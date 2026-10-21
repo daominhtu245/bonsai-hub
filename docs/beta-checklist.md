@@ -51,6 +51,6 @@ Các bước cần người vận hành làm tay. Code đã sẵn; mục nào ch
 
 ## 9. Mời 20–30 người dùng thử
 - [ ] Nhóm: ~10 nhà vườn, ~10 người chơi lâu năm, ~5–10 người mới (docs/ui-spec.md).
-- [ ] Cộng lượt dùng thử thêm qua `credit_ledger` (reason `gift`, `ref_id` = mã đợt mời) để mỗi người thử 3–5 cây.
+- [ ] Tặng lượt dùng thử ở `/admin` → Tặng lượt (mỗi người 1 lần mỗi mã đợt) để mỗi người thử 3–5 cây.
 - [ ] Theo dõi hằng ngày: `/admin` (chi phí/lượt, job lỗi), phản hồi "Chưa đúng" trong bảng `feedback`, cảnh báo Telegram.
 - [ ] Sau 2 tuần: tổng hợp phản hồi, nghệ nhân duyệt lại bộ luật (`rules/rule_set.yaml`) và prompt (tạo phiên bản mới ở `/admin` → Prompt).
