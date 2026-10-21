@@ -1,0 +1,12 @@
+step_code: P3b
+version: v1
+kind: image
+active: true
+description: Bản vẽ phong cách nghệ nhân (sau MVP)
+user: |
+  Using the FIRST image (original photo) and the design sketch in the SECOND image, create a bonsai design drawing
+  of the SAME tree's final form ({{style_description}}).
+  Keep the trunk line, base and lean exactly as in the original photo.
+  Drawing style: traditional bonsai design sketch, fine ink lines with light grey wash shading on off-white paper,
+  foliage pads drawn as clean cloud shapes, pot drawn in simple outline. Side view, centered composition, generous margins.
+  No text, no signature, no color except subtle grey wash.

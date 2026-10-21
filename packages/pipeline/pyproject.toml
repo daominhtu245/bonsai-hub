@@ -1,0 +1,29 @@
+[project]
+name = "bonsai-pipeline"
+version = "0.1.0"
+description = "Bonsai AI pipeline: P1..P6, rule engine, sketch, CV checks, AI adapters"
+requires-python = ">=3.12"
+dependencies = [
+  "pydantic>=2.8",
+  "pydantic-settings>=2.4",
+  "pillow>=10.4",
+  "pillow-heif>=0.18",
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.70"]
+gemini = ["google-genai>=1.30"]
+openai = ["openai>=1.100"]
+all = ["anthropic>=0.70", "google-genai>=1.30", "openai>=1.100"]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["bonsai_pipeline*"]
+
+[tool.setuptools.package-data]
+bonsai_pipeline = ["rules/*.yaml"]

@@ -1,0 +1,8 @@
+[
+  {
+    "AllowedOrigins": ["https://bonsai.example.vn", "http://localhost:5173", "http://localhost:8080"],
+    "AllowedMethods": ["PUT", "GET"],
+    "AllowedHeaders": ["Content-Type"],
+    "MaxAgeSeconds": 3600
+  }
+]

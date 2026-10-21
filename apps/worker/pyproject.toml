@@ -1,0 +1,20 @@
+[project]
+name = "bonsai-worker"
+version = "0.1.0"
+description = "Bonsai AI worker: Celery tasks cho pipeline A, pipeline B"
+requires-python = ">=3.12"
+dependencies = [
+  "bonsai-api",
+  "bonsai-pipeline[all]",
+  "celery[redis]>=5.4",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["bonsai_worker*"]

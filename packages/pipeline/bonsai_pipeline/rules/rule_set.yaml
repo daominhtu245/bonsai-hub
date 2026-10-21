@@ -1,0 +1,24 @@
+# Bộ luật tỉ lệ (docs/prompt_system.md §0.3) — dùng trong rule engine và chèn vào P2, P4.
+# Nghệ nhân duyệt lại từ tuần 2.
+proportions:
+  height_to_base_diameter: [5, 7]        # lý tưởng ~6
+  first_branch_height_ratio: [0.25, 0.4] # ~1/3 chiều cao
+  pot_length_to_tree_height: [0.6, 0.75] # ~2/3 (thế đứng); thế huyền dùng chậu sâu
+  pot_depth_to_base_diameter: [0.8, 1.2]
+silhouette:
+  shape: scalene_triangle
+  apex_lean: toward_viewer_slightly
+  negative_space: required
+branches:
+  order: alternate_left_right_back
+  thickness: decreasing_upwards
+  length: decreasing_upwards
+  forbidden:
+    - bar_branches
+    - eye_poke_branches
+    - crossing_branches
+    - inside_of_curve_branches
+    - reverse_taper
+trunk:
+  taper: required
+  front_selection: [best_nebari, best_taper, visible_movement]

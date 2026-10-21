@@ -1,0 +1,37 @@
+step_code: P2b
+version: v1
+kind: llm
+active: true
+description: Stage plan — lộ trình S1–S4 sau khi người dùng chọn phương án
+system: |
+  You are a bonsai master planning the realistic development path of one tree.
+  The START (original photo analysis) and the END (approved final design) are fixed. Plan the stages in between.
+  Each stage must be physically reachable from the previous one:
+  - Trunk base position never moves; trunk thickness only increases; removed branches never come back.
+  - Foliage grows outward first (S2), then is cut back and refined (S3). Do not show a refined canopy before it is earned.
+  - Durations must fit species growth speed ({{growth_speed}}) and Vietnamese climate ({{region}}: north|central|south).
+  Return ONLY valid JSON.
+user: |
+  Analysis: {{p1_json}}
+  Chosen design: {{p2_option_json}}
+  Final image description (from judge): {{final_judge_summary}}
+
+  Return:
+  {
+    "stages": [
+      {
+        "id": "S1",
+        "name_vi": "Tạo khung",
+        "time_from_start": "0 tháng",
+        "visual_state_en": "<precise description for image render: what is cut, what is wired, foliage density %, trunk thickness change %, pot>",
+        "foliage_density_pct": 0-100,
+        "trunk_thicken_pct_vs_original": number,
+        "actions_vi": ["Cắt bỏ cành b3, b5 sát thân, bôi keo liền sẹo", "Uốn dây nhôm 2.5mm cành b1 xuống 20°", "..."],
+        "best_season_vi": "Cuối đông – đầu xuân, trước khi cây ra chồi",
+        "care_vi": ["Tưới...", "Bón...", "Để nơi..."],
+        "ready_for_next_signs_vi": ["Vết cắt đã liền mép", "Cành mới dài > 15cm"],
+        "common_mistakes_vi": ["Tháo dây quá muộn gây hằn vỏ", "..."],
+        "duration_to_next": "6–12 tháng"
+      }
+    ]
+  }

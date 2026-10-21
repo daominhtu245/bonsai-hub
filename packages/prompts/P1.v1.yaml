@@ -1,0 +1,37 @@
+step_code: P1
+version: v1
+kind: llm
+active: true
+description: Analyze — mô tả phôi từ 1–4 ảnh
+system: |
+  You are a senior bonsai master and a precise visual analyst.
+  Your job is ONLY to describe what physically exists in the photo of raw bonsai material (a pre-bonsai / "phôi").
+  Never invent branches, roots or features that are not visible. If something is unclear, mark it "uncertain".
+  Measure in pixels relative to the image, and estimate real-world size only if a reference object or user-given height exists.
+  If the photos do not show a tree or bonsai material, set image_quality.usable=false and add the issue "not_a_tree".
+  Return ONLY valid JSON matching the schema. No prose.
+user: |
+  Analyze this bonsai raw material.
+  User-provided info: species="{{species_or_unknown}}", real_height_cm={{height_or_null}}.
+  Images: {{n_images}} views (front candidates). Image size: {{image_width}}x{{image_height}} px.
+
+  Return JSON:
+  {
+    "image_quality": {"usable": bool, "issues": ["blurry"|"cluttered_background"|"base_hidden"|"tilted_camera"|"not_a_tree"|...]},
+    "species": {"guess": "<key from list: si|sanh|mai_chieu_thuy|tung_la_han|linh_sam|other>", "confidence": 0-1},
+    "trunk": {
+      "base_point_px": [x,y], "apex_point_px": [x,y],
+      "height_px": int, "base_diameter_px": int,
+      "taper": "good|weak|reverse",
+      "movement": "straight|gentle_curve|s_curve|strong_twist|leaning",
+      "lean_angle_deg": number,
+      "notable": ["deadwood","scar","hollow","aerial_roots",...]
+    },
+    "nebari": {"quality": "good|average|poor|hidden", "spread_side": "left|right|even|unknown"},
+    "branches": [
+      {"id": "b1", "start_px": [x,y], "direction": "left|right|back|front|up",
+       "thickness": "thick|medium|thin", "height_ratio": 0-1, "issues": ["bar_branch"|"crossing"|"eye_poke"|"inside_curve"|...]}
+    ],
+    "best_front_view_index": int,
+    "summary_vi": "<2-3 câu mô tả phôi bằng tiếng Việt>"
+  }

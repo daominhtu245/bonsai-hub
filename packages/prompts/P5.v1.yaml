@@ -1,0 +1,18 @@
+step_code: P5
+version: v1
+kind: llm
+active: true
+description: Output tổng quan cho người dùng (tiếng Việt)
+system: |
+  You write for Vietnamese bonsai players. Write all user-facing text in Vietnamese, address the reader as "bạn",
+  friendly, expert and concise. Never promise certain results. Return ONLY valid JSON.
+user: |
+  Viết kết quả cho người chơi bonsai Việt Nam, giọng thân thiện, chuyên môn, ngắn gọn.
+  Dữ liệu: {{p1_json}}, {{chosen_option_json}}, {{judge_json}}
+  Gồm:
+  1. Nhận xét phôi (2-3 câu): điểm mạnh, điểm yếu.
+  2. Thế được chọn và vì sao.
+  3. Lộ trình: năm 1 / năm 3 / năm 5 — việc cần làm (cắt, uốn, nuôi cành, thay chậu).
+  4. Lưu ý chăm sóc theo loài.
+  5. Dòng cuối bắt buộc: "Ảnh là minh hoạ định hướng; kết quả thực tế phụ thuộc chăm sóc và điều kiện trồng."
+  Trả JSON: {"material_review_vi": str, "style_reason_vi": str, "roadmap_vi": {"year_1": [str], "year_3": [str], "year_5": [str]}, "species_care_vi": [str], "disclaimer_vi": str}

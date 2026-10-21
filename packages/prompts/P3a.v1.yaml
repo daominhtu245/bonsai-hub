@@ -1,0 +1,33 @@
+step_code: P3a
+version: v1
+kind: image
+active: true
+description: Render S4 photoreal theo bản vẽ (ảnh 1 gốc, ảnh 2 sketch, còn lại tham chiếu loài)
+user: |
+  Edit the FIRST image (original photo). Show the SAME tree after {{years}} years of professional bonsai training,
+  following the design sketch in the SECOND image. The remaining images are species references only — do not copy their trunks.
+
+  HARD CONSTRAINTS — do not violate:
+  1. Keep the exact same trunk: same base position, same trunk line and curves, same lean.
+     Base thickness may increase by at most {{max_thicken_pct}}% over {{years}} years.
+  2. Keep the camera angle, framing, background and lighting identical to the original.
+  3. Do NOT add new trunks. Do NOT move or straighten the trunk.
+  4. Branches marked RED in the sketch are removed ({{scar_note}}).
+  5. Follow GREEN lines for branch positions and the dashed outline for the canopy silhouette.
+
+  DESIGN:
+  - Style: {{style_description}}.
+  - Apex at the marked dot, leaning {{apex_lean}}.
+  - First branch on the {{first_branch_side}} at about one-third of the tree height; branches alternate left, right, back,
+    getting thinner and shorter toward the top.
+  - Foliage: {{species_foliage_description}}, arranged in {{pads}} distinct foliage pads with clear negative space between them.
+  - Overall silhouette: asymmetric (scalene) triangle.
+  - Pot: {{pot_description}}, tree placed {{pot_position}}. {{repot_note}}
+
+  REALISM FOR {{years}} YEARS:
+  - {{timeline_text}}
+  - Foliage density and ramification must be believable for {{years}} years of {{species_name}} ({{growth_speed}} grower).
+    Do not make it look like a 50-year-old masterpiece.
+
+  STYLE OF OUTPUT: photorealistic photo, natural daylight, sharp focus, same aspect ratio as the original.
+  No text, no watermark, no illustration or painting look, no extra objects.

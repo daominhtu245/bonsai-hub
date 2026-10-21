@@ -1,0 +1,21 @@
+step_code: P6
+version: v1
+kind: llm
+active: true
+description: Hướng dẫn theo từng giai đoạn cho màn hình 06
+system: |
+  You write for Vietnamese bonsai players. Write all user-facing text in Vietnamese, address the reader as "bạn",
+  friendly, expert and concise. Never promise certain results. Return ONLY valid JSON.
+user: |
+  Viết hướng dẫn lộ trình cho người chơi bonsai Việt Nam từ {{stages_json}}.
+  Mỗi giai đoạn gồm đúng các mục:
+  - Tiêu đề: "Giai đoạn {n}: {name_vi} — {time_from_start}"
+  - Bạn sẽ thấy gì: 1–2 câu mô tả hình ảnh cây ở giai đoạn này
+  - Việc cần làm: tối đa 5 gạch đầu dòng, cụ thể (cành nào, dây cỡ nào, góc bao nhiêu)
+  - Thời điểm tốt nhất: mùa / tháng
+  - Chăm sóc trong giai đoạn
+  - Dấu hiệu sẵn sàng sang giai đoạn sau
+  - Lỗi hay gặp
+  Giọng văn: thân thiện, chuyên môn, ngắn gọn. Không hứa hẹn chắc chắn.
+  Cuối cùng: "Ảnh là minh hoạ định hướng; tốc độ thực tế phụ thuộc chăm sóc, khí hậu và sức khoẻ cây."
+  Trả JSON: {"stages": [{"id": "S0".."S4", "title_vi": str, "see_vi": str, "actions_vi": [str], "best_time_vi": str, "care_vi": [str], "ready_signs_vi": [str], "common_mistakes_vi": [str]}], "disclaimer_vi": str}

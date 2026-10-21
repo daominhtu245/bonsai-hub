@@ -1,0 +1,24 @@
+step_code: P3d_chain
+version: v1
+kind: image
+active: true
+description: Render S2, S3 theo chuỗi (ảnh trước + ảnh S4 làm đích)
+user: |
+  FIRST image: the tree at the previous stage ({{prev_stage_name}}). Use it as the exact structural base.
+  SECOND image: the approved final result. Use it only as the direction of development, NOT as the current look.
+  THIRD image (optional): species reference.
+
+  Show the SAME tree at stage "{{stage_name_en}}", {{time_from_start}} after the start.
+
+  HARD CONSTRAINTS:
+  - Same trunk line, same base position, same camera, same background and lighting as the FIRST image.
+  - Trunk base thickness = original +{{trunk_thicken_pct}}% (thicker than previous stage, thinner than final).
+  - Branches removed earlier must not reappear.
+  - {{pot_rule}}
+
+  STATE AT THIS STAGE:
+  {{visual_state_en}}
+  Foliage density about {{foliage_density_pct}}%. The tree must look clearly LESS refined than the final image
+  and clearly MORE developed than the previous stage.
+
+  Photorealistic photo, same aspect ratio, no text, no watermark.

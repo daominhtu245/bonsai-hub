@@ -1,0 +1,14 @@
+step_code: P3d_S1
+version: v1
+kind: image
+active: true
+description: Render S1 Tạo khung — sửa có kiểm soát trên ảnh gốc
+user: |
+  Edit the FIRST image (original photo) minimally.
+  1. Remove ONLY the branches marked RED in the SECOND image (sketch). Fill the removed area with the original background.
+     Leave small fresh pruning cuts with sealing paste on the trunk where branches were removed.
+  2. Apply bonsai training wire (aluminium, brown/copper color) spirally on the branches marked GREEN,
+     bending them to the positions shown in the sketch.
+  3. Keep everything else pixel-identical: trunk, base, roots, remaining foliage, pot, background, lighting, camera.
+  Foliage density about {{foliage_density_pct}}% of the original (sparse after pruning).
+  Photorealistic, no text.

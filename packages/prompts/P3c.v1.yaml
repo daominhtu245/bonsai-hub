@@ -1,0 +1,11 @@
+step_code: P3c
+version: v1
+kind: image
+active: true
+description: Sửa lỗi khi P4 đánh trượt — nối sau prompt P3a gốc
+user: |
+  {{base_prompt}}
+
+  The previous result failed these checks: {{failed_checks}}.
+  Regenerate from the original photo again. Fix ONLY these issues, keep everything else from the instructions:
+  {{fix_instructions}}

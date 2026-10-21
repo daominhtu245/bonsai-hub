@@ -1,0 +1,35 @@
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-bg font-body text-body text-ink antialiased;
+    margin: 0;
+  }
+  h1, h2, h3 {
+    @apply font-display font-semibold;
+    margin: 0;
+  }
+  a {
+    @apply text-primary;
+  }
+  a:hover {
+    @apply text-primary-ink;
+  }
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
