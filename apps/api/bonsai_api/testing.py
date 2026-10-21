@@ -53,6 +53,7 @@ def _clean():
         c.execute(text("TRUNCATE users, trees, tree_photos, design_jobs, credit_ledger, payments, pipeline_steps, feedback CASCADE"))
         c.execute(text("DELETE FROM prompt_versions WHERE version <> 'v1'"))
         c.execute(text("UPDATE prompt_versions SET active = true"))
+        c.execute(text("UPDATE species SET ref_image_keys = '[]'::jsonb"))
 
 
 @pytest.fixture
@@ -68,6 +69,11 @@ def enqueued(monkeypatch):
     calls = []
     monkeypatch.setattr("bonsai_api.queue.enqueue", lambda name, *args, **kw: calls.append((name, args, kw)) or True)
     return calls
+
+
+@pytest.fixture(autouse=True)
+def _no_rate_limit(monkeypatch):
+    monkeypatch.setattr("bonsai_api.ratelimit.hit", lambda key, limit, window_s: True)
 
 
 @pytest.fixture

@@ -49,6 +49,7 @@ services:
       SEPAY_API_KEY: ${SEPAY_API_KEY:-}
       CASSO_SECURE_TOKEN: ${CASSO_SECURE_TOKEN:-}
       SENTRY_DSN: ${SENTRY_DSN:-}
+      TRUST_CLOUDFLARE: ${TRUST_CLOUDFLARE:-false}
     # Không có khóa AI ở đây — chỉ worker giữ.
     depends_on:
       postgres:

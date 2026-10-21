@@ -1,13 +1,18 @@
 """Trang admin: prompt (phiên bản, kích hoạt), chi phí từ pipeline_steps, job lỗi."""
 
+import uuid
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import Integer, case, cast, func, select, update
 
-from ..db.models import DesignJob, JobStatus, PipelineStep, PromptVersion
+from .. import storage
+from ..db.models import (
+    CreditReason, DesignJob, DesignOption, Feedback, JobStatus, PipelineStep, PromptVersion, Species, User,
+)
 from ..security import DB, require_admin
+from ..services.credits import apply_credit
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -135,3 +140,124 @@ def failed_jobs(db: DB, limit: int = 50):
                       .order_by(DesignJob.created_at.desc()).limit(min(limit, 200))).scalars()
     return [FailedJob(id=str(j.id), status=j.status.value, error_code=j.error_code, error=(j.error or "")[:500],
                       created_at=j.created_at, charged=j.chosen_option_id is not None) for j in rows]
+
+
+# ---------- phản hồi người dùng ----------
+
+class FeedbackRow(BaseModel):
+    job_id: str
+    rating: int
+    reason_tags: list
+    comment: str | None
+    style_key: str | None
+    user_email: str | None
+    created_at: datetime
+
+
+@router.get("/feedback", response_model=list[FeedbackRow])
+def feedback_list(db: DB, rating: int | None = None, limit: int = 100):
+    q = (select(Feedback, User.email, DesignOption.style_key)
+         .join(User, User.id == Feedback.user_id)
+         .join(DesignJob, DesignJob.id == Feedback.job_id)
+         .outerjoin(DesignOption, DesignOption.id == DesignJob.chosen_option_id)
+         .order_by(Feedback.created_at.desc()).limit(min(limit, 500)))
+    if rating in (1, -1):
+        q = q.where(Feedback.rating == rating)
+    return [FeedbackRow(job_id=str(f.job_id), rating=f.rating, reason_tags=f.reason_tags or [], comment=f.comment,
+                        style_key=style, user_email=email, created_at=f.created_at) for f, email, style in db.execute(q)]
+
+
+# ---------- tặng lượt (mời dùng thử beta) ----------
+
+class GiftIn(BaseModel):
+    email: str
+    credits: int = Field(ge=1, le=100)
+    batch: str = Field(min_length=1, max_length=40, pattern=r"^[a-zA-Z0-9_-]+$")
+
+
+class GiftOut(BaseModel):
+    email: str
+    credited: bool
+    credits: int
+
+
+@router.post("/credits/gift", response_model=GiftOut)
+def gift_credits(body: GiftIn, db: DB):
+    """Cộng lượt cho một người (đã đăng nhập ít nhất 1 lần). Mỗi người chỉ nhận 1 lần mỗi đợt (`batch`)."""
+    user = db.execute(select(User).where(func.lower(User.email) == body.email.lower())).scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Chưa có tài khoản với email này (người dùng cần đăng nhập trước).")
+    credited = apply_credit(db, user.id, body.credits, CreditReason.gift, f"batch:{body.batch}")
+    db.commit()
+    db.refresh(user)
+    return GiftOut(email=user.email, credited=credited, credits=user.credits)
+
+
+# ---------- ảnh tham chiếu loài (đưa vào P3a/P3d) ----------
+
+MAX_REFS = 5
+REF_TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+
+
+class SpeciesRefs(BaseModel):
+    key: str
+    name_vi: str
+    refs: list[dict]  # [{"key", "url"}]
+
+
+class RefPresignIn(BaseModel):
+    content_type: str
+
+
+class RefKeyIn(BaseModel):
+    key: str
+
+
+def _species(db, key: str) -> Species:
+    sp = db.get(Species, key)
+    if sp is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Loài không tồn tại.")
+    return sp
+
+
+def _refs_out(sp: Species) -> SpeciesRefs:
+    return SpeciesRefs(key=sp.key, name_vi=sp.name_vi,
+                       refs=[{"key": k, "url": storage.presign_get(k)} for k in (sp.ref_image_keys or [])])
+
+
+@router.get("/species", response_model=list[SpeciesRefs])
+def species_refs(db: DB):
+    return [_refs_out(sp) for sp in db.execute(select(Species).order_by(Species.name_vi)).scalars()]
+
+
+@router.post("/species/{key}/refs/presign")
+def species_ref_presign(key: str, body: RefPresignIn, db: DB):
+    _species(db, key)
+    ext = REF_TYPES.get(body.content_type)
+    if ext is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Chỉ nhận JPEG, PNG, WebP.")
+    obj = f"refs/species/{key}/{uuid.uuid4().hex}.{ext}"
+    return {"key": obj, "url": storage.presign_put(obj, body.content_type), "headers": {"Content-Type": body.content_type}}
+
+
+@router.post("/species/{key}/refs", response_model=SpeciesRefs)
+def species_ref_add(key: str, body: RefKeyIn, db: DB):
+    sp = _species(db, key)
+    if not body.key.startswith(f"refs/species/{key}/") or ".." in body.key:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Ảnh không thuộc loài này.")
+    refs = list(sp.ref_image_keys or [])
+    if len(refs) >= MAX_REFS:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Tối đa {MAX_REFS} ảnh mỗi loài.")
+    if body.key not in refs:
+        refs.append(body.key)
+    sp.ref_image_keys = refs
+    db.commit()
+    return _refs_out(sp)
+
+
+@router.delete("/species/{key}/refs", response_model=SpeciesRefs)
+def species_ref_remove(key: str, body: RefKeyIn, db: DB):
+    sp = _species(db, key)
+    sp.ref_image_keys = [k for k in (sp.ref_image_keys or []) if k != body.key]
+    db.commit()
+    return _refs_out(sp)

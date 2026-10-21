@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '@/lib/auth';
@@ -121,5 +121,25 @@ describe('Admin', () => {
     expect(await screen.findAllByText('$1.23')).toHaveLength(2); // ô tổng + dòng theo ngày
     expect(screen.getByText('$0.5100')).toBeInTheDocument();
     expect(screen.getByText('17%')).toBeInTheDocument();
+  });
+});
+
+describe('Admin tools', () => {
+  it('gifts credits and shows feedback', async () => {
+    const calls = mockFetch([
+      ['GET /api/v1/me', () => json({ ...user, role: 'admin' })],
+      ['GET /api/v1/admin/costs?days=14', () => json({ total_usd: 0, avg_cost_per_paid_job_usd: null, days: [], steps: [] })],
+      ['GET /api/v1/admin/feedback?rating=-1', () => json([{ job_id: 'j1234567890', rating: -1, reason_tags: [], comment: 'Thân bị vẽ khác', style_key: 'moyogi', user_email: 'a@b.vn', created_at: '2026-10-21T10:00:00Z' }])],
+      ['POST /api/v1/admin/credits/gift', () => json({ email: 'a@b.vn', credited: true, credits: 4 })],
+    ]);
+    renderAt('/admin', '/admin', <Admin />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Phản hồi' }));
+    expect(await screen.findByText('Thân bị vẽ khác')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Tặng lượt' }));
+    await userEvent.type(screen.getByLabelText('Email'), 'a@b.vn');
+    const form = screen.getByLabelText('Email').closest('form')!;
+    await userEvent.click(within(form).getByRole('button', { name: 'Tặng lượt' }));
+    expect(await screen.findByText(/Đã cộng 3 lượt cho a@b.vn/)).toBeInTheDocument();
+    expect(calls.find((c) => c.url.endsWith('/gift'))?.body).toEqual({ email: 'a@b.vn', credits: 3, batch: 'beta-1' });
   });
 });

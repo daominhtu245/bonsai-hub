@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     public_base_url: str = "http://localhost:8080"
     sentry_dsn: str | None = None
+    trust_cloudflare: bool = False  # bật khi origin chỉ nhận traffic qua Cloudflare
     admin_emails: Annotated[list[str], NoDecode] = []
 
     # VietQR: tài khoản nhận tiền (BIN theo danh sách napas, vd. 970436 = Vietcombank)

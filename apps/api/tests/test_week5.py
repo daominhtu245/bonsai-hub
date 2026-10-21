@@ -201,3 +201,40 @@ def test_admin_requires_role_and_works(db, client, login, monkeypatch):
     assert p3a["calls"] == 2 and p3a["cost_usd"] == 0.0336 and p3a["fail_rate"] == 0.5
     assert c["total_usd"] == 0.0336
     assert client.get("/api/v1/admin/jobs/failed", headers=admin).status_code == 200
+
+
+def _admin(client, login, monkeypatch):
+    monkeypatch.setattr(get_settings(), "admin_emails", ["boss@example.com"])
+    headers, _ = login("boss@example.com")
+    return headers
+
+
+def test_admin_feedback_and_gift(db, client, login, monkeypatch, bucket):
+    user_headers, job = _done_job(db, client, login, bucket)
+    client.post(f"/api/v1/jobs/{job.id}/feedback", headers=user_headers, json={"rating": -1, "comment": "Thân bị vẽ khác"})
+    admin = _admin(client, login, monkeypatch)
+    rows = client.get("/api/v1/admin/feedback?rating=-1", headers=admin).json()
+    assert rows[0]["comment"] == "Thân bị vẽ khác" and rows[0]["style_key"] == "moyogi" and rows[0]["user_email"] == "nhavuon@example.com"
+    assert client.get("/api/v1/admin/feedback?rating=1", headers=admin).json() == []
+
+    gift = lambda **kw: client.post("/api/v1/admin/credits/gift", headers=admin, json={"email": "NhaVuon@example.com", "credits": 3, "batch": "beta-1"} | kw)
+    r = gift()
+    assert r.json() == {"email": "nhavuon@example.com", "credited": True, "credits": 4}
+    assert gift().json()["credited"] is False  # cùng đợt: không cộng lại
+    assert gift(batch="beta-2").json()["credits"] == 7
+    assert gift(email="khongco@example.com").status_code == 404
+    assert gift(batch="có dấu").status_code == 422
+    assert client.post("/api/v1/admin/credits/gift", headers=user_headers, json={"email": "a@b.c", "credits": 1, "batch": "x"}).status_code == 403
+
+
+def test_admin_species_refs(db, client, login, monkeypatch):
+    admin = _admin(client, login, monkeypatch)
+    p = client.post("/api/v1/admin/species/si/refs/presign", headers=admin, json={"content_type": "image/webp"}).json()
+    assert p["key"].startswith("refs/species/si/") and "X-Amz-Signature" in p["url"]
+    assert client.post("/api/v1/admin/species/si/refs/presign", headers=admin, json={"content_type": "image/gif"}).status_code == 400
+    r = client.post("/api/v1/admin/species/si/refs", headers=admin, json={"key": p["key"]}).json()
+    assert [x["key"] for x in r["refs"]] == [p["key"]]
+    assert client.post("/api/v1/admin/species/si/refs", headers=admin, json={"key": "refs/species/sanh/x.webp"}).status_code == 400
+    r = client.request("DELETE", "/api/v1/admin/species/si/refs", headers=admin, json={"key": p["key"]}).json()
+    assert r["refs"] == []
+    assert client.get("/api/v1/admin/species", headers=admin).status_code == 200

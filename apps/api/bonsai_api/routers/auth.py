@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..auth.google import verify_google_id_token
 from ..auth.identity import ExternalIdentity, IdentityError
@@ -8,7 +8,9 @@ from ..security import DB, create_access_token
 from ..services.users import get_or_create_user
 from ..settings import get_settings
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+from ..ratelimit import per_ip
+
+router = APIRouter(prefix="/auth", tags=["auth"], dependencies=[Depends(per_ip("auth", 30, 600))])
 
 
 def _issue(db, ident: ExternalIdentity) -> TokenOut:

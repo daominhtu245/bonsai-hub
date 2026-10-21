@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { Button, FilterChip, Notice, Skeleton, StateView, type ViewState } from '@/components/ui';
-import { adminApi, type Costs, type FailedJob, type PromptRow } from '@/lib/admin';
+import { adminApi, type Costs, type FailedJob, type FeedbackRow, type PromptRow, type SpeciesRefs } from '@/lib/admin';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -142,20 +142,139 @@ function FailedTab() {
   );
 }
 
-/** Trang quản trị: chi phí (pipeline_steps), prompt (phiên bản trong DB), job lỗi. */
+function FeedbackTab() {
+  const [rating, setRating] = useState<1 | -1 | undefined>(-1);
+  const [state] = useLoad<FeedbackRow[]>(() => adminApi.feedback(rating), [rating]);
+  return (
+    <div className="flex flex-col gap-3 text-caption">
+      <div className="flex gap-2" role="group" aria-label="Lọc đánh giá">
+        <FilterChip selected={rating === -1} onClick={() => setRating(-1)}>Chưa đúng</FilterChip>
+        <FilterChip selected={rating === 1} onClick={() => setRating(1)}>Hợp lý</FilterChip>
+        <FilterChip selected={rating === undefined} onClick={() => setRating(undefined)}>Tất cả</FilterChip>
+      </div>
+      <StateView state={state} skeleton={<Skeleton className="h-40 rounded-card" />} empty={null}>
+        {(rows) => rows.length === 0 ? <p className="text-ink-muted">Chưa có phản hồi.</p> : (
+          <ul className="m-0 flex list-none flex-col gap-2 p-0">
+            {rows.map((r) => (
+              <li key={r.job_id + r.created_at} className="rounded-card border border-line bg-surface p-3">
+                <div className="flex justify-between gap-2">
+                  <span className={r.rating === 1 ? 'font-semibold text-primary-ink' : 'font-semibold text-danger'}>{r.rating === 1 ? 'Hợp lý' : 'Chưa đúng'}</span>
+                  <span className="text-ink-muted">{new Date(r.created_at).toLocaleString('vi-VN')}</span>
+                </div>
+                <div className="text-ink-muted">{r.user_email} · {r.style_key ?? '—'} · <span className="font-mono">{r.job_id.slice(0, 8)}</span></div>
+                {r.comment ? <p className="m-0 mt-1">{r.comment}</p> : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </StateView>
+    </div>
+  );
+}
+
+function GiftTab() {
+  const [email, setEmail] = useState('');
+  const [credits, setCredits] = useState(3);
+  const [batch, setBatch] = useState('beta-1');
+  const [msg, setMsg] = useState<{ tone: 'success' | 'warn' | 'danger'; text: string } | null>(null);
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      const r = await adminApi.gift(email.trim(), credits, batch.trim());
+      setMsg(r.credited ? { tone: 'success', text: `Đã cộng ${credits} lượt cho ${r.email} (hiện có ${r.credits}).` } : { tone: 'warn', text: `${r.email} đã nhận lượt của đợt "${batch}" rồi.` });
+    } catch (err) {
+      setMsg({ tone: 'danger', text: (err as ApiError).message });
+    }
+  };
+  const input = 'min-h-touch rounded-btn border border-line-strong bg-surface px-3 text-body text-ink';
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-2 text-caption">
+      <p className="m-0 text-ink-muted">Tặng lượt cho người dùng thử (họ cần đăng nhập ít nhất 1 lần). Mỗi người nhận 1 lần mỗi đợt.</p>
+      <label htmlFor="g-email" className="font-medium">Email</label>
+      <input id="g-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
+      <label htmlFor="g-n" className="font-medium">Số lượt</label>
+      <input id="g-n" type="number" min={1} max={100} value={credits} onChange={(e) => setCredits(Number(e.target.value))} className={input} />
+      <label htmlFor="g-batch" className="font-medium">Mã đợt</label>
+      <input id="g-batch" required pattern="[a-zA-Z0-9_-]+" value={batch} onChange={(e) => setBatch(e.target.value)} className={input} />
+      {msg ? <Notice tone={msg.tone}>{msg.text}</Notice> : null}
+      <Button type="submit">Tặng lượt</Button>
+    </form>
+  );
+}
+
+function SpeciesTab() {
+  const [state, reload] = useLoad<SpeciesRefs[]>(adminApi.species);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const run = async (key: string, fn: () => Promise<unknown>) => {
+    setBusy(key);
+    setError(null);
+    try {
+      await fn();
+      reload();
+    } catch (e) {
+      setError((e as ApiError).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <div className="flex flex-col gap-3 text-caption">
+      <p className="m-0 text-ink-muted">3–5 ảnh cây hoàn thiện mỗi loài (ảnh có quyền sử dụng). Model ảnh dùng để vẽ đúng lá, vỏ, hoa của loài.</p>
+      {error ? <Notice tone="danger">{error}</Notice> : null}
+      <StateView state={state} skeleton={<Skeleton className="h-40 rounded-card" />} empty={null}>
+        {(list) => (
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            {list.map((sp) => (
+              <li key={sp.key} className="flex flex-col gap-2 rounded-card border border-line bg-surface p-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">{sp.name_vi} <span className="font-normal text-ink-muted">· {sp.refs.length}/5 ảnh</span></span>
+                  {sp.refs.length < 5 ? (
+                    <label className="flex min-h-touch cursor-pointer items-center rounded-btn border border-primary px-3 font-medium text-primary-ink">
+                      {busy === sp.key ? 'Đang tải…' : 'Thêm ảnh'}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" hidden disabled={busy !== null}
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) run(sp.key, () => adminApi.addRef(sp.key, f)); e.target.value = ''; }} />
+                    </label>
+                  ) : null}
+                </div>
+                {sp.refs.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {sp.refs.map((r) => (
+                      <div key={r.key} className="relative">
+                        <img src={r.url} alt={`Ảnh tham chiếu ${sp.name_vi}`} className="h-20 w-20 rounded-img object-cover" />
+                        <button type="button" aria-label="Xóa ảnh" onClick={() => run(sp.key, () => adminApi.removeRef(sp.key, r.key))}
+                          className="absolute -right-2 -top-2 flex h-touch w-touch items-center justify-center">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-surface text-ink shadow-sm" aria-hidden="true">×</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </StateView>
+    </div>
+  );
+}
+
+/** Trang quản trị: chi phí (pipeline_steps), prompt (phiên bản trong DB), job lỗi, phản hồi, tặng lượt, ảnh tham chiếu loài. */
 export default function Admin() {
   const { user } = useAuth();
-  const [tab, setTab] = useState<'costs' | 'prompts' | 'failed'>('costs');
+  const [tab, setTab] = useState<'costs' | 'prompts' | 'failed' | 'feedback' | 'gift' | 'species'>('costs');
   if (user.status === 'ready' && user.data.role !== 'admin') return <Navigate to="/" replace />;
   return (
     <div className="mx-auto flex min-h-dvh max-w-content flex-col">
       <BackHeader to="/tai-khoan" title="Quản trị" />
-      <div className="flex gap-2 px-gutter pb-3" role="group" aria-label="Mục">
-        <FilterChip selected={tab === 'costs'} onClick={() => setTab('costs')}>Chi phí</FilterChip>
-        <FilterChip selected={tab === 'prompts'} onClick={() => setTab('prompts')}>Prompt</FilterChip>
-        <FilterChip selected={tab === 'failed'} onClick={() => setTab('failed')}>Job lỗi</FilterChip>
+      <div className="flex flex-wrap gap-2 px-gutter pb-3" role="group" aria-label="Mục">
+        {([['costs', 'Chi phí'], ['prompts', 'Prompt'], ['failed', 'Job lỗi'], ['feedback', 'Phản hồi'], ['gift', 'Tặng lượt'], ['species', 'Ảnh loài']] as const).map(([k, label]) => (
+          <FilterChip key={k} selected={tab === k} onClick={() => setTab(k)}>{label}</FilterChip>
+        ))}
       </div>
-      <main className="px-gutter pb-8">{tab === 'costs' ? <CostsTab /> : tab === 'prompts' ? <PromptsTab /> : <FailedTab />}</main>
+      <main className="px-gutter pb-8">
+        {{ costs: <CostsTab />, prompts: <PromptsTab />, failed: <FailedTab />, feedback: <FeedbackTab />, gift: <GiftTab />, species: <SpeciesTab /> }[tab]}
+      </main>
     </div>
   );
 }

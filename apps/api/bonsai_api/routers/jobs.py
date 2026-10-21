@@ -3,7 +3,7 @@ import time
 import uuid
 from collections.abc import Iterator
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 
@@ -17,6 +17,7 @@ from ..security import DB, CurrentUser
 from ..services.credits import InsufficientCredits, next_charge_ref, spend_for_render
 from ..services.jobs import STREAM_END, can_retry, job_out, jobs_today
 from ..services.results import result_full
+from ..ratelimit import per_ip
 from ..settings import get_settings
 
 router = APIRouter(tags=["jobs"])
@@ -33,7 +34,8 @@ def _own_job(db, job_id: uuid.UUID, user) -> DesignJob:
     return job
 
 
-@router.post("/trees/{tree_id}/jobs", response_model=JobOut, status_code=status.HTTP_202_ACCEPTED)
+@router.post("/trees/{tree_id}/jobs", response_model=JobOut, status_code=status.HTTP_202_ACCEPTED,
+             dependencies=[Depends(per_ip("phase_a", 30, 86400, "Mạng của bạn đã phân tích quá nhiều lần hôm nay. Ngày mai thử tiếp nhé."))])
 def create_job(tree_id: uuid.UUID, body: JobCreate, user: CurrentUser, db: DB):
     tree = db.get(Tree, tree_id)
     if tree is None or tree.user_id != user.id:

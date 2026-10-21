@@ -4,7 +4,7 @@ import time
 import uuid
 from collections.abc import Iterator
 
-from fastapi import APIRouter, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -16,6 +16,7 @@ from ..services.payments import (
     PACKAGE_BY_CODE, PACKAGES, BankNotConfigured, apply_bank_txn, create_payment, expire_if_stale, parse_casso,
     parse_sepay, vietqr_url,
 )
+from ..ratelimit import per_ip
 from ..settings import get_settings
 
 router = APIRouter(tags=["payments"])
@@ -67,7 +68,8 @@ def packages():
     return [PackageOut(**p.__dict__) for p in PACKAGES]
 
 
-@router.post("/payments", response_model=PaymentOut, status_code=status.HTTP_201_CREATED)
+@router.post("/payments", response_model=PaymentOut, status_code=status.HTTP_201_CREATED,
+             dependencies=[Depends(per_ip("payments", 20, 3600))])
 def new_payment(body: PaymentIn, user: CurrentUser, db: DB):
     package = PACKAGE_BY_CODE.get(body.package_code)
     if package is None:
