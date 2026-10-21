@@ -115,6 +115,7 @@ class User(Base):
     name: Mapped[str | None] = mapped_column(String(200))
     avatar_url: Mapped[str | None] = mapped_column(Text)
     phone: Mapped[str | None] = mapped_column(String(32))
+    garden_name: Mapped[str | None] = mapped_column(String(120))  # nhà vườn: in lên ảnh chia sẻ
     role: Mapped[UserRole] = mapped_column(_enum(UserRole, "user_role"), default=UserRole.player)
     # Cache; nguồn gốc là credit_ledger (xem services/credits.py).
     credits: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
@@ -174,7 +175,8 @@ class DesignJob(Base):
     inputs: Mapped[dict[str, Any] | None] = mapped_column(JSONB)  # style ưa thích, mục đích
     # Tiến độ chi tiết cho màn 04: {"steps": {"species": {...}, "trunk": ..., ...}}
     progress: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, server_default=text("'{}'::jsonb"))
-    report: Mapped[dict[str, Any] | None] = mapped_column(JSONB)  # P5: nhận xét phôi, lý do chọn thế, lộ trình năm
+    report: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    share_code: Mapped[str | None] = mapped_column(String(16), unique=True)  # P5: nhận xét phôi, lý do chọn thế, lộ trình năm
     error: Mapped[str | None] = mapped_column(Text)
     error_code: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = _created()
@@ -328,7 +330,9 @@ class Payment(Base):
     package_code: Mapped[str] = mapped_column(String(32))
     transfer_code: Mapped[str] = mapped_column(String(32), unique=True)
     status: Mapped[PaymentStatus] = mapped_column(_enum(PaymentStatus, "payment_status"), default=PaymentStatus.pending)
+    provider: Mapped[str | None] = mapped_column(String(16))  # sepay | casso
     provider_txn_id: Mapped[str | None] = mapped_column(String(100), unique=True)
+    raw: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = _created()
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 

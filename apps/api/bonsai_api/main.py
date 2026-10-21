@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from .db.session import get_engine
-from .routers import auth, catalog, jobs, me, trees, uploads
+from .routers import admin, auth, catalog, garden, jobs, me, payments, share, trees, uploads
 from .settings import get_settings
 
 API_PREFIX = "/api/v1"
@@ -20,8 +20,10 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["Authorization", "Content-Type"],
     )
-    for r in (auth.router, me.router, uploads.router, trees.router, jobs.router, catalog.router):
+    for r in (auth.router, me.router, uploads.router, trees.router, jobs.router, share.router, payments.router, garden.router, admin.router, catalog.router):
         app.include_router(r, prefix=API_PREFIX)
+
+    app.include_router(share.page_router)
 
     @app.get("/healthz", include_in_schema=False)
     def healthz():

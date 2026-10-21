@@ -32,10 +32,22 @@ class Settings(BaseSettings):
     presign_ttl_seconds: int = 3600
     max_upload_bytes: int = 20 * 1024 * 1024
 
+    public_base_url: str = "http://localhost:8080"
+    admin_emails: Annotated[list[str], NoDecode] = []
+
+    # VietQR: tài khoản nhận tiền (BIN theo danh sách napas, vd. 970436 = Vietcombank)
+    bank_bin: str | None = None
+    bank_account: str | None = None
+    bank_account_name: str | None = None
+    bank_name: str | None = None
+    sepay_api_key: str | None = None
+    casso_secure_token: str | None = None
+    payment_ttl_hours: int = 24
+
     trial_credits: int = 1
     phase_a_daily_limit: int = 10
 
-    @field_validator("cors_origins", mode="before")
+    @field_validator("cors_origins", "admin_emails", mode="before")
     @classmethod
     def _split_origins(cls, v):
         if isinstance(v, str):

@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..auth.identity import ExternalIdentity
-from ..db.models import AuthProvider, CreditReason, User
+from ..db.models import AuthProvider, CreditReason, User, UserRole
 from ..settings import get_settings
 from .credits import apply_credit
 
@@ -19,14 +19,17 @@ def get_or_create_user(db: Session, ident: ExternalIdentity) -> tuple[User, bool
         user = db.execute(select(User).where(User.email == ident.email)).scalar_one_or_none()
         if user is not None and ident.provider == "google":
             user.google_sub = ident.subject
+    is_admin = bool(ident.email) and ident.email.lower() in {e.lower() for e in get_settings().admin_emails}
     if user is not None:
+        if is_admin:
+            user.role = UserRole.admin
         user.name = user.name or ident.name
         user.avatar_url = ident.avatar_url or user.avatar_url
         db.commit()
         return user, False
 
     user = User(auth_provider=AuthProvider(ident.provider), email=ident.email, name=ident.name,
-                avatar_url=ident.avatar_url, credits=0)
+                avatar_url=ident.avatar_url, credits=0, role=UserRole.admin if is_admin else UserRole.player)
     if ident.provider == "google":
         user.google_sub = ident.subject
     elif ident.provider == "zalo":

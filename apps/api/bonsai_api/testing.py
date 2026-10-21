@@ -51,6 +51,8 @@ def _clean():
 
     with get_engine().begin() as c:
         c.execute(text("TRUNCATE users, trees, tree_photos, design_jobs, credit_ledger, payments, pipeline_steps, feedback CASCADE"))
+        c.execute(text("DELETE FROM prompt_versions WHERE version <> 'v1'"))
+        c.execute(text("UPDATE prompt_versions SET active = true"))
 
 
 @pytest.fixture

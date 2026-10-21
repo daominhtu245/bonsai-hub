@@ -32,6 +32,8 @@ class UserOut(ORM):
     avatar_url: str | None
     role: str
     credits: int
+    garden_name: str | None = None
+    phone: str | None = None
 
 
 class TokenOut(BaseModel):
