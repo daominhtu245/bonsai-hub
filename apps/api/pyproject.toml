@@ -18,6 +18,7 @@ dependencies = [
   "boto3>=1.35",
   "pyyaml>=6.0",
   "celery[redis]>=5.4",
+  "sentry-sdk[fastapi,celery]>=2.14",
 ]
 
 [project.optional-dependencies]

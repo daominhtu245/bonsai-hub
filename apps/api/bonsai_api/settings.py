@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     max_upload_bytes: int = 20 * 1024 * 1024
 
     public_base_url: str = "http://localhost:8080"
+    sentry_dsn: str | None = None
     admin_emails: Annotated[list[str], NoDecode] = []
 
     # VietQR: tài khoản nhận tiền (BIN theo danh sách napas, vd. 970436 = Vietcombank)

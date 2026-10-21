@@ -20,6 +20,7 @@ services:
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
         VITE_ZALO_APP_ID: ${VITE_ZALO_APP_ID:-}
         VITE_DEV_LOGIN: ${VITE_DEV_LOGIN:-false}  # chỉ bật khi APP_ENV=dev
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
     ports:
       - "${WEB_PORT:-8080}:80"
     depends_on:
@@ -39,6 +40,15 @@ services:
       ZALO_APP_ID: ${ZALO_APP_ID:-}
       ZALO_APP_SECRET: ${ZALO_APP_SECRET:-}
       TRIAL_CREDITS: ${TRIAL_CREDITS:-1}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      BANK_BIN: ${BANK_BIN:-}
+      BANK_ACCOUNT: ${BANK_ACCOUNT:-}
+      BANK_ACCOUNT_NAME: ${BANK_ACCOUNT_NAME:-}
+      BANK_NAME: ${BANK_NAME:-}
+      SEPAY_API_KEY: ${SEPAY_API_KEY:-}
+      CASSO_SECURE_TOKEN: ${CASSO_SECURE_TOKEN:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
     # Không có khóa AI ở đây — chỉ worker giữ.
     depends_on:
       postgres:
@@ -70,9 +80,30 @@ services:
       IMAGE_MODEL: ${IMAGE_MODEL:-gemini-2.5-flash-image}
       IMAGE_FALLBACK_PROVIDER: ${IMAGE_FALLBACK_PROVIDER:-openai}
       IMAGE_FALLBACK_MODEL: ${IMAGE_FALLBACK_MODEL:-gpt-image-1}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      DAILY_COST_ALERT_USD: ${DAILY_COST_ALERT_USD:-20}
     depends_on:
       api:
         condition: service_healthy  # api chạy migration trước
+    restart: unless-stopped
+
+  # Lịch định kỳ: kiểm tra lỗi/chi phí/hàng đợi mỗi 10 phút → cảnh báo Telegram. Không cần khóa AI.
+  beat:
+    build:
+      context: ..
+      dockerfile: apps/worker/Dockerfile
+    command: ["celery", "-A", "bonsai_worker.celery_app", "beat", "--loglevel=INFO", "--schedule=/tmp/celerybeat-schedule"]
+    environment:
+      <<: *common-env
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      DAILY_COST_ALERT_USD: ${DAILY_COST_ALERT_USD:-20}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   redis:
@@ -136,7 +167,17 @@ services:
     restart: "no"
     command: ["python", "-m", "bonsai_api.scripts.ensure_bucket"]
 
+  # Giám sát uptime (https://github.com/louislam/uptime-kuma): `--profile monitoring`, mở cổng 3001,
+  # thêm monitor HTTP cho https://<domain>/healthz và trang chủ, gửi thông báo qua Telegram.
+  uptime-kuma:
+    profiles: [monitoring]
+    image: louislam/uptime-kuma:1.23.15
+    ports: ["${UPTIME_KUMA_PORT:-3001}:3001"]
+    volumes: [uptime-kuma-data:/app/data]
+    restart: unless-stopped
+
 volumes:
+  uptime-kuma-data:
   s3-data:
   pg-data:
   redis-data:

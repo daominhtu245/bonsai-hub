@@ -8,6 +8,8 @@ export interface User {
   avatar_url: string | null;
   role: 'player' | 'nursery' | 'admin';
   credits: number;
+  garden_name?: string | null;
+  phone?: string | null;
 }
 
 export interface TokenResponse {

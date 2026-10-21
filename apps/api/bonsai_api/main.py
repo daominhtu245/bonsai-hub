@@ -9,8 +9,18 @@ from .settings import get_settings
 API_PREFIX = "/api/v1"
 
 
+def _init_sentry(dsn: str | None, env: str) -> None:
+    if not dsn or not dsn.startswith("http"):
+        return  # chưa cấu hình (hoặc cấu hình sai) thì bỏ qua, không làm sập api
+    import sentry_sdk
+
+    # Không gửi PII (email, ảnh, token) lên Sentry.
+    sentry_sdk.init(dsn=dsn, environment=env, traces_sample_rate=0.05, send_default_pii=False)
+
+
 def create_app() -> FastAPI:
     s = get_settings()
+    _init_sentry(s.sentry_dsn, s.app_env)
     app = FastAPI(title="Bonsai AI API", version="0.1.0", docs_url="/api/docs" if s.is_dev else None,
                   openapi_url="/api/openapi.json" if s.is_dev else None)
     app.add_middleware(

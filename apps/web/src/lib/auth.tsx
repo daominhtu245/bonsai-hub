@@ -6,6 +6,7 @@ interface AuthValue {
   /** `empty` = chưa đăng nhập. */
   user: ViewState<User>;
   signIn: (res: TokenResponse) => void;
+  setUser: (u: User) => void;
   signOut: () => void;
   refresh: () => void;
 }
@@ -39,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         tokenStore.set(res.access_token);
         setUser({ status: 'ready', data: res.user });
       },
+      setUser: (u) => setUser({ status: 'ready', data: u }),
       signOut: () => {
         tokenStore.set(null);
         setUser({ status: 'empty' });

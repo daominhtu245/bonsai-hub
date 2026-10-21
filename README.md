@@ -36,9 +36,28 @@ Toàn bộ stack: `cp .env.example .env`, điền khóa, rồi `make up` (web �
 - **Đăng nhập:** `VITE_DEV_LOGIN=true` hiện form "Vào bằng email thử" ở `/dang-nhap`.
 - Phiên B (ảnh tương lai) làm ở tuần 3–4: hiện tại chọn phương án sẽ trừ lượt rồi tự hoàn lượt kèm thông báo.
 
-## Luồng màn hình (đã có)
-`/` Trang chủ → `/chup` Chụp 4 mặt → `/chup/thong-tin` Thông tin cây → `/phan-tich/:job` Đang phân tích (SSE)
-→ `/chon/:job` Chọn thế (bản vẽ đè ảnh) → `/ket-qua/:job` chờ phiên B.
+## Màn hình
+| Đường dẫn | Màn | Ghi chú |
+|---|---|---|
+| `/` | 01 Trang chủ | |
+| `/chup`, `/chup/thong-tin` | 02 Chụp ảnh, 03 Thông tin cây | |
+| `/phan-tich/:job` | 04 Đang phân tích | SSE |
+| `/chon/:job` | 05 Chọn thế | bản vẽ đè ảnh; trừ 1 lượt |
+| `/ket-qua/:job` | 06 Kết quả + lộ trình | tiến độ phiên B, timeline S0–S4, việc cần làm, phản hồi |
+| `/chia-se/:job`, `/s/:code` | 07 Chia sẻ | ảnh 9:16/1:1 ghép phía server; trang công khai có thẻ OG |
+| `/vuon` | 08 Vườn của tôi | |
+| `/mua-luot`, `/tai-khoan` | 09 Mua lượt, tài khoản | VietQR + webhook SePay/Casso |
+| `/admin` | Quản trị | chi phí, prompt, job lỗi (`ADMIN_EMAILS`) |
+
+## Thanh toán
+`POST /payments` tạo đơn + mã chuyển khoản `BONSAI XXXXX` + ảnh VietQR. Ngân hàng báo về `POST /api/v1/webhooks/bank`
+(SePay: `Authorization: Apikey …`; Casso: `Secure-Token: …`), khớp mã trong nội dung, cộng lượt một lần duy nhất
+(`payments.provider_txn_id` unique + `credit_ledger` unique theo đơn). Gói nhà vườn tự nâng vai trò `nursery`.
+
+## Giám sát & triển khai
+- Sentry (`SENTRY_DSN`, `VITE_SENTRY_DSN`), Uptime Kuma (`--profile monitoring`), cảnh báo Telegram từ dịch vụ `beat` mỗi 10 phút.
+- CI: `.github/workflows/ci.yml` (pytest + migration check + web). Deploy: workflow **Deploy** (SSH tới VPS).
+- Danh sách việc trước khi mở beta: `docs/beta-checklist.md`.
 
 ## YOLO-seg thân cây
 Xem `packages/pipeline/tools/seg/README.md` (SAM gán nhãn → dataset → huấn luyện → `TRUNK_SEG_WEIGHTS`).

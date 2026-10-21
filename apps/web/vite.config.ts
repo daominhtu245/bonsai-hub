@@ -40,7 +40,10 @@ export default defineConfig({
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   server: {
     port: 5173,
-    proxy: { '/api': { target: process.env.API_PROXY ?? 'http://localhost:8001', changeOrigin: true } },
+    proxy: {
+      '/api': { target: process.env.API_PROXY ?? 'http://localhost:8001', changeOrigin: true },
+      '/s/': { target: process.env.API_PROXY ?? 'http://localhost:8001', changeOrigin: true },
+    },
   },
   test: { environment: 'jsdom', globals: true, setupFiles: ['./src/test/setup.ts'], css: false },
 });

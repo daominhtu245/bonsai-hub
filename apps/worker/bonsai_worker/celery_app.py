@@ -1,6 +1,7 @@
 import os
 
 from celery import Celery
+from celery.schedules import crontab
 
 app = Celery(
     "bonsai",
@@ -16,4 +17,14 @@ app.conf.update(
     result_expires=3600,
     timezone="Asia/Ho_Chi_Minh",
     task_routes={"bonsai_worker.tasks.phase_b.*": {"queue": "render"}},
+    beat_schedule={
+        "monitoring-check": {"task": "bonsai_worker.tasks.monitoring.check", "schedule": crontab(minute="*/10")},
+    },
 )
+
+if (dsn := os.environ.get("SENTRY_DSN", "")).startswith("http"):
+    import sentry_sdk
+    from sentry_sdk.integrations.celery import CeleryIntegration
+
+    sentry_sdk.init(dsn=dsn, environment=os.environ.get("APP_ENV", "dev"), integrations=[CeleryIntegration()],
+                    traces_sample_rate=0.05, send_default_pii=False)

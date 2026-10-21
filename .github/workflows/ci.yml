@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: bonsai
+          POSTGRES_PASSWORD: bonsai
+          POSTGRES_DB: bonsai
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U bonsai" --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://bonsai:bonsai@localhost:5432/bonsai_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -e "packages/pipeline[all,dev]" -e "apps/api[dev]" -e "apps/worker[dev]"
+      - run: cd packages/pipeline && pytest -q
+      - run: cd apps/api && pytest -q
+      - run: cd apps/worker && pytest -q
+      - name: Migration không lệch model
+        run: cd apps/api && DATABASE_URL=postgresql+psycopg://bonsai:bonsai@localhost:5432/bonsai alembic upgrade head && DATABASE_URL=postgresql+psycopg://bonsai:bonsai@localhost:5432/bonsai alembic check
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
