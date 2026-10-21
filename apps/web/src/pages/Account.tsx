@@ -105,8 +105,8 @@ export default function Account() {
       <header className="px-gutter pb-2 pt-4"><h1 className="text-h1">Tài khoản</h1></header>
       <main className="flex flex-col gap-4 px-gutter pb-6">
         {!me ? <Skeleton className="h-24 rounded-card" /> : (
-          <Card className="flex items-center gap-3">
-            <div className="flex-1">
+          <Card className="flex flex-wrap items-center gap-3">
+            <div className="min-w-[10rem] flex-1 [overflow-wrap:anywhere]">
               <div className="font-semibold">{me.name || me.email}</div>
               <div className="text-caption text-ink-muted">{me.role === 'nursery' ? 'Nhà vườn' : me.role === 'admin' ? 'Quản trị' : 'Người chơi'} · còn {me.credits} lượt</div>
             </div>

@@ -61,20 +61,20 @@ export default function Buy() {
                 <label
                   key={p.code}
                   className={cx(
-                    'relative flex min-h-[72px] cursor-pointer items-center gap-3 rounded-card bg-surface px-3.5 py-3',
+                    'relative flex min-h-[72px] cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 rounded-card bg-surface px-3.5 py-3',
                     selected === p.code ? 'border-2 border-primary' : 'border border-line',
                   )}
                 >
                   {p.popular ? <span className="absolute -top-2.5 left-3 rounded-full bg-primary px-2 text-label font-semibold text-primary-on">Được chọn nhiều</span> : null}
                   <input type="radio" name="pk" value={p.code} checked={selected === p.code} onChange={() => setSelected(p.code)} className="h-5 w-5 accent-[var(--primary)]" />
-                  <span className="flex flex-1 flex-col">
+                  <span className="flex min-w-[9rem] flex-1 flex-col">
                     <span className="font-semibold">
                       {p.name_vi} · {p.credits} lượt{' '}
                       {p.nursery ? <span className="rounded-full bg-clay-soft px-2 text-label font-semibold text-clay">Logo vườn</span> : null}
                     </span>
                     <span className="text-caption text-ink-muted">{p.note_vi}</span>
                   </span>
-                  <span className="font-semibold">{vnd(p.amount_vnd)}</span>
+                  <span className="ml-auto font-semibold">{vnd(p.amount_vnd)}</span>
                 </label>
               ))}
         </fieldset>

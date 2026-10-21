@@ -31,6 +31,10 @@ ${vars('dark').replace(/^/gm, '  ')}
   color-scheme: dark;
 ${vars('dark')}
 }
+/* Nội dung đóng vai "ảnh chụp" (hình minh họa) giữ màu bảng sáng ở mọi chế độ. */
+.theme-light {
+${vars('light')}
+}
 `;
 writeFileSync(resolve(here, '../src/styles/tokens.css'), css);
 console.log('tokens.css generated');

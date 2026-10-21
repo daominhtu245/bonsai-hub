@@ -14,7 +14,7 @@ export default function Terms() {
         <p><strong>Ảnh tương lai là minh họa định hướng do AI tạo</strong>, không phải lời hứa kết quả. Kết quả thật phụ thuộc chăm sóc, khí hậu và sức khỏe cây.</p>
 
         <h2 className={h}>2. Ảnh và dữ liệu của bạn</h2>
-        <ul className="pl-5">
+        <ul className="pl-5 list-disc">
           <li>Ảnh tải lên được xóa thông tin vị trí (GPS) và EXIF, lưu ở kho riêng tư; chỉ bạn xem được qua đường dẫn có thời hạn 1 giờ.</li>
           <li>Ảnh và mô tả cây được gửi tới nhà cung cấp AI (Anthropic, Google, OpenAI) để phân tích và tạo ảnh. Chúng tôi không bán dữ liệu của bạn.</li>
           <li>Trang chia sẻ chỉ công khai khi bạn bấm chia sẻ, và không hiện email hay thông tin tài khoản (trừ tên vườn, số điện thoại bạn chọn in lên ảnh).</li>
@@ -25,7 +25,7 @@ export default function Terms() {
         <p>Nếu bạn bật “Cho phép dùng ảnh để cải thiện AI”, ảnh mặt tiền phôi của bạn có thể được dùng để huấn luyện mô hình nhận diện thân cây của Bonsai AI. Ảnh không được công bố hay bán. Bạn tắt được bất cứ lúc nào trong Tài khoản; ảnh tải lên sau khi tắt sẽ không được dùng.</p>
 
         <h2 className={h}>4. Lượt và thanh toán</h2>
-        <ul className="pl-5">
+        <ul className="pl-5 list-disc">
           <li>Phân tích và bản vẽ luôn miễn phí. Mỗi lượt dùng để tạo ảnh tương lai, ảnh các giai đoạn và hướng dẫn.</li>
           <li>Nếu tạo ảnh lỗi sau khi đã trừ lượt, lượt được hoàn tự động.</li>
           <li>Lượt mua qua chuyển khoản được cộng khi ngân hàng báo tiền về; lịch sử nằm trong Tài khoản.</li>

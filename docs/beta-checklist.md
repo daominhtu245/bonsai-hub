@@ -39,7 +39,17 @@ Các bước cần người vận hành làm tay. Code đã sẵn; mục nào ch
 - [ ] Telegram: tạo bot với @BotFather, thêm vào nhóm vận hành → `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`; chỉnh `DAILY_COST_ALERT_USD`.
 - [ ] Uptime Kuma: `docker compose --profile monitoring up -d uptime-kuma`, monitor `https://<domain>/healthz` mỗi 60 s, thông báo qua Telegram. Không mở cổng 3001 ra Internet (dùng SSH tunnel hoặc Cloudflare Access).
 
-## 7. Mời 20–30 người dùng thử
+## 7. Thông báo
+- [ ] Web Push: `docker compose exec worker python -m bonsai_worker.scripts.gen_vapid` → `VAPID_PUBLIC_KEY` (api), `VAPID_PRIVATE_KEY` (worker), `VAPID_SUBJECT=mailto:<email vận hành>`. Đổi khóa sẽ làm mất mọi đăng ký cũ.
+- [ ] iPhone chỉ nhận Web Push khi người dùng "Thêm vào Màn hình chính" (iOS 16.4+); app tự hướng dẫn.
+- [ ] Zalo ZNS: Zalo OA đã xác thực, nạp tiền ZNS; đăng ký 4 mẫu tin với **tham số `customer_name`, `message`, `link`** → `ZNS_TEMPLATE_DESIGN_READY`, `ZNS_TEMPLATE_RESULT_READY`, `ZNS_TEMPLATE_RESULT_FAILED`, `ZNS_TEMPLATE_ANALYSIS_FAILED`.
+- [ ] Cấp quyền OA cho app → `ZALO_OA_APP_ID`, `ZALO_OA_SECRET_KEY`, `ZALO_OA_REFRESH_TOKEN` (lần đầu; worker tự lưu token mới vào Redis — **không xóa volume Redis**, nếu mất phải cấp lại).
+
+## 8. Pháp lý
+- [ ] Luật sư duyệt trang `/dieu-khoan` (bản nháp), nhất là mục dùng ảnh huấn luyện và xóa tài khoản.
+- [ ] Chỉ xuất ảnh huấn luyện của người đã đồng ý (`export_from_db.py` đã lọc `consent_training`).
+
+## 9. Mời 20–30 người dùng thử
 - [ ] Nhóm: ~10 nhà vườn, ~10 người chơi lâu năm, ~5–10 người mới (docs/ui-spec.md).
 - [ ] Cộng lượt dùng thử thêm qua `credit_ledger` (reason `gift`, `ref_id` = mã đợt mời) để mỗi người thử 3–5 cây.
 - [ ] Theo dõi hằng ngày: `/admin` (chi phí/lượt, job lỗi), phản hồi "Chưa đúng" trong bảng `feedback`, cảnh báo Telegram.

@@ -10,13 +10,14 @@ export interface StageTab {
 /** Timeline S0–S4: đã qua · đang xem · chưa tới. */
 export function StageTimeline({ stages, current, onSelect }: { stages: StageTab[]; current: number; onSelect: (index: number) => void }) {
   return (
-    <nav aria-label="Các giai đoạn" className="relative">
-      <div aria-hidden="true" className="absolute left-[10%] right-[10%] top-[22px] h-px bg-line-strong" />
-      <ol className="relative m-0 grid list-none p-0" style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}>
+    // Màn rất hẹp (zoom 200%): cuộn ngang thay vì thu nhỏ nút dưới 44 px.
+    <nav aria-label="Các giai đoạn" className="overflow-x-auto">
+      <ol className="relative m-0 grid min-w-[17rem] list-none p-0" style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}>
+      <li aria-hidden="true" className="pointer-events-none absolute left-[10%] right-[10%] top-[22px] h-px bg-line-strong" />
         {stages.map((s, i) => {
           const state = i === current ? 'current' : i < current ? 'past' : 'future';
           return (
-            <li key={s.code} className="flex justify-center">
+            <li key={s.code} className="relative flex justify-center">
               <button
                 type="button"
                 onClick={() => onSelect(i)}
@@ -34,7 +35,7 @@ export function StageTimeline({ stages, current, onSelect }: { stages: StageTab[
                 >
                   {s.code}
                 </span>
-                <span className={cx('text-label', state === 'current' ? 'font-semibold text-ink' : 'text-ink-muted')}>{s.short}</span>
+                <span className={cx('text-center text-label leading-tight', state === 'current' ? 'font-semibold text-ink' : 'text-ink-muted')}>{s.short}</span>
               </button>
             </li>
           );

@@ -30,7 +30,7 @@ function CostsTab() {
               <div className="rounded-card border border-line bg-surface p-3"><div className="text-ink-muted">Tổng 14 ngày</div><div className="text-h2 font-display">{usd(c.total_usd)}</div></div>
               <div className="rounded-card border border-line bg-surface p-3"><div className="text-ink-muted">TB mỗi lượt trả phí</div><div className="text-h2 font-display">{c.avg_cost_per_paid_job_usd !== null ? usd(c.avg_cost_per_paid_job_usd) : '—'}</div></div>
             </div>
-            <table className="w-full border-collapse">
+            <div className="overflow-x-auto"><table className="w-full border-collapse">
               <caption className="mb-1 text-left font-semibold">Theo ngày</caption>
               <thead><tr className="text-left text-ink-muted"><th className="py-1">Ngày</th><th>Chi phí</th><th>Phiên</th><th>Trả phí</th><th>Lỗi</th></tr></thead>
               <tbody>
@@ -42,8 +42,8 @@ function CostsTab() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-            <table className="w-full border-collapse">
+            </table></div>
+            <div className="overflow-x-auto"><table className="w-full border-collapse">
               <caption className="mb-1 text-left font-semibold">Theo bước</caption>
               <thead><tr className="text-left text-ink-muted"><th className="py-1">Bước</th><th>Lần gọi</th><th>Chi phí</th><th>Độ trễ TB</th><th>Tỉ lệ lỗi</th></tr></thead>
               <tbody>
@@ -54,7 +54,7 @@ function CostsTab() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           </div>
         );
       }}

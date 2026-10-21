@@ -273,7 +273,7 @@ export default function Choose() {
           {option.remove_reasons_vi.length || option.new_branch_notes_vi.length || option.care_steps_vi.length ? (
             <details className="mt-1 text-caption">
               <summary className="flex min-h-touch cursor-pointer items-center font-medium text-primary-ink">Chi tiết cắt tỉa</summary>
-              <ul className="m-0 flex flex-col gap-1 pl-5">
+              <ul className="m-0 flex flex-col gap-1 pl-5 list-disc">
                 {option.remove_reasons_vi.map((r, i) => <li key={`r${i}`}>Cắt: {r}</li>)}
                 {option.new_branch_notes_vi.map((r, i) => <li key={`n${i}`}>Nuôi: {r}</li>)}
                 {option.care_steps_vi.map((r, i) => <li key={`c${i}`}>{r}</li>)}

@@ -1,7 +1,7 @@
 // Hình minh họa phôi si trước/sau (lấy từ mockup Main). Sản phẩm thật dùng ảnh người dùng và ảnh render.
 export function RawTreeIllustration() {
   return (
-    <svg viewBox="0 0 300 300" role="img" aria-label="Phôi si trước khi tạo dáng">
+    <svg viewBox="0 0 300 300" role="img" aria-label="Phôi si trước khi tạo dáng" className="theme-light">
       <rect width="300" height="300" fill="var(--photo-bg)" />
       <ellipse cx="150" cy="292" rx="70" ry="5" fill="var(--line-strong)" />
       <rect x="96" y="242" width="108" height="10" rx="3" fill="var(--ink-muted)" />
@@ -23,7 +23,7 @@ export function RawTreeIllustration() {
 
 export function StyledTreeIllustration() {
   return (
-    <svg viewBox="0 0 300 300" role="img" aria-label="Minh họa cây sau khoảng 5 năm tạo dáng">
+    <svg viewBox="0 0 300 300" role="img" aria-label="Minh họa cây sau khoảng 5 năm tạo dáng" className="theme-light">
       <rect width="300" height="300" fill="var(--photo-bg)" />
       <ellipse cx="150" cy="282" rx="80" ry="5" fill="var(--line-strong)" />
       <rect x="78" y="244" width="144" height="9" rx="3" fill="var(--clay)" />

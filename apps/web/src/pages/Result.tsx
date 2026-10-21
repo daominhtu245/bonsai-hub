@@ -174,7 +174,7 @@ function Done({ result, onToggle }: { result: ResultView; onToggle: (code: strin
             <p className="m-0">{r.material_review_vi}</p>
             {r.style_reason_vi ? <p className="m-0">{r.style_reason_vi}</p> : null}
             {r.species_care_vi?.length ? (
-              <ul className="m-0 flex flex-col gap-1 pl-5">
+              <ul className="m-0 flex flex-col gap-1 pl-5 list-disc">
                 {r.species_care_vi.map((c, i) => <li key={i}>{c}</li>)}
               </ul>
             ) : null}
@@ -264,7 +264,7 @@ export default function Result() {
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
           </Link>
           <div className="flex min-w-0 flex-col leading-tight">
-            <h1 className="truncate font-body text-body font-semibold">{title}</h1>
+            <h1 className="font-body text-body font-semibold [overflow-wrap:anywhere]">{title}</h1>
             {result.style_vi ? (
               <span className="text-label text-ink-muted">
                 <StyleName vi={result.style_vi} jp={result.style_jp} />

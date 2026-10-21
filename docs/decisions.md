@@ -34,7 +34,13 @@ Tài liệu kỹ thuật vẫn là nguồn chính. Đây là những chỗ code 
 | 19 | Giới hạn theo IP qua Redis, lỗi Redis thì cho qua; chỉ tin `CF-Connecting-IP` khi `TRUST_CLOUDFLARE=true` | Chống lạm dụng phiên A nhưng không chặn nhầm; header có thể bị giả |
 | 20 | Cảnh báo tỉ lệ lỗi không tính `unusable_photo` | Ảnh xấu là lỗi người dùng, không phải hệ thống |
 
+| 21 | Xóa tài khoản = **xóa mềm** (`users.deleted_at`): chặn đăng nhập, vô hiệu token, ẩn trang chia sẻ, gỡ đăng ký push; dữ liệu giữ nguyên, admin khôi phục (`/admin/users/restore`) | Yêu cầu: chỉ xóa mềm, vẫn giữ |
+| 22 | Đồng ý dùng ảnh huấn luyện là **tùy chọn, mặc định tắt**, theo tài khoản; rút lại được | Dữ liệu cá nhân (NĐ 13/2023) |
+| 23 | Thông báo chỉ gửi ở các mốc người dùng cần quay lại (bản vẽ xong, ảnh xong, lỗi); chạy task riêng sau mỗi phiên | Lỗi gửi không ảnh hưởng kết quả |
+| 24 | Zalo ZNS gửi theo số điện thoại hồ sơ, chỉ khi người dùng bật; refresh token OA xoay vòng lưu trong Redis | Token Zalo OA hết hạn ~25 giờ, refresh token dùng 1 lần |
+| 25 | Zoom 200%: timeline S0–S4 cuộn ngang thay vì thu nút dưới 44 px; bảng admin cuộn ngang | Giữ vùng chạm tối thiểu (ui-spec) |
+| 26 | Hình minh họa giữ màu bảng sáng ở chế độ tối (`.theme-light`) | Đóng vai ảnh chụp |
+
 ## Chưa làm (cố ý)
-- Thông báo Web Push / Zalo khi phân tích xong (để sau theo yêu cầu).
 - Xóa tài khoản (đã có xóa cây kèm ảnh; xóa tài khoản cần quy định giữ sổ lượt/thanh toán, Nghị định 13/2023).
 - P3b bản vẽ phong cách nghệ nhân, video timelapse, theo dõi tiến độ cây thật (sau MVP theo §1).

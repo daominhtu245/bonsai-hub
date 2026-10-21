@@ -68,7 +68,7 @@ export function GuideCard({ guide, done, onToggle }: { guide: StageGuide; done: 
 
       {guide.care && guide.care.length > 0 ? (
         <Section title="Chăm sóc trong giai đoạn">
-          <ul className="m-0 flex flex-col gap-1 pl-5">
+          <ul className="m-0 flex flex-col gap-1 pl-5 list-disc">
             {guide.care.map((c, i) => (
               <li key={i}>{c}</li>
             ))}
@@ -78,7 +78,7 @@ export function GuideCard({ guide, done, onToggle }: { guide: StageGuide; done: 
 
       {guide.ready.length > 0 && (
         <Section title="Sẵn sàng sang giai đoạn sau khi">
-          <ul className="m-0 flex flex-col gap-1 pl-5">
+          <ul className="m-0 flex flex-col gap-1 pl-5 list-disc">
             {guide.ready.map((r, i) => (
               <li key={i}>{r}</li>
             ))}

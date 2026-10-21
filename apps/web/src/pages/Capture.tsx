@@ -22,7 +22,7 @@ function QualityPill({ q }: { q: Quality | null }) {
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ok ? 'var(--leaf)' : 'var(--warn)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         {ok ? <path d="M5 12l4 4 10-10" /> : <path d="M12 4 2.5 20h19L12 4Zm0 6v4m0 3h.01" />}
       </svg>
-      <span>{ok ? 'Đủ sáng · ảnh nét' : issueText[q.issue!]}</span>
+      <span className="truncate">{ok ? 'Đủ sáng · ảnh nét' : issueText[q.issue!]}</span>
     </div>
   );
 }
@@ -121,7 +121,7 @@ export default function Capture() {
         {showHelp ? (
           <div className="mx-gutter mt-3 rounded-card border border-line bg-surface p-4 text-caption">
             <p className="m-0 font-semibold">Chụp sao cho AI đọc đúng phôi</p>
-            <ul className="m-0 mt-2 flex flex-col gap-1 pl-5">
+            <ul className="m-0 mt-2 flex flex-col gap-1 pl-5 list-disc">
               <li>Chụp 4 mặt: trước, phải, sau, trái. Ít nhất 1 mặt cũng được.</li>
               <li>Giữ máy ngang tầm gốc, cách khoảng một sải tay, thấy rõ gốc và rễ nổi.</li>
               <li>Nền trơn (tường, tấm vải) cho kết quả tốt hơn nền cây cối rối.</li>
@@ -153,7 +153,7 @@ export default function Capture() {
                   <path d="M24 40V24h16M318 24h16v16" />
                 </g>
               </svg>
-              <div className="absolute left-3 top-[63%] rounded-[6px] scrim px-2 py-1 text-label">Mặt đất · đặt gốc trên vạch</div>
+              <div className="absolute left-3 top-[58%] max-w-[calc(100%-1.5rem)] truncate rounded-[6px] scrim px-2 py-1 text-label">Mặt đất · đặt gốc trên vạch</div>
               <QualityPill q={live} />
             </>
           )}

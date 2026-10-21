@@ -32,12 +32,12 @@ function destination(t: GardenTree): { to: string; status: string; cta: string |
 function TreeCard({ t }: { t: GardenTree }) {
   const d = destination(t);
   return (
-    <Link to={d.to} className="flex gap-3 rounded-card border border-line bg-surface p-3 text-ink no-underline hover:text-ink">
+    <Link to={d.to} className="flex flex-wrap gap-3 rounded-card border border-line bg-surface p-3 text-ink no-underline hover:text-ink">
       <div className="h-[84px] w-[84px] flex-none overflow-hidden rounded-img bg-photo">
         {t.thumbnail_url ? <img src={t.thumbnail_url} alt="" className="h-full w-full object-cover" /> : null}
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="truncate font-semibold">{t.nickname || (t.species_key ? `Phôi ${SPECIES_NAME[t.species_key]?.toLowerCase() ?? ''}` : 'Cây chưa đặt tên')}</span>
+      <div className="flex min-w-[9rem] flex-1 flex-col gap-1">
+        <span className="font-semibold [overflow-wrap:anywhere]">{t.nickname || (t.species_key ? `Phôi ${SPECIES_NAME[t.species_key]?.toLowerCase() ?? ''}` : 'Cây chưa đặt tên')}</span>
         <span className="text-caption text-ink-muted">{d.status}</span>
         {t.job_status === 'done' ? (
           <>
