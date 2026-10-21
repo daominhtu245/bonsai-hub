@@ -31,8 +31,15 @@ migrate:
 seed:
 	cd apps/api && ../../$(PY) -m bonsai_api.scripts.seed
 
-up:  ## Toàn bộ stack (cần .env)
-	docker compose -f infra/docker-compose.yml --env-file .env up -d --build
+COMPOSE := docker compose -f infra/docker-compose.yml --env-file .env
+
+up:  ## Toàn bộ stack (cần .env). Build tuần tự: build song song cùng Dockerfile có thể treo với builder cổ điển.
+	$(COMPOSE) build api
+	$(COMPOSE) build worker
+	$(COMPOSE) build web
+	docker tag bonsai-worker bonsai-beat
+	docker tag bonsai-api bonsai-s3-init
+	$(COMPOSE) up -d --no-build
 
 down:
-	docker compose -f infra/docker-compose.yml --env-file .env down
+	$(COMPOSE) down

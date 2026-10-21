@@ -66,3 +66,14 @@ def delete(key: str) -> None:
 
 def tree_photo_key(tree_id, photo_id) -> str:
     return f"trees/{tree_id}/photos/{photo_id}.webp"
+
+
+def delete_prefix(prefix: str) -> int:
+    """Xóa mọi object có tiền tố `prefix` (vd. toàn bộ ảnh của một cây). Trả số object đã xóa."""
+    s3, bucket, n = _s3(), get_settings().r2_bucket, 0
+    for page in s3.get_paginator("list_objects_v2").paginate(Bucket=bucket, Prefix=prefix):
+        keys = [{"Key": o["Key"]} for o in page.get("Contents", [])]
+        if keys:
+            s3.delete_objects(Bucket=bucket, Delete={"Objects": keys, "Quiet": True})
+            n += len(keys)
+    return n

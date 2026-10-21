@@ -11,7 +11,6 @@ from ..db.models import DesignJob, JobStatus, RenderImage, Style, Tree, TreePhot
 from ..schemas import AnalysisSummary, JobOut, OptionOut, PhotoRef, ResultOut, TreePhotoRef
 
 VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
-PHASE_B_ERRORS = {"image_unavailable", "ai_unavailable", "internal", "invalid_state"}
 
 
 def can_retry(job: DesignJob) -> bool:

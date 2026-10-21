@@ -85,3 +85,21 @@ describe('Result (màn 06)', () => {
     expect(await screen.findByText(/Đã hoàn lượt cho bạn/)).toBeInTheDocument();
   });
 });
+
+describe('Result delete', () => {
+  it('deletes the tree after confirmation', async () => {
+    const calls = mockFetch([
+      ['GET /api/v1/me', () => json(user)],
+      ['GET /api/v1/jobs/j1', () => json(job({ status: 'done', chosen_option_id: 'o1' }))],
+      ['GET /api/v1/jobs/j1/result', () => json(view)],
+      ['DELETE /api/v1/trees/t1', () => new Response(null, { status: 204 })],
+    ]);
+    vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
+    renderResult();
+    const btn = await screen.findByRole('button', { name: 'Xóa cây này' });
+    await userEvent.click(btn);
+    expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
+    await userEvent.click(btn);
+    await waitFor(() => expect(calls.some((c) => c.method === 'DELETE')).toBe(true));
+  });
+});

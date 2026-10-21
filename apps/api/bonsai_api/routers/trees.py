@@ -62,3 +62,17 @@ def get_tree(tree_id: uuid.UUID, user: CurrentUser, db: DB):
     if tree is None or tree.user_id != user.id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy cây.")
     return _out(tree, with_urls=True)
+
+
+@router.delete("/{tree_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_tree(tree_id: uuid.UUID, user: CurrentUser, db: DB):
+    """Xóa cây cùng ảnh, phiên thiết kế, ảnh sinh (R2). Sổ lượt và thanh toán giữ lại để đối soát."""
+    tree = db.get(Tree, tree_id)
+    if tree is None or tree.user_id != user.id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy cây.")
+    raw_keys = [p.storage_key for p in tree.photos if p.storage_key.startswith("uploads/")]
+    db.delete(tree)  # cascade: tree_photos, design_jobs → options, stages, render_images, feedback…
+    db.commit()
+    storage.delete_prefix(f"trees/{tree_id}/")
+    for key in raw_keys:
+        storage.delete(key)

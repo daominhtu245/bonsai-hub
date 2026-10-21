@@ -78,7 +78,6 @@ export interface TreeCreate {
 
 export type Region = 'north' | 'central' | 'south';
 
-export const PHASE_A_DONE: JobStatus[] = ['awaiting_choice', 'failed'];
 export const TERMINAL: JobStatus[] = ['awaiting_choice', 'done', 'failed'];
 
 export const jobsApi = {

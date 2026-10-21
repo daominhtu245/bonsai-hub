@@ -50,6 +50,7 @@ export const vnd = (n: number) => `${n.toLocaleString('vi-VN')} đ`;
 
 export const accountApi = {
   garden: () => api<{ trees: GardenTree[]; credits: number }>('/garden'),
+  deleteTree: (treeId: string) => api<void>(`/trees/${treeId}`, { method: 'DELETE' }),
   share: (jobId: string, branded: boolean) => api<Share>(`/jobs/${jobId}/share`, { method: 'POST', json: { branded } }),
   packages: () => api<Package[]>('/packages'),
   createPayment: (package_code: string) => api<Payment>('/payments', { method: 'POST', json: { package_code } }),

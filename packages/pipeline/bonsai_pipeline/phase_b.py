@@ -10,7 +10,7 @@ import hashlib
 import io
 import json
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 import numpy as np
 from PIL import Image
@@ -338,8 +338,3 @@ def repair_inputs(best: Candidate) -> tuple[str, str]:
     if best.judge and best.judge.fix_instructions:
         fixes.append(best.judge.fix_instructions)
     return ", ".join(checks) or "overall score below threshold", "\n".join(f"- {f}" for f in fixes) or "- Follow the sketch more closely."
-
-
-def candidate_summary(c: Candidate) -> dict:
-    return {"attempt": c.attempt, "cv": c.cv, "total": c.total, "hard_fails": c.hard_fails,
-            "judge": c.judge_raw, "record": asdict(c.record) | {"output": None}}

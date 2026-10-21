@@ -2,7 +2,7 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { Link, type LinkProps } from 'react-router-dom';
 import { cx } from '@/lib/cx';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 const base =
   'inline-flex items-center justify-center gap-2 rounded-btn font-body font-semibold text-body transition-colors duration-fast ease-calm disabled:cursor-not-allowed';
@@ -11,6 +11,7 @@ const variants: Record<Variant, string> = {
   primary: 'bg-primary text-primary-on hover:bg-primary-ink disabled:bg-line disabled:text-ink-muted',
   secondary: 'border border-primary bg-surface text-primary-ink hover:bg-primary-soft disabled:border-line disabled:text-ink-muted',
   ghost: 'text-primary-ink hover:bg-primary-soft disabled:text-ink-muted',
+  danger: 'text-danger hover:bg-danger-soft disabled:text-ink-muted',
 };
 
 function classes(variant: Variant, block: boolean, size: 'cta' | 'touch') {
@@ -51,6 +52,6 @@ export interface ButtonLinkProps extends LinkProps {
 
 export function ButtonLink({ variant = 'primary', block = true, size = 'cta', className, ...rest }: ButtonLinkProps) {
   // Ghi đè màu link toàn cục (a:hover) để chữ nút luôn đủ tương phản.
-  const hoverText = variant === 'primary' ? 'hover:text-primary-on' : 'hover:text-primary-ink';
+  const hoverText = { primary: 'hover:text-primary-on', secondary: 'hover:text-primary-ink', ghost: 'hover:text-primary-ink', danger: 'hover:text-danger' }[variant];
   return <Link className={cx(classes(variant, block, size), 'no-underline', hoverText, className)} {...rest} />;
 }

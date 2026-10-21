@@ -66,3 +66,23 @@ def test_catalog(client):
     assert {s["key"] for s in species} == {"si", "sanh", "mai_chieu_thuy", "tung_la_han", "linh_sam"}
     styles = {s["key"]: s for s in client.get("/api/v1/styles").json()}
     assert styles["moyogi"]["name_vi"] == "Trực uốn" and styles["vn_long"]["name_jp"] is None
+
+
+def test_delete_tree_removes_rows_and_files(db, client, login, monkeypatch):
+    from sqlalchemy import select
+
+    from bonsai_api.db.models import CreditLedger, DesignJob, Tree
+
+    deleted_prefixes, deleted = [], []
+    monkeypatch.setattr("bonsai_api.storage.delete_prefix", lambda p: deleted_prefixes.append(p) or 3)
+    monkeypatch.setattr("bonsai_api.storage.delete", lambda k: deleted.append(k))
+    headers, _ = login()
+    key = _presign(client, headers).json()["key"]
+    tree = client.post("/api/v1/trees", headers=headers, json={"photos": [{"key": key, "view_index": 0}]}).json()
+    client.post(f"/api/v1/trees/{tree['id']}/jobs", headers=headers, json={})
+    other, _ = login("khac@example.com")
+    assert client.delete(f"/api/v1/trees/{tree['id']}", headers=other).status_code == 404
+    assert client.delete(f"/api/v1/trees/{tree['id']}", headers=headers).status_code == 204
+    assert db.execute(select(Tree)).scalars().all() == [] and db.execute(select(DesignJob)).scalars().all() == []
+    assert deleted_prefixes == [f"trees/{tree['id']}/"] and deleted == [key]
+    assert db.execute(select(CreditLedger)).scalars().all()  # sổ lượt giữ nguyên

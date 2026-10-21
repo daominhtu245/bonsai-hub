@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import {
   Button, ButtonLink, GuideCard, Notice, Skeleton, StageTimeline, StepList, StyleName, type StageGuide, type StepState,
@@ -7,6 +7,7 @@ import {
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { cx } from '@/lib/cx';
+import { accountApi } from '@/lib/account';
 import { jobsApi, resultApi, watchJob, type Job, type ResultView, type StageView } from '@/lib/jobs';
 
 const PHASE_B_STEPS: Array<[string, string]> = [
@@ -121,6 +122,26 @@ function Feedback({ jobId, initial }: { jobId: string; initial: 1 | -1 | null })
   );
 }
 
+function DeleteTree({ treeId }: { treeId: string }) {
+  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+  const remove = async () => {
+    if (!window.confirm('Xóa cây này cùng toàn bộ ảnh, bản vẽ và lộ trình? Không khôi phục được.')) return;
+    try {
+      await accountApi.deleteTree(treeId);
+      navigate('/vuon', { replace: true });
+    } catch (e) {
+      setError((e as ApiError).message);
+    }
+  };
+  return (
+    <div className="mx-gutter mt-3 flex flex-col gap-2">
+      {error ? <Notice tone="danger">{error}</Notice> : null}
+      <Button variant="danger" size="touch" onClick={remove}>Xóa cây này</Button>
+    </div>
+  );
+}
+
 function Done({ result, onToggle }: { result: ResultView; onToggle: (code: string, idx: number) => void }) {
   const [index, setIndex] = useState(4);
   const stage = result.stages[index];
@@ -169,6 +190,7 @@ function Done({ result, onToggle }: { result: ResultView; onToggle: (code: strin
       </div>
 
       <Feedback jobId={result.job_id} initial={result.my_rating} />
+      <DeleteTree treeId={result.tree_id} />
 
       <footer className="mt-auto px-gutter pb-7 pt-5 text-label text-ink-muted">{result.disclaimer_vi}</footer>
     </>
