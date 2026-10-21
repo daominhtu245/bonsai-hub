@@ -17,8 +17,11 @@ from ..recording import record_step
 
 def normalize_photo(db, photo: TreePhoto, *, job_id: uuid.UUID | None = None) -> bool:
     """Trả True nếu đã chuẩn hóa (hoặc đã chuẩn hóa từ trước). Ảnh thô bị xóa ngay sau khi lưu bản sạch."""
+    # Khóa dòng: task A0 lúc tạo cây và phiên A có thể chạy cùng lúc trên cùng ảnh.
+    db.refresh(photo, with_for_update=True)
     raw_key = photo.storage_key
     if not raw_key.startswith("uploads/"):
+        db.commit()  # nhả khóa
         return True
     started = time.monotonic()
     try:

@@ -161,6 +161,7 @@ class DesignJob(Base):
 
     id: Mapped[uuid.UUID] = _uuid_pk()
     tree_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("trees.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     status: Mapped[JobStatus] = mapped_column(_enum(JobStatus, "job_status"), default=JobStatus.queued)
     analysis: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     targets: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
@@ -168,7 +169,13 @@ class DesignJob(Base):
         ForeignKey("design_options.id", use_alter=True, ondelete="SET NULL")
     )
     prompt_version: Mapped[str | None] = mapped_column(String(64))
+    # Ảnh mặt tiền dùng làm hệ tọa độ cho P1/P2/sketch/P3.
+    front_photo_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("tree_photos.id", ondelete="SET NULL"))
+    inputs: Mapped[dict[str, Any] | None] = mapped_column(JSONB)  # style ưa thích, mục đích
+    # Tiến độ chi tiết cho màn 04: {"steps": {"species": {...}, "trunk": ..., ...}}
+    progress: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, server_default=text("'{}'::jsonb"))
     error: Mapped[str | None] = mapped_column(Text)
+    error_code: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = _created()
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -176,6 +183,8 @@ class DesignJob(Base):
     options: Mapped[list[DesignOption]] = relationship(
         back_populates="job", foreign_keys="DesignOption.job_id", order_by="DesignOption.rank"
     )
+
+    __table_args__ = (Index("ix_design_jobs_user_created", "user_id", "created_at"),)
 
 
 class DesignOption(Base):
@@ -189,6 +198,7 @@ class DesignOption(Base):
     design: Mapped[dict[str, Any]] = mapped_column(JSONB)
     sketch_svg_key: Mapped[str | None] = mapped_column(Text)
     sketch_png_key: Mapped[str | None] = mapped_column(Text)
+    sketch_meta: Mapped[dict[str, Any] | None] = mapped_column(JSONB)  # số cành cắt/giữ/nuôi, hạ ngọn
 
     job: Mapped[DesignJob] = relationship(back_populates="options", foreign_keys=[job_id])
 

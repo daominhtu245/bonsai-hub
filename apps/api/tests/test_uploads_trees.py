@@ -36,7 +36,7 @@ def test_create_list_get_tree(client, login, enqueued):
     assert r.status_code == 201, r.text
     tree = r.json()
     assert [p["is_front"] for p in tree["photos"]] == [False, True]
-    assert enqueued == [("bonsai_worker.tasks.preprocess.normalize_tree_photos", (tree["id"],))]
+    assert enqueued == [("bonsai_worker.tasks.preprocess.normalize_tree_photos", (tree["id"],), {})]
 
     listed = client.get("/api/v1/trees", headers=headers).json()
     assert [t["id"] for t in listed] == [tree["id"]]

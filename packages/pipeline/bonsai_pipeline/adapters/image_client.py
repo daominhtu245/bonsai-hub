@@ -49,7 +49,7 @@ class ImageClient:
                     continue
                 trace.calls.append(ProviderCall(provider.name, provider.model, resp.usage, _ms(started), True))
                 return ImageResult(response=resp, trace=trace)
-        raise AIError(f"all image providers failed: {last}")
+        raise AIError(f"all image providers failed: {last}", trace=trace)
 
 
 def _ms(started: float) -> int:

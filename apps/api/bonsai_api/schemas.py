@@ -96,3 +96,61 @@ class StyleOut(ORM):
     key: str
     name_vi: str
     name_jp: str | None
+
+
+class JobCreate(BaseModel):
+    style: str | None = Field(default=None, max_length=32)
+    goal: Literal["display", "sale", "gift"] | None = None
+
+
+class ChooseIn(BaseModel):
+    option_id: uuid.UUID
+
+
+class PhotoRef(BaseModel):
+    id: uuid.UUID
+    url: str
+    width: int | None
+    height: int | None
+
+
+class AnalysisSummary(BaseModel):
+    usable: bool
+    issues: list[str] = []
+    species_key: str | None = None
+    species_confidence: float | None = None
+    summary_vi: str = ""
+    branch_count: int = 0
+    height_cm: float | None = None
+    base_diameter_cm: float | None = None
+    lower_apex_cm: float | None = None
+
+
+class OptionOut(BaseModel):
+    id: uuid.UUID
+    rank: int
+    style_key: str
+    name_vi: str
+    name_jp: str | None
+    suitability: float
+    why_vi: str
+    care_steps_vi: list[str]
+    remove_reasons_vi: list[str]
+    new_branch_notes_vi: list[str]
+    counts: dict
+    sketch_svg_url: str | None
+
+
+class JobOut(BaseModel):
+    id: uuid.UUID
+    tree_id: uuid.UUID
+    tree_nickname: str | None
+    status: str
+    error_code: str | None
+    progress: dict
+    created_at: datetime
+    front_photo: PhotoRef | None
+    analysis: AnalysisSummary | None
+    options: list[OptionOut]
+    chosen_option_id: uuid.UUID | None
+    credits_left: int

@@ -50,7 +50,7 @@ def _clean():
     from bonsai_api.db.session import get_engine
 
     with get_engine().begin() as c:
-        c.execute(text("TRUNCATE users, trees, tree_photos, design_jobs, credit_ledger, payments CASCADE"))
+        c.execute(text("TRUNCATE users, trees, tree_photos, design_jobs, credit_ledger, payments, pipeline_steps CASCADE"))
 
 
 @pytest.fixture
@@ -64,7 +64,7 @@ def db():
 @pytest.fixture(autouse=True)
 def enqueued(monkeypatch):
     calls = []
-    monkeypatch.setattr("bonsai_api.queue.enqueue", lambda name, *args, **kw: calls.append((name, args)) or True)
+    monkeypatch.setattr("bonsai_api.queue.enqueue", lambda name, *args, **kw: calls.append((name, args, kw)) or True)
     return calls
 
 

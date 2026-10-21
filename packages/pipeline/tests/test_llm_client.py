@@ -35,9 +35,10 @@ def test_retries_with_error_message_then_succeeds():
 
 def test_gives_up_after_two_retries():
     llm = FakeLLM(responses=["bad"] * 3)
-    with pytest.raises(SchemaValidationError):
+    with pytest.raises(SchemaValidationError) as exc:
         LLMClient(llm, max_retries=2).complete_json(system="s", user="u", schema=Out)
     assert len(llm.calls) == 3
+    assert len(exc.value.trace.calls) == 3  # vẫn tính chi phí các lần gọi hỏng
 
 
 def test_hard_rules_trigger_retry():

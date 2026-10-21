@@ -63,7 +63,7 @@ def test_normalize_photo_invalid_image(db, login, bucket):
 
 def test_job_guard_refunds_charged_credit(db, login):
     user, tree = _tree(db, login)
-    job = DesignJob(tree_id=tree.id, status=JobStatus.rendering_final)
+    job = DesignJob(tree_id=tree.id, user_id=user.id, status=JobStatus.rendering_final)
     db.add(job)
     db.commit()
     spend_for_render(db, user.id, job.id)
@@ -80,7 +80,7 @@ def test_job_guard_refunds_charged_credit(db, login):
 
 def test_job_guard_phase_a_failure_does_not_add_credit(db, login):
     user, tree = _tree(db, login)
-    job = DesignJob(tree_id=tree.id)
+    job = DesignJob(tree_id=tree.id, user_id=user.id)
     db.add(job)
     db.commit()
     with pytest.raises(ValueError):

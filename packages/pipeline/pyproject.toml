@@ -9,6 +9,7 @@ dependencies = [
   "pillow>=10.4",
   "pillow-heif>=0.18",
   "pyyaml>=6.0",
+  "numpy>=1.26",
 ]
 
 [project.optional-dependencies]
@@ -16,6 +17,7 @@ anthropic = ["anthropic>=0.70"]
 gemini = ["google-genai>=1.30"]
 openai = ["openai>=1.100"]
 all = ["anthropic>=0.70", "google-genai>=1.30", "openai>=1.100"]
+cv = ["ultralytics>=8.3"]  # YOLO-seg thân + SAM gán nhãn; nặng (torch), chỉ cài khi có trọng số
 dev = ["pytest>=8"]
 
 [build-system]

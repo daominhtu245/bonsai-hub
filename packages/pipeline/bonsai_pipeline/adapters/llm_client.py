@@ -84,12 +84,13 @@ class LLMClient:
                 return self._run_with_retries(
                     provider, system, user, schema, images or [], max_tokens, hard_rules, trace
                 )
-            except SchemaValidationError:
+            except SchemaValidationError as e:
+                e.trace = trace
                 raise
             except AIError as e:
                 last_error = e
                 continue
-        raise AIError(f"all LLM providers failed: {last_error}")
+        raise AIError(f"all LLM providers failed: {last_error}", trace=trace)
 
     def _run_with_retries(self, provider, system, user, schema, images, max_tokens, hard_rules, trace):
         schema_json = json.dumps(schema.model_json_schema(), ensure_ascii=False)

@@ -71,11 +71,12 @@ class CallTrace:
 
 
 class AIError(Exception):
-    """Lỗi từ nhà cung cấp AI."""
+    """Lỗi từ nhà cung cấp AI. `trace` (nếu có) chứa các lần gọi đã tốn tiền trước khi lỗi."""
 
-    def __init__(self, message: str, *, retryable: bool = False):
+    def __init__(self, message: str, *, retryable: bool = False, trace: CallTrace | None = None):
         super().__init__(message)
         self.retryable = retryable
+        self.trace = trace
 
 
 class SchemaValidationError(AIError):

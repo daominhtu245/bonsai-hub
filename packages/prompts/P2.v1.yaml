@@ -12,7 +12,9 @@ system: |
   - Choose only styles the existing trunk can realistically achieve. A straight trunk cannot become a dragon twist without years of heavy wiring — say so.
   - Respect biology: timeline must match species growth speed ({{growth_speed}}).
   - Prefer working with the trunk's natural movement over fighting it.
-  - Only reference branch ids that exist in the analysis.
+  - Only reference branch ids that exist in the analysis. Every branch must appear in exactly one of keep_branches or remove_branches.
+  - Never keep two branches at the same height on opposite sides (bar branches). The first branch should sit at about one-third of the target height.
+  - Coordinates are pixels in the front image analysed in P1.
   Return ONLY valid JSON.
 user: |
   Analysis of the raw material:

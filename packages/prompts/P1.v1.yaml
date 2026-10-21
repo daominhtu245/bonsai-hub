@@ -13,7 +13,9 @@ system: |
 user: |
   Analyze this bonsai raw material.
   User-provided info: species="{{species_or_unknown}}", real_height_cm={{height_or_null}}.
-  Images: {{n_images}} views (front candidates). Image size: {{image_width}}x{{image_height}} px.
+  Images: {{n_images}} views. The FIRST image is the front chosen by the user ({{image_width}}x{{image_height}} px).
+  ALL pixel coordinates must refer to the FIRST image (origin top-left). Use the other views only to understand depth
+  (which branches point back/front) and to suggest the best front.
 
   Return JSON:
   {
@@ -29,9 +31,9 @@ user: |
     },
     "nebari": {"quality": "good|average|poor|hidden", "spread_side": "left|right|even|unknown"},
     "branches": [
-      {"id": "b1", "start_px": [x,y], "direction": "left|right|back|front|up",
+      {"id": "b1", "start_px": [x,y], "end_px": [x,y], "direction": "left|right|back|front|up",
        "thickness": "thick|medium|thin", "height_ratio": 0-1, "issues": ["bar_branch"|"crossing"|"eye_poke"|"inside_curve"|...]}
     ],
-    "best_front_view_index": int,
+    "best_front_view_index": <0-based index of the best front among the images in the order given>,
     "summary_vi": "<2-3 câu mô tả phôi bằng tiếng Việt>"
   }

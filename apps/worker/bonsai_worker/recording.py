@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from bonsai_api.db.models import DesignJob, JobStatus, PipelineStep, Tree
 from bonsai_api.services.credits import refund_render
@@ -48,6 +49,25 @@ def set_status(db: Session, job: DesignJob, status: JobStatus) -> None:
     db.commit()
 
 
+def set_progress(db: Session, job: DesignJob, step: str, state: str, **detail) -> None:
+    """Cập nhật một bước hiển thị ở màn 04 (state: running | done)."""
+    progress = dict(job.progress or {})
+    steps = dict(progress.get("steps", {}))
+    steps[step] = {"state": state, **detail}
+    progress["steps"] = steps
+    job.progress = progress
+    flag_modified(job, "progress")
+    db.commit()
+
+
+class JobFailure(Exception):
+    """Lỗi có mã để giao diện hiển thị câu hướng dẫn phù hợp."""
+
+    def __init__(self, code: str, message: str = ""):
+        super().__init__(message or code)
+        self.code = code
+
+
 @contextmanager
 def job_guard(db: Session, job_id: uuid.UUID) -> Iterator[DesignJob]:
     """Bọc một phiên pipeline: lỗi bất kỳ → job `failed`, hoàn lượt nếu đã trừ (ghi ledger reason=refund)."""
@@ -60,6 +80,7 @@ def job_guard(db: Session, job_id: uuid.UUID) -> Iterator[DesignJob]:
         db.rollback()
         job = db.get(DesignJob, job_id)
         job.error = f"{type(e).__name__}: {e}"[:2000]
+        job.error_code = getattr(e, "code", None) or "internal"
         tree = db.get(Tree, job.tree_id)
         refunded = refund_render(db, tree.user_id, job.id)
         set_status(db, job, JobStatus.failed)  # commit cả refund
