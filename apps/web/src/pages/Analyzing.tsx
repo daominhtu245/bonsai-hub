@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
+import { NotifyPrompt } from '@/components/NotifyPrompt';
 import { Button, ButtonLink, Notice, Skeleton, StepList, type StepState } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { phaseAError, SPECIES_NAME, TIPS } from '@/lib/copy';
@@ -161,6 +162,7 @@ export default function Analyzing() {
 
       {!failed && !error ? (
         <div className="mt-auto flex flex-col items-center gap-1.5 px-gutter pb-7 pt-4">
+          <NotifyPrompt />
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-line" role="progressbar" aria-label="Tiến độ phân tích" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
             <div className="h-full bg-primary transition-[width] duration-base ease-calm" style={{ width: `${pct}%` }} />
           </div>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { Button, Notice } from '@/components/ui';
 import { ApiError, auth } from '@/lib/api';
@@ -70,6 +70,10 @@ export default function Login() {
         {!googleEnabled && !zaloEnabled ? (
           <Notice tone="warn">Đăng nhập Google và Zalo chưa được cấu hình (VITE_GOOGLE_CLIENT_ID, VITE_ZALO_APP_ID).</Notice>
         ) : null}
+
+        <p className="m-0 text-label text-ink-muted">
+          Bằng việc tiếp tục, bạn đồng ý với <Link to="/dieu-khoan">Điều khoản và quyền riêng tư</Link>.
+        </p>
 
         {devLoginEnabled ? (
           <form onSubmit={onDev} className="flex flex-col gap-2 rounded-card border border-dashed border-line-strong p-4">

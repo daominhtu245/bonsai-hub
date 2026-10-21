@@ -8,6 +8,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Service worker tự viết (src/sw.ts) để xử lý Web Push; Workbox vẫn lo precache.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      injectManifest: { globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'] },
       includeAssets: ['icon.svg'],
       manifest: {
         name: 'Bonsai AI',
@@ -21,18 +26,6 @@ export default defineConfig({
         icons: [
           { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
           { src: 'icon-maskable.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
-        ],
-      },
-      workbox: {
-        navigateFallback: '/index.html',
-        // Không cache API và ảnh ký sẵn (URL hết hạn sau 1 giờ).
-        navigateFallbackDenylist: [/^\/api\//, /^\/s\//],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com',
-            handler: 'CacheFirst',
-            options: { cacheName: 'fonts', expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 } },
-          },
         ],
       },
     }),

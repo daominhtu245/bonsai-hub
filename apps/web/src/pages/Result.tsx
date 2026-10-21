@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
+import { NotifyPrompt } from '@/components/NotifyPrompt';
 import {
   Button, ButtonLink, GuideCard, Notice, Skeleton, StageTimeline, StepList, StyleName, type StageGuide, type StepState,
 } from '@/components/ui';
@@ -305,6 +306,7 @@ export default function Result() {
           </div>
           <StepList steps={steps} />
           <p className="m-0 text-center text-caption text-ink-muted">Khoảng 3–5 phút. Nếu có lỗi, lượt sẽ được hoàn tự động.</p>
+          <NotifyPrompt />
         </main>
       )}
     </div>

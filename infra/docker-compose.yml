@@ -50,6 +50,7 @@ services:
       CASSO_SECURE_TOKEN: ${CASSO_SECURE_TOKEN:-}
       SENTRY_DSN: ${SENTRY_DSN:-}
       TRUST_CLOUDFLARE: ${TRUST_CLOUDFLARE:-false}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
     # Không có khóa AI ở đây — chỉ worker giữ.
     depends_on:
       postgres:
@@ -85,6 +86,16 @@ services:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
       DAILY_COST_ALERT_USD: ${DAILY_COST_ALERT_USD:-20}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@example.com}
+      ZALO_OA_APP_ID: ${ZALO_OA_APP_ID:-}
+      ZALO_OA_SECRET_KEY: ${ZALO_OA_SECRET_KEY:-}
+      ZALO_OA_REFRESH_TOKEN: ${ZALO_OA_REFRESH_TOKEN:-}
+      ZNS_TEMPLATE_DESIGN_READY: ${ZNS_TEMPLATE_DESIGN_READY:-}
+      ZNS_TEMPLATE_RESULT_READY: ${ZNS_TEMPLATE_RESULT_READY:-}
+      ZNS_TEMPLATE_RESULT_FAILED: ${ZNS_TEMPLATE_RESULT_FAILED:-}
+      ZNS_TEMPLATE_ANALYSIS_FAILED: ${ZNS_TEMPLATE_ANALYSIS_FAILED:-}
     depends_on:
       api:
         condition: service_healthy  # api chạy migration trước

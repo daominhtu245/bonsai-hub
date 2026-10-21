@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 
 from .. import storage
-from ..db.models import DesignJob, JobStatus, Species, Tree
+from ..db.models import DesignJob, JobStatus, Species, Tree, User
 from ..security import DB, CurrentUser
 from ..services.share import can_brand, ensure_share, public_keys
 from ..settings import get_settings
@@ -29,7 +29,7 @@ class ShareOut(BaseModel):
 
 def _public_job(db, code: str) -> DesignJob:
     job = db.execute(select(DesignJob).where(DesignJob.share_code == code)).scalar_one_or_none()
-    if job is None or job.status != JobStatus.done:
+    if job is None or job.status != JobStatus.done or db.get(User, job.user_id).deleted_at is not None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy trang chia sẻ.")
     return job
 

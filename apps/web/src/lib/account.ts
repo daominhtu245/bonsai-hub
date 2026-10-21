@@ -56,8 +56,9 @@ export const accountApi = {
   createPayment: (package_code: string) => api<Payment>('/payments', { method: 'POST', json: { package_code } }),
   payment: (id: string) => api<Payment>(`/payments/${id}`),
   payments: () => api<Payment[]>('/payments'),
-  updateProfile: (body: { name?: string | null; garden_name?: string | null; phone?: string | null }) =>
+  updateProfile: (body: { name?: string | null; garden_name?: string | null; phone?: string | null; consent_training?: boolean; notify_zalo?: boolean }) =>
     api<User>('/me', { method: 'PATCH', json: body }),
+  deleteAccount: () => api<void>('/me', { method: 'DELETE', json: { confirm: true } }),
 };
 
 export function watchPayment(id: string, onStatus: (s: Payment['status']) => void, onError: (e: ApiError) => void) {

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { AppHeader } from '@/components/AppHeader';
 import { RawTreeIllustration, StyledTreeIllustration } from '@/components/illustrations/Bonsai';
 import { BeforeAfterSlider, ButtonLink, Chip, StyleName } from '@/components/ui';
@@ -83,7 +84,8 @@ export default function Home() {
 
       <div className="h-8" />
       <footer className="mt-auto border-t border-line px-gutter py-6 text-label text-ink-muted">
-        Ảnh tương lai là minh họa định hướng; kết quả thực tế phụ thuộc chăm sóc và điều kiện trồng.
+        Ảnh tương lai là minh họa định hướng; kết quả thực tế phụ thuộc chăm sóc và điều kiện trồng.{' '}
+        <Link to="/dieu-khoan">Điều khoản và quyền riêng tư</Link>
       </footer>
     </div>
   );

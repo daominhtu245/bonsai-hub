@@ -5,7 +5,7 @@ from ..auth.identity import ExternalIdentity, IdentityError
 from ..auth.zalo import exchange_zalo_code
 from ..schemas import DevLogin, GoogleLogin, TokenOut, UserOut, ZaloLogin
 from ..security import DB, create_access_token
-from ..services.users import get_or_create_user
+from ..services.users import AccountDeleted, get_or_create_user
 from ..settings import get_settings
 
 from ..ratelimit import per_ip
@@ -14,7 +14,11 @@ router = APIRouter(prefix="/auth", tags=["auth"], dependencies=[Depends(per_ip("
 
 
 def _issue(db, ident: ExternalIdentity) -> TokenOut:
-    user, created = get_or_create_user(db, ident)
+    try:
+        user, created = get_or_create_user(db, ident)
+    except AccountDeleted as e:
+        raise HTTPException(status.HTTP_403_FORBIDDEN,
+                            "Tài khoản này đã bị xóa. Liên hệ hỗ trợ nếu bạn muốn khôi phục.") from e
     return TokenOut(access_token=create_access_token(user.id), user=UserOut.model_validate(user), is_new=created)
 
 

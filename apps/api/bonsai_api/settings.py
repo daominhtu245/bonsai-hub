@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     public_base_url: str = "http://localhost:8080"
     sentry_dsn: str | None = None
+    vapid_public_key: str | None = None  # Web Push: khóa công khai (khóa bí mật chỉ ở worker)
     trust_cloudflare: bool = False  # bật khi origin chỉ nhận traffic qua Cloudflare
     admin_emails: Annotated[list[str], NoDecode] = []
 

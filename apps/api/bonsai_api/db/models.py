@@ -116,12 +116,32 @@ class User(Base):
     avatar_url: Mapped[str | None] = mapped_column(Text)
     phone: Mapped[str | None] = mapped_column(String(32))
     garden_name: Mapped[str | None] = mapped_column(String(120))  # nhà vườn: in lên ảnh chia sẻ
+    # Đồng ý (không bắt buộc) cho phép dùng ảnh để cải thiện AI; rút lại được bất cứ lúc nào.
+    consent_training: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    notify_zalo: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    # Xóa mềm: dữ liệu giữ nguyên, tài khoản không đăng nhập/hiển thị được nữa (admin khôi phục được).
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     role: Mapped[UserRole] = mapped_column(_enum(UserRole, "user_role"), default=UserRole.player)
     # Cache; nguồn gốc là credit_ledger (xem services/credits.py).
     credits: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     created_at: Mapped[datetime] = _created()
 
     __table_args__ = (CheckConstraint("credits >= 0", name="credits_non_negative"),)
+
+
+class PushSubscription(Base):
+    """Đăng ký Web Push của một trình duyệt/thiết bị."""
+
+    __tablename__ = "push_subscriptions"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    endpoint: Mapped[str] = mapped_column(Text, unique=True)
+    p256dh: Mapped[str] = mapped_column(String(200))
+    auth: Mapped[str] = mapped_column(String(100))
+    user_agent: Mapped[str | None] = mapped_column(String(300))
+    created_at: Mapped[datetime] = _created()
 
 
 class Tree(Base):

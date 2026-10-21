@@ -1,8 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { Button, Notice, Skeleton } from '@/components/ui';
+import { accountApi } from '@/lib/account';
 import { ApiError, uploadPhoto } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { useCapture, VIEW_LABELS } from '@/lib/capture';
 import { cx } from '@/lib/cx';
 import { jobsApi, type Region, type Species } from '@/lib/jobs';
@@ -27,6 +29,9 @@ export default function TreeInfo() {
   const [height, setHeight] = useState('');
   const [nickname, setNickname] = useState('');
   const [region, setRegion] = useState<Region | null>(null);
+  const { user, setUser } = useAuth();
+  const alreadyConsented = user.status === 'ready' && user.data.consent_training;
+  const [consent, setConsent] = useState(false);
   const [submit, setSubmit] = useState<Submit>({ status: 'idle' });
 
   useEffect(() => {
@@ -57,6 +62,7 @@ export default function TreeInfo() {
         real_height_cm: heightNum,
         photos: shots.map((s, i) => ({ key: keys[i], view_index: i, is_front: s.id === frontId })),
       });
+      if (consent && !alreadyConsented) setUser(await accountApi.updateProfile({ consent_training: true }));
       const job = await jobsApi.createJob(tree.id, region ? { region } : {});
       reset();
       navigate(`/phan-tich/${job.id}`, { replace: true });
@@ -183,6 +189,16 @@ export default function TreeInfo() {
           />
         </div>
       </section>
+
+      {!alreadyConsented ? (
+        <label className="mx-gutter mt-5 flex cursor-pointer items-start gap-3 text-caption">
+          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 h-[22px] w-[22px] flex-none accent-[var(--primary)]" />
+          <span>
+            Cho phép dùng ảnh của tôi để cải thiện AI <span className="text-ink-muted">(không bắt buộc, tắt được trong Tài khoản)</span> ·{' '}
+            <Link to="/dieu-khoan">Điều khoản</Link>
+          </span>
+        </label>
+      ) : null}
 
       <div className="mt-auto flex flex-col gap-2 px-gutter pb-7 pt-4">
         {submit.status === 'error' ? <Notice tone="danger">{submit.message}</Notice> : null}

@@ -41,8 +41,8 @@ def get_current_user(
     if creds is None or creds.scheme.lower() != "bearer":
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Bạn cần đăng nhập.")
     user = db.get(User, decode_access_token(creds.credentials))
-    if user is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Tài khoản không tồn tại.")
+    if user is None or user.deleted_at is not None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Tài khoản không tồn tại hoặc đã bị xóa.")
     return user
 
 

@@ -1,5 +1,7 @@
 """Xuất ảnh mặt tiền + số đo P1 của các phiên A đã chạy thành manifest cho label_with_sam.py.
 
+Chỉ lấy ảnh của người dùng đã đồng ý cho dùng ảnh cải thiện AI (users.consent_training) và chưa xóa tài khoản.
+
     DATABASE_URL=... R2_...=... python tools/seg/export_from_db.py out/ --limit 300
 """
 
@@ -12,7 +14,7 @@ from pathlib import Path
 from sqlalchemy import select
 
 from bonsai_api import storage
-from bonsai_api.db.models import DesignJob, TreePhoto
+from bonsai_api.db.models import DesignJob, TreePhoto, User
 from bonsai_api.db.session import get_sessionmaker
 
 
@@ -25,7 +27,9 @@ def main() -> None:
     manifest = []
     with get_sessionmaker()() as db:
         jobs = db.execute(
-            select(DesignJob).where(DesignJob.analysis.isnot(None), DesignJob.front_photo_id.isnot(None))
+            select(DesignJob).join(User, User.id == DesignJob.user_id)
+            .where(DesignJob.analysis.isnot(None), DesignJob.front_photo_id.isnot(None),
+                   User.consent_training.is_(True), User.deleted_at.is_(None))
             .order_by(DesignJob.created_at.desc()).limit(args.limit)
         ).scalars()
         for job in jobs:

@@ -10,6 +10,8 @@ export interface User {
   credits: number;
   garden_name?: string | null;
   phone?: string | null;
+  consent_training?: boolean;
+  notify_zalo?: boolean;
 }
 
 export interface TokenResponse {

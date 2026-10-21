@@ -7,6 +7,10 @@ from ..db.models import AuthProvider, CreditReason, User, UserRole
 from ..settings import get_settings
 from .credits import apply_credit
 
+class AccountDeleted(Exception):
+    """Tài khoản đã xóa mềm: không cho đăng nhập (admin khôi phục được)."""
+
+
 _SUBJECT_COLUMN = {"google": User.google_sub, "zalo": User.zalo_id, "dev": User.email}
 
 
@@ -21,6 +25,8 @@ def get_or_create_user(db: Session, ident: ExternalIdentity) -> tuple[User, bool
             user.google_sub = ident.subject
     is_admin = bool(ident.email) and ident.email.lower() in {e.lower() for e in get_settings().admin_emails}
     if user is not None:
+        if user.deleted_at is not None:
+            raise AccountDeleted()
         if is_admin:
             user.role = UserRole.admin
         user.name = user.name or ident.name

@@ -34,6 +34,8 @@ class UserOut(ORM):
     credits: int
     garden_name: str | None = None
     phone: str | None = None
+    consent_training: bool = False
+    notify_zalo: bool = False
 
 
 class TokenOut(BaseModel):

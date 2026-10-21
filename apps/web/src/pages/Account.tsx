@@ -1,10 +1,32 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { BottomNav } from '@/components/BottomNav';
 import { Button, ButtonLink, Card, Notice, Skeleton } from '@/components/ui';
 import { accountApi, vnd, type Payment } from '@/lib/account';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { disablePush, enablePush, pushState, type PushState } from '@/lib/push';
+
+const PUSH_TEXT: Record<PushState, string> = {
+  on: 'Đang bật trên thiết bị này',
+  off: 'Đang tắt trên thiết bị này',
+  denied: 'Trình duyệt đang chặn thông báo — mở cài đặt trang web để cho phép',
+  disabled: 'Máy chủ chưa bật thông báo',
+  unsupported: 'Trình duyệt này không hỗ trợ',
+  'ios-needs-install': 'Trên iPhone: Chia sẻ › Thêm vào Màn hình chính, rồi mở app từ đó',
+};
+
+function Toggle({ id, label, hint, checked, disabled, onChange }: { id: string; label: string; hint?: string; checked: boolean; disabled?: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label htmlFor={id} className="flex min-h-touch cursor-pointer items-center gap-3">
+      <span className="flex-1">
+        <span className="block font-medium">{label}</span>
+        {hint ? <span className="block text-caption text-ink-muted">{hint}</span> : null}
+      </span>
+      <input id={id} type="checkbox" role="switch" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} className="h-6 w-6 flex-none accent-[var(--primary)]" />
+    </label>
+  );
+}
 
 const STATUS: Record<Payment['status'], string> = { pending: 'Chờ tiền về', paid: 'Đã cộng lượt', expired: 'Hết hạn', cancelled: 'Đã hủy' };
 
@@ -16,6 +38,39 @@ export default function Account() {
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [payments, setPayments] = useState<Payment[] | null>(null);
+  const [push, setPush] = useState<PushState | null>(null);
+  const [prefError, setPrefError] = useState<string | null>(null);
+
+  useEffect(() => {
+    pushState().then(setPush).catch(() => setPush('unsupported'));
+  }, []);
+
+  const setPref = async (body: { consent_training?: boolean; notify_zalo?: boolean }) => {
+    setPrefError(null);
+    try {
+      setUser(await accountApi.updateProfile(body));
+    } catch (e) {
+      setPrefError((e as ApiError).message);
+    }
+  };
+  const togglePush = async (on: boolean) => {
+    setPrefError(null);
+    try {
+      setPush(on ? await enablePush() : await disablePush());
+    } catch (e) {
+      setPrefError((e as ApiError).message ?? 'Chưa đổi được cài đặt thông báo.');
+    }
+  };
+  const removeAccount = async () => {
+    if (!window.confirm('Xóa tài khoản? Bạn sẽ không đăng nhập được nữa. Dữ liệu được giữ lại và có thể khôi phục khi liên hệ hỗ trợ.')) return;
+    try {
+      await accountApi.deleteAccount();
+      signOut();
+      navigate('/', { replace: true });
+    } catch (e) {
+      setPrefError((e as ApiError).message);
+    }
+  };
 
   useEffect(() => {
     if (me) setForm({ name: me.name ?? '', garden_name: me.garden_name ?? '', phone: me.phone ?? '' });
@@ -68,6 +123,23 @@ export default function Account() {
           <Button type="submit" variant="secondary">Lưu</Button>
         </form>
 
+        <section className="flex flex-col gap-1 rounded-card border border-line bg-surface p-4" aria-labelledby="notify-h">
+          <h2 id="notify-h" className="text-h2">Thông báo</h2>
+          <p className="m-0 text-caption text-ink-muted">Báo khi phân tích xong, khi ảnh và lộ trình sẵn sàng.</p>
+          <Toggle id="push" label="Trên trình duyệt này" hint={push ? PUSH_TEXT[push] : undefined} checked={push === 'on'}
+            disabled={push !== 'on' && push !== 'off'} onChange={togglePush} />
+          <Toggle id="zalo" label="Qua Zalo" hint={me?.phone ? `Gửi tới ${me.phone}` : 'Thêm số điện thoại ở trên để bật'}
+            checked={Boolean(me?.notify_zalo)} disabled={!me?.phone} onChange={(v) => setPref({ notify_zalo: v })} />
+        </section>
+
+        <section className="flex flex-col gap-1 rounded-card border border-line bg-surface p-4" aria-labelledby="privacy-h">
+          <h2 id="privacy-h" className="text-h2">Quyền riêng tư</h2>
+          <Toggle id="consent" label="Cho phép dùng ảnh để cải thiện AI" hint="Không bắt buộc. Ảnh không được công bố hay bán."
+            checked={Boolean(me?.consent_training)} onChange={(v) => setPref({ consent_training: v })} />
+          <Link to="/dieu-khoan" className="flex min-h-touch items-center text-caption">Điều khoản và quyền riêng tư</Link>
+        </section>
+        {prefError ? <Notice tone="danger">{prefError}</Notice> : null}
+
         <section className="flex flex-col gap-2">
           <h2 className="text-h2">Lịch sử thanh toán</h2>
           {payments === null ? <Skeleton className="h-16 rounded-card" /> : payments.length === 0 ? (
@@ -86,6 +158,7 @@ export default function Account() {
 
         {me?.role === 'admin' ? <ButtonLink to="/admin" variant="secondary">Trang quản trị</ButtonLink> : null}
         <Button variant="ghost" onClick={() => { signOut(); navigate('/'); }}>Đăng xuất</Button>
+        <Button variant="danger" size="touch" onClick={removeAccount}>Xóa tài khoản</Button>
       </main>
       <BottomNav />
     </div>

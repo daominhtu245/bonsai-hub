@@ -261,3 +261,19 @@ def species_ref_remove(key: str, body: RefKeyIn, db: DB):
     sp.ref_image_keys = [k for k in (sp.ref_image_keys or []) if k != body.key]
     db.commit()
     return _refs_out(sp)
+
+
+# ---------- tài khoản đã xóa mềm ----------
+
+class RestoreIn(BaseModel):
+    email: str
+
+
+@router.post("/users/restore")
+def restore_user(body: RestoreIn, db: DB):
+    user = db.execute(select(User).where(func.lower(User.email) == body.email.lower())).scalar_one_or_none()
+    if user is None or user.deleted_at is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Không có tài khoản đã xóa với email này.")
+    user.deleted_at = None
+    db.commit()
+    return {"email": user.email, "restored": True}

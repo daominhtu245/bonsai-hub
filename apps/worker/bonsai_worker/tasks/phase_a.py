@@ -152,6 +152,14 @@ def run_phase_a(db: Session, job_id: uuid.UUID) -> None:
 
 @app.task(name="bonsai_worker.tasks.phase_a.run", acks_late=True)
 def run(job_id: str) -> str:
+    try:
+        return _run(job_id)
+    finally:
+        # Báo người dùng (Web Push / Zalo) kể cả khi lỗi; task riêng để lỗi gửi không ảnh hưởng kết quả.
+        app.send_task("bonsai_worker.tasks.notify.job_event", args=[job_id])
+
+
+def _run(job_id: str) -> str:
     with get_sessionmaker()() as db:
         try:
             run_phase_a(db, uuid.UUID(job_id))
