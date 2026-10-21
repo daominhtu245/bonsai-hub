@@ -57,3 +57,11 @@ def test_fallback_provider_on_api_error():
     rec = StepRecord.from_trace("P2", res.trace, prompt_version="v1", ok=True)
     assert rec.model == "gemini-flash-latest" and rec.attempts == 2
     assert rec.cost_usd > 0
+
+
+def test_fallback_skipped_without_key():
+    from bonsai_pipeline.adapters.llm_client import get_llm_client
+    from bonsai_pipeline.config import AISettings
+
+    client = get_llm_client(AISettings(llm_provider="fake", llm_fallback_provider="gemini", gemini_api_key=None))
+    assert client.fallback is None

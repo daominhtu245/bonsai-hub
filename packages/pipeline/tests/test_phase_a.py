@@ -52,3 +52,18 @@ def test_p2_gives_up():
     bad = json.dumps(design(option(style_key="chokkan"), option(style_key="shakan", suitability=0.5)))
     with pytest.raises(SchemaValidationError):
         run_p2(LLMClient(FakeLLM(responses=[bad] * 3)), _tpl("P2"), a, t)
+
+
+def test_demo_provider_passes_schema_and_rules(monkeypatch):
+    from bonsai_pipeline.adapters.llm_client import build_llm_provider
+    from bonsai_pipeline.config import AISettings
+
+    monkeypatch.setenv("APP_ENV", "dev")
+    llm = LLMClient(build_llm_provider("demo", "demo", AISettings()))
+    a, _ = run_p1(llm, _tpl("P1"), [], image_size=(1024, 1536), species_key=None, real_height_cm=45)
+    t = compute_targets(a, image_size=(1024, 1536))
+    d, rec = run_p2(llm, _tpl("P2"), a, t)
+    assert len(d.options) == 3 and rec.attempts == 1  # không vi phạm luật cứng
+    monkeypatch.setenv("APP_ENV", "prod")
+    with pytest.raises(ValueError):
+        build_llm_provider("demo", "demo", AISettings())

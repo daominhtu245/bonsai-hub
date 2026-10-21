@@ -6,6 +6,7 @@ Quy ước (CLAUDE.md): JSON lỗi → gọi lại tối đa 2 lần kèm thông
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -144,13 +145,24 @@ def build_llm_provider(name: str, model: str, settings: AISettings) -> LLMProvid
         from .providers.fake import FakeLLM
 
         return FakeLLM(model=model)
+    if name == "demo":
+        if os.environ.get("APP_ENV", "dev") != "dev":
+            raise ValueError("demo LLM provider is only allowed when APP_ENV=dev")
+        from .providers.fake import DemoLLM
+
+        return DemoLLM(model="demo")
     raise ValueError(f"unknown LLM provider: {name}")
+
+
+def has_key(provider: str, settings: AISettings) -> bool:
+    key = {"anthropic": settings.anthropic_api_key, "gemini": settings.gemini_api_key, "openai": settings.openai_api_key}
+    return provider not in key or bool(key[provider])
 
 
 def get_llm_client(settings: AISettings | None = None) -> LLMClient:
     s = settings or get_ai_settings()
     primary = build_llm_provider(s.llm_provider, s.llm_model, s)
     fallback = None
-    if s.llm_fallback_provider and s.llm_fallback_model:
+    if s.llm_fallback_provider and s.llm_fallback_model and has_key(s.llm_fallback_provider, s):
         fallback = build_llm_provider(s.llm_fallback_provider, s.llm_fallback_model, s)
     return LLMClient(primary, fallback, max_retries=s.json_max_retries)

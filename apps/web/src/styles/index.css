@@ -33,3 +33,21 @@
     }
   }
 }
+
+@layer utilities {
+  /* Nền mờ đè lên ảnh/camera (token + độ trong suốt). */
+  .scrim {
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+  }
+}
+
+@layer components {
+  .scan-line {
+    background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--leaf) 35%, transparent), transparent);
+    animation: scan 2.4s var(--easing) infinite alternate;
+  }
+  @keyframes scan {
+    from { top: -10%; }
+    to { top: 85%; }
+  }
+}

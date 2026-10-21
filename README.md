@@ -30,6 +30,20 @@ Thư viện component: http://localhost:5173/he-thong-thiet-ke
 
 Toàn bộ stack: `cp .env.example .env`, điền khóa, rồi `make up` (web ở cổng `WEB_PORT`, mặc định 8080).
 
+### Chạy thử khi chưa có key
+- **Lưu trữ:** `COMPOSE_PROFILES=local-s3` bật S3 local (SeaweedFS, cổng 9000) thay R2; `s3-init` tự tạo bucket.
+- **AI:** `LLM_PROVIDER=demo` trả kết quả P1/P2 **mẫu** (gắn chữ "Dữ liệu mẫu") để đi hết luồng giao diện. Chỉ chạy khi `APP_ENV=dev`.
+- **Đăng nhập:** `VITE_DEV_LOGIN=true` hiện form "Vào bằng email thử" ở `/dang-nhap`.
+- Phiên B (ảnh tương lai) làm ở tuần 3–4: hiện tại chọn phương án sẽ trừ lượt rồi tự hoàn lượt kèm thông báo.
+
+## Luồng màn hình (đã có)
+`/` Trang chủ → `/chup` Chụp 4 mặt → `/chup/thong-tin` Thông tin cây → `/phan-tich/:job` Đang phân tích (SSE)
+→ `/chon/:job` Chọn thế (bản vẽ đè ảnh) → `/ket-qua/:job` chờ phiên B.
+
+## YOLO-seg thân cây
+Xem `packages/pipeline/tools/seg/README.md` (SAM gán nhãn → dataset → huấn luyện → `TRUNK_SEG_WEIGHTS`).
+Chưa có trọng số thì A2 dùng số đo P1 (`cv_fallback`).
+
 ## Đổi nhà cung cấp AI
 Chỉ sửa biến môi trường của `worker`: `LLM_PROVIDER/LLM_MODEL` (anthropic | gemini | fake), `IMAGE_PROVIDER/IMAGE_MODEL` (gemini | openai | fake) và các biến `*_FALLBACK_*`. Đơn giá để tính `cost_usd` ở `packages/pipeline/bonsai_pipeline/pricing.py`.
 

@@ -19,7 +19,14 @@ export function StyleName({ vi, jp }: { vi: string; jp?: string | null }) {
   return (
     <>
       {vi}
-      {jp ? <span className="text-label text-clay" lang="ja-Latn">{jp}</span> : null}
+      {jp ? (
+        <>
+          {' '}
+          <span className="font-body text-label font-normal text-clay" lang="ja-Latn">
+            {jp}
+          </span>
+        </>
+      ) : null}
     </>
   );
 }

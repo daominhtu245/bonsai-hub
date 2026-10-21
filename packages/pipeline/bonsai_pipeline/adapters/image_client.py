@@ -76,6 +76,8 @@ def get_image_client(settings: AISettings | None = None) -> ImageClient:
     s = settings or get_ai_settings()
     primary = build_image_provider(s.image_provider, s.image_model, s)
     fallback = None
-    if s.image_fallback_provider and s.image_fallback_model:
+    from .llm_client import has_key
+
+    if s.image_fallback_provider and s.image_fallback_model and has_key(s.image_fallback_provider, s):
         fallback = build_image_provider(s.image_fallback_provider, s.image_fallback_model, s)
     return ImageClient(primary, fallback, max_retries=s.image_max_retries)

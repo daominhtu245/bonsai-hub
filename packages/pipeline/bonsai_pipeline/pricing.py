@@ -25,6 +25,7 @@ PRICES: dict[str, Price] = {
     "gemini-3-pro-image": Price(2.0, 0.0, 0.134),
     "gpt-image-1": Price(5.0, 0.0, 0.042),
     "fake": Price(0.0, 0.0, 0.0),
+    "demo": Price(0.0, 0.0, 0.0),
 }
 
 
