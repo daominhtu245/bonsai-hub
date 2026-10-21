@@ -141,6 +141,13 @@ class OptionOut(BaseModel):
     sketch_svg_url: str | None
 
 
+class ResultOut(BaseModel):
+    final_url: str
+    years: int | None
+    low_confidence: bool
+    chosen_style_vi: str | None
+
+
 class JobOut(BaseModel):
     id: uuid.UUID
     tree_id: uuid.UUID
@@ -153,4 +160,5 @@ class JobOut(BaseModel):
     analysis: AnalysisSummary | None
     options: list[OptionOut]
     chosen_option_id: uuid.UUID | None
+    result: ResultOut | None = None
     credits_left: int

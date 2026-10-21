@@ -119,7 +119,7 @@ class YoloTrunkSegmenter:
 
 
 @lru_cache
-def _segmenter() -> YoloTrunkSegmenter | None:
+def get_segmenter() -> YoloTrunkSegmenter | None:
     weights = os.environ.get("TRUNK_SEG_WEIGHTS")
     if not weights or not os.path.exists(weights):
         return None
@@ -131,7 +131,7 @@ def _segmenter() -> YoloTrunkSegmenter | None:
 
 
 def segment_trunk(image_bytes: bytes, analysis: Analysis, segmenter: YoloTrunkSegmenter | None = None) -> SegmentationResult:
-    seg = segmenter if segmenter is not None else _segmenter()
+    seg = segmenter if segmenter is not None else get_segmenter()
     if seg is not None:
         try:
             image = Image.open(io.BytesIO(image_bytes)).convert("RGB")

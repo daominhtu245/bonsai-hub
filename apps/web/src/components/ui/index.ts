@@ -6,5 +6,6 @@ export { GuideCard, type StageGuide } from './GuideCard';
 export { Notice } from './Notice';
 export { Skeleton } from './Skeleton';
 export { SketchLegend } from './SketchLegend';
+export { StepList, type StepState } from './StepList';
 export { StageTimeline, type StageCode, type StageTab } from './StageTimeline';
 export { EmptyState, StateView, type ViewState } from './StateView';

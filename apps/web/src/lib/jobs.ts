@@ -10,7 +10,7 @@ export interface StepState {
 }
 
 export interface JobProgress {
-  steps?: Partial<Record<'species' | 'trunk' | 'branches' | 'front' | 'design', StepState>>;
+  steps?: Partial<Record<'species' | 'trunk' | 'branches' | 'front' | 'design' | 'render' | 'judge' | 'repair', StepState>>;
 }
 
 export interface DesignOptionView {
@@ -50,6 +50,7 @@ export interface Job {
   } | null;
   options: DesignOptionView[];
   chosen_option_id: string | null;
+  result: { final_url: string; years: number | null; low_confidence: boolean; chosen_style_vi: string | null } | null;
   credits_left: number;
 }
 

@@ -67,7 +67,11 @@ class DemoLLM:
         import re
 
         prompt = messages[0]["content"]
-        if "visual analyst" in system:
+        if "competition judge" in system:
+            body = {"trunk_fidelity": 8, "proportions": 7, "silhouette": 7, "branch_structure": 7, "negative_space": 7,
+                    "species_realism": 7, "timeline_plausibility": 7, "photo_realism": 7, "hard_fail": [],
+                    "fix_instructions": "", "summary_en": "(demo) four foliage pads, apex slightly left, oval brown pot"}
+        elif "visual analyst" in system:
             m = re.search(r"\((\d+)x(\d+) px\)", prompt)
             w, h = (int(m.group(1)), int(m.group(2))) if m else (1024, 1536)
             body = _demo_analysis(w, h)
@@ -123,3 +127,34 @@ def _demo_design(w: int, h: int, styles: list[str]) -> dict:
          "apex": {"point_px": p(0.515, 0.33), "lean": "slightly_left"}}
         for i, s in enumerate(preferred[:3])
     ]}
+
+
+class DemoImage:
+    """Ảnh "tương lai" mẫu: ảnh gốc + vài tầng tán vẽ đơn giản ở giữa ảnh (góc ảnh giữ nguyên để qua kiểm tra nền).
+
+    Chỉ dùng ở APP_ENV=dev để chạy thử luồng phiên B khi chưa có khóa API.
+    """
+
+    name = "demo"
+
+    def __init__(self, model: str = "demo"):
+        self.model = model
+        self.calls = 0
+
+    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1) -> ImageResponse:
+        from PIL import ImageDraw
+
+        self.calls += 1
+        base = Image.open(io.BytesIO(images[0].data)).convert("RGB") if images else Image.new("RGB", (768, 1024), (232, 225, 211))
+        w, h = base.size
+        draw = ImageDraw.Draw(base)
+        shift = (self.calls % 3 - 1) * 0.02  # mỗi ứng viên hơi khác nhau
+        pads = [(0.34, 0.6, 0.2, 0.05), (0.66, 0.52, 0.17, 0.045), (0.42, 0.42, 0.14, 0.04), (0.53, 0.3, 0.15, 0.06)]
+        for cx, cy, rx, ry in pads:
+            cx += shift
+            draw.ellipse([w * (cx - rx), h * (cy - ry), w * (cx + rx), h * (cy + ry)], fill=(63, 91, 58))
+            draw.ellipse([w * (cx - rx * 0.8), h * (cy - ry * 1.1), w * (cx + rx * 0.8), h * (cy - ry * 0.1)], fill=(94, 140, 79))
+        draw.polygon([(w * 0.3, h * 0.86), (w * 0.7, h * 0.86), (w * 0.66, h * 0.93), (w * 0.34, h * 0.93)], fill=(140, 90, 60))
+        buf = io.BytesIO()
+        base.save(buf, format="PNG")
+        return ImageResponse(images=[buf.getvalue()] * n, usage=Usage(images_out=n), provider=self.name, model=self.model)

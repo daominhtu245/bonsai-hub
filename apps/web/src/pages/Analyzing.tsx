@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
-import { Button, ButtonLink, Notice, Skeleton } from '@/components/ui';
+import { Button, ButtonLink, Notice, Skeleton, StepList, type StepState } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { phaseAError, SPECIES_NAME, TIPS } from '@/lib/copy';
-import { cx } from '@/lib/cx';
 import { jobsApi, watchJob, type Job, type JobProgress } from '@/lib/jobs';
 
 const STEP_KEYS = ['species', 'trunk', 'branches', 'front', 'design'] as const;
@@ -33,22 +32,6 @@ function stepLabel(key: (typeof STEP_KEYS)[number], progress: JobProgress, done:
     case 'design':
       return 'Đề xuất thế cây và vẽ bản thiết kế';
   }
-}
-
-function StepIcon({ state }: { state: 'done' | 'current' | 'pending' }) {
-  if (state === 'done')
-    return (
-      <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-leaf" aria-hidden="true">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--surface)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l4 4 10-10" /></svg>
-      </span>
-    );
-  if (state === 'current')
-    return (
-      <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full border-2 border-primary" aria-hidden="true">
-        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary" />
-      </span>
-    );
-  return <span className="h-7 w-7 flex-none rounded-full border-[1.5px] border-line-strong" aria-hidden="true" />;
 }
 
 /** Màn 04 — Đang phân tích (design/mockups/Analyzing.dc.html). Tiến độ qua SSE. */
@@ -99,7 +82,7 @@ export default function Analyzing() {
     let currentSet = false;
     return STEP_KEYS.map((key) => {
       const done = progress.steps?.[key]?.state === 'done';
-      let state: 'done' | 'current' | 'pending' = done ? 'done' : 'pending';
+      let state: StepState = done ? 'done' : 'pending';
       if (!done && !currentSet && job && job.status !== 'failed') {
         state = 'current';
         currentSet = true;
@@ -162,14 +145,9 @@ export default function Analyzing() {
         </div>
       ) : (
         <>
-          <ol className="mx-gutter mt-5 flex list-none flex-col gap-1 p-0" aria-live="polite">
-            {steps.map((s) => (
-              <li key={s.key} className={cx('flex min-h-touch items-center gap-3', s.state === 'pending' && 'text-ink-muted', s.state === 'current' && 'font-semibold')}>
-                <StepIcon state={s.state} />
-                <span>{s.label}</span>
-              </li>
-            ))}
-          </ol>
+          <div className="mx-gutter mt-5">
+            <StepList steps={steps} />
+          </div>
 
           <div className="mx-gutter mt-4 flex gap-3 rounded-card border border-line bg-surface px-4 py-3.5">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--clay)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mt-0.5 flex-none"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3Z" /></svg>

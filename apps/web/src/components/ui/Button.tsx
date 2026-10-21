@@ -50,5 +50,7 @@ export interface ButtonLinkProps extends LinkProps {
 }
 
 export function ButtonLink({ variant = 'primary', block = true, size = 'cta', className, ...rest }: ButtonLinkProps) {
-  return <Link className={cx(classes(variant, block, size), 'no-underline hover:text-primary-on', variant !== 'primary' && 'hover:text-primary-ink', className)} {...rest} />;
+  // Ghi đè màu link toàn cục (a:hover) để chữ nút luôn đủ tương phản.
+  const hoverText = variant === 'primary' ? 'hover:text-primary-on' : 'hover:text-primary-ink';
+  return <Link className={cx(classes(variant, block, size), 'no-underline', hoverText, className)} {...rest} />;
 }

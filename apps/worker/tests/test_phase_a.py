@@ -9,12 +9,10 @@ from sqlalchemy import select
 from bonsai_api.db.models import (
     CreditLedger, DesignJob, DesignOption, JobStatus, PipelineStep, Tree, TreePhoto, User,
 )
-from bonsai_api.services.credits import spend_for_render
 from bonsai_pipeline.adapters.base import AIError
 from bonsai_pipeline.adapters.llm_client import LLMClient
 from bonsai_pipeline.adapters.providers.fake import FakeLLM
 from bonsai_worker.tasks.phase_a import run_phase_a
-from bonsai_worker.tasks.phase_b import run_phase_b
 
 from pipeline_samples import analysis, design
 
@@ -123,17 +121,6 @@ def test_invalid_image(db, login, bucket, llm):
     bucket[tree.photos[0].storage_key] = b"garbage"
     run_phase_a_safe(db, job.id)
     assert db.get(DesignJob, job.id).error_code == "invalid_image"
-
-
-def test_phase_b_stub_refunds(db, login, bucket):
-    user, _, job = _job(db, login, bucket)
-    job.status = JobStatus.rendering_final
-    spend_for_render(db, user.id, job.id)
-    db.commit()
-    run_phase_a_safe(db, job.id, fn=run_phase_b)
-    job = db.get(DesignJob, job.id)
-    assert job.status == JobStatus.failed and job.error_code == "phase_b_not_ready"
-    assert db.get(User, user.id).credits == 1
 
 
 def run_phase_a_safe(db, job_id, fn=run_phase_a):

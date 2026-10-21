@@ -12,7 +12,7 @@ const Capture = lazy(() => import('@/pages/Capture'));
 const TreeInfo = lazy(() => import('@/pages/TreeInfo'));
 const Analyzing = lazy(() => import('@/pages/Analyzing'));
 const Choose = lazy(() => import('@/pages/Choose'));
-const ResultPending = lazy(() => import('@/pages/ResultPending'));
+const Result = lazy(() => import('@/pages/Result'));
 
 const guard = (el: JSX.Element) => <RequireAuth>{el}</RequireAuth>;
 
@@ -31,7 +31,7 @@ export default function App() {
               <Route path="/chup/thong-tin" element={guard(<TreeInfo />)} />
               <Route path="/phan-tich/:jobId" element={guard(<Analyzing />)} />
               <Route path="/chon/:jobId" element={guard(<Choose />)} />
-              <Route path="/ket-qua/:jobId" element={guard(<ResultPending />)} />
+              <Route path="/ket-qua/:jobId" element={guard(<Result />)} />
               <Route path="/vuon" element={<ComingSoon title="Vườn của tôi" />} />
               <Route path="/mua-luot" element={<ComingSoon title="Mua lượt" />} />
               <Route path="*" element={<ComingSoon title="Không tìm thấy trang" />} />

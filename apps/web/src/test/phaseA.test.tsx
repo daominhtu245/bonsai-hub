@@ -169,3 +169,14 @@ describe('Choose', () => {
     expect(screen.queryByRole('button', { name: /Tạo ảnh tương lai/ })).not.toBeInTheDocument();
   });
 });
+
+describe('Choose read-only after phase B', () => {
+  it('shows the chosen option without spending again', async () => {
+    mockFetch([['GET /api/v1/me', () => json(user)], ['GET /api/v1/jobs/j1', () => json(job({ status: 'done', chosen_option_id: 'o2', credits_left: 0 }))]]);
+    renderAt('/chon/j1', <Route path="/chon/:jobId" element={<Choose />} />);
+    expect(await screen.findByRole('heading', { name: /Xiêu/ })).toBeInTheDocument();
+    expect(screen.getByText('Đã dùng')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Tạo ảnh tương lai/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Về ảnh kết quả' })).toHaveAttribute('href', '/ket-qua/j1');
+  });
+});

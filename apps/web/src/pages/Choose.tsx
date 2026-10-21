@@ -134,7 +134,9 @@ export default function Choose() {
       </div>
     );
 
-  if (job.status !== 'awaiting_choice') {
+  // Đã chọn và phiên B đã kết thúc → xem lại bản vẽ (chỉ đọc). Đang chạy → về màn chờ.
+  const readOnly = job.status === 'done' || (job.status === 'failed' && job.chosen_option_id !== null);
+  if (job.status !== 'awaiting_choice' && !readOnly) {
     if (job.chosen_option_id) return <Navigate to={`/ket-qua/${job.id}`} replace />;
     return <Navigate to={`/phan-tich/${job.id}`} replace />;
   }
@@ -151,7 +153,7 @@ export default function Choose() {
       </div>
     );
 
-  const option = job.options.find((o) => o.id === selected) ?? job.options[0];
+  const option = job.options.find((o) => o.id === (readOnly ? job.chosen_option_id : selected)) ?? job.options[0];
   const a = job.analysis;
   const noCredit = job.credits_left <= 0;
 
@@ -193,7 +195,7 @@ export default function Choose() {
             </h2>
             <div className="text-caption text-ink-muted">{option.rank === 1 ? 'Phù hợp nhất với phôi này' : `Phương án ${option.rank}`}</div>
           </div>
-          <span className="flex-none rounded-full bg-primary px-2.5 py-1 text-label font-semibold text-primary-on">Đã chọn</span>
+          <span className="flex-none rounded-full bg-primary px-2.5 py-1 text-label font-semibold text-primary-on">{readOnly ? 'Đã dùng' : 'Đã chọn'}</span>
         </div>
 
         <div className="border-y border-line">
@@ -249,7 +251,7 @@ export default function Choose() {
         </div>
       </section>
 
-      {job.options.length > 1 ? (
+      {job.options.length > 1 && !readOnly ? (
         <section className="mx-gutter mt-3 flex flex-col gap-2.5" aria-label="Phương án khác">
           {job.options
             .filter((o) => o.id !== option.id)
@@ -280,6 +282,13 @@ export default function Choose() {
         </section>
       ) : null}
 
+      {readOnly ? (
+        <div className="mt-auto px-gutter pb-7 pt-5">
+          <ButtonLink to={`/ket-qua/${job.id}`} variant="secondary">
+            Về ảnh kết quả
+          </ButtonLink>
+        </div>
+      ) : (
       <div className="sticky bottom-0 mt-auto flex flex-col gap-2 border-t border-line bg-surface px-gutter pb-7 pt-5">
         {submitError && submitError.status !== 402 ? <Notice tone="danger">{submitError.message}</Notice> : null}
         {noCredit ? (
@@ -298,6 +307,7 @@ export default function Choose() {
           </>
         )}
       </div>
+      )}
 
       {zoom ? <ZoomDialog job={job} option={option} onClose={() => setZoom(false)} /> : null}
     </div>

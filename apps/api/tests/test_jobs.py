@@ -105,3 +105,18 @@ def test_events_stream_ends_on_terminal_state(db, client, login, monkeypatch):
         body = "".join(r.iter_text())
     events = [json.loads(line[6:]) for line in body.splitlines() if line.startswith("data: ")]
     assert events == [{"status": "awaiting_choice", "progress": {}, "error_code": None}]
+
+
+def test_done_job_exposes_final_image(db, client, login):
+    from bonsai_api.db.models import RenderImage
+
+    headers, job_id, opt_id = _ready_job(db, client, login)
+    j = db.get(DesignJob, job_id)
+    j.status, j.chosen_option_id = JobStatus.done, opt_id
+    j.progress = {"result": {"low_confidence": True, "years": 4}}
+    db.add(RenderImage(job_id=j.id, stage_code="S4", attempt=0, storage_key="a/S4_0.webp", model="m", selected=False))
+    db.add(RenderImage(job_id=j.id, stage_code="S4", attempt=1, storage_key="a/S4_1.webp", model="m", selected=True))
+    db.commit()
+    out = client.get(f"/api/v1/jobs/{job_id}", headers=headers).json()
+    assert out["result"]["low_confidence"] is True and out["result"]["years"] == 4
+    assert "S4_1.webp" in out["result"]["final_url"] and out["result"]["chosen_style_vi"] == "Trực uốn"

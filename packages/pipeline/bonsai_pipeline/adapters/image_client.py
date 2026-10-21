@@ -65,6 +65,14 @@ def build_image_provider(name: str, model: str, settings: AISettings) -> ImagePr
         from .providers.openai_image import OpenAIImage
 
         return OpenAIImage(model=model, api_key=settings.openai_api_key)
+    if name == "demo":
+        import os
+
+        if os.environ.get("APP_ENV", "dev") != "dev":
+            raise ValueError("demo image provider is only allowed when APP_ENV=dev")
+        from .providers.fake import DemoImage
+
+        return DemoImage()
     if name == "fake":
         from .providers.fake import FakeImage
 

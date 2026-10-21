@@ -25,6 +25,7 @@ export function job(patch: Partial<Job> = {}): Job {
         counts: { cut: 1, keep: 4, new: 0 }, sketch_svg_url: 'https://r2/s2.svg' },
     ],
     chosen_option_id: null,
+    result: null,
     credits_left: 1,
     ...patch,
   };

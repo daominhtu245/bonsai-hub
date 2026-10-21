@@ -7,8 +7,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .. import storage
-from ..db.models import DesignJob, Style, Tree, TreePhoto, User
-from ..schemas import AnalysisSummary, JobOut, OptionOut, PhotoRef
+from ..db.models import DesignJob, JobStatus, RenderImage, Style, Tree, TreePhoto, User
+from ..schemas import AnalysisSummary, JobOut, OptionOut, PhotoRef, ResultOut
 
 VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 STREAM_END = {"awaiting_choice", "done", "failed"}
@@ -62,11 +62,22 @@ def job_out(db: Session, job: DesignJob, user: User) -> JobOut:
             counts=o.sketch_meta or {},
             sketch_svg_url=storage.presign_get(o.sketch_svg_key) if o.sketch_svg_key else None,
         ))
+    result = None
+    if job.status == JobStatus.done:
+        final = db.execute(
+            select(RenderImage).where(RenderImage.job_id == job.id, RenderImage.stage_code == "S4", RenderImage.selected)
+        ).scalar_one_or_none()
+        if final is not None:
+            meta = (job.progress or {}).get("result", {})
+            chosen = next((o for o in options if o.id == job.chosen_option_id), None)
+            result = ResultOut(final_url=storage.presign_get(final.storage_key), years=meta.get("years"),
+                               low_confidence=bool(meta.get("low_confidence")),
+                               chosen_style_vi=chosen.name_vi if chosen else None)
     return JobOut(
         id=job.id, tree_id=job.tree_id, tree_nickname=tree.nickname if tree else None,
         status=job.status.value, error_code=job.error_code, progress=job.progress or {}, created_at=job.created_at,
         front_photo=PhotoRef(id=front.id, url=storage.presign_get(front.storage_key), width=front.width, height=front.height)
         if front else None,
-        analysis=_analysis_summary(job), options=options, chosen_option_id=job.chosen_option_id,
+        analysis=_analysis_summary(job), options=options, chosen_option_id=job.chosen_option_id, result=result,
         credits_left=user.credits,
     )
