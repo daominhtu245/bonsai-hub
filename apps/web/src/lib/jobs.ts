@@ -10,7 +10,7 @@ export interface StepState {
 }
 
 export interface JobProgress {
-  steps?: Partial<Record<'species' | 'trunk' | 'branches' | 'front' | 'design' | 'render' | 'judge' | 'repair', StepState>>;
+  steps?: Partial<Record<string, StepState>>;
 }
 
 export interface DesignOptionView {
@@ -152,3 +152,50 @@ export function watchJob(id: string, onEvent: (e: JobEvent) => void, onError: (e
   void run();
   return () => ctrl.abort();
 }
+
+export interface StageView {
+  code: 'S0' | 'S1' | 'S2' | 'S3' | 'S4';
+  short_vi: string;
+  name_vi: string;
+  time_from_start: string | null;
+  image_url: string | null;
+  fallback_sketch: boolean;
+  guide: {
+    title_vi: string;
+    see_vi: string;
+    actions_vi: string[];
+    best_time_vi: string;
+    care_vi: string[];
+    ready_signs_vi: string[];
+    common_mistakes_vi: string[];
+  } | null;
+  done_tasks: number[];
+}
+
+export interface ResultView {
+  job_id: string;
+  tree_id: string;
+  tree_nickname: string | null;
+  style_vi: string | null;
+  style_jp: string | null;
+  low_confidence: boolean;
+  years: number | null;
+  front_photo: { id: string; url: string; width: number | null; height: number | null } | null;
+  sketch_svg_url: string | null;
+  stages: StageView[];
+  report: {
+    material_review_vi?: string;
+    style_reason_vi?: string;
+    roadmap_vi?: Record<string, string[]>;
+    species_care_vi?: string[];
+  } | null;
+  disclaimer_vi: string;
+  my_rating: 1 | -1 | null;
+}
+
+export const resultApi = {
+  get: (id: string) => api<ResultView>(`/jobs/${id}/result`),
+  toggleTask: (id: string, stage_code: string, task_index: number, done: boolean) =>
+    api<void>(`/jobs/${id}/tasks`, { method: 'PUT', json: { stage_code, task_index, done } }),
+  feedback: (id: string, rating: 1 | -1) => api<void>(`/jobs/${id}/feedback`, { method: 'POST', json: { rating } }),
+};

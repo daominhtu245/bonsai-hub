@@ -8,12 +8,15 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 
 from .. import queue
-from ..db.models import DesignJob, DesignOption, JobStatus, Tree
+from sqlalchemy.dialects.postgresql import insert
+
+from ..db.models import DesignJob, DesignOption, Feedback, JobStatus, Stage, StageTaskCheck, Tree
 from ..db.session import get_sessionmaker
-from ..schemas import ChooseIn, JobCreate, JobOut
+from ..schemas import ChooseIn, FeedbackIn, JobCreate, JobOut, ResultFull, TaskToggle
 from ..security import DB, CurrentUser
 from ..services.credits import InsufficientCredits, spend_for_render
 from ..services.jobs import STREAM_END, job_out, jobs_today
+from ..services.results import result_full
 from ..settings import get_settings
 
 router = APIRouter(tags=["jobs"])
@@ -109,3 +112,43 @@ def choose(job_id: uuid.UUID, body: ChooseIn, user: CurrentUser, db: DB):
     db.refresh(user)
     queue.enqueue("bonsai_worker.tasks.phase_b.run", str(job.id), queue="render")
     return job_out(db, job, user)
+
+
+def _done_job(db, job_id: uuid.UUID, user) -> DesignJob:
+    job = _own_job(db, job_id, user)
+    if job.status != JobStatus.done:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Kết quả chưa sẵn sàng.")
+    return job
+
+
+@router.get("/jobs/{job_id}/result", response_model=ResultFull)
+def get_result(job_id: uuid.UUID, user: CurrentUser, db: DB):
+    return result_full(db, _done_job(db, job_id, user), user)
+
+
+@router.put("/jobs/{job_id}/tasks", status_code=status.HTTP_204_NO_CONTENT)
+def toggle_task(job_id: uuid.UUID, body: TaskToggle, user: CurrentUser, db: DB):
+    job = _done_job(db, job_id, user)
+    stage = db.execute(select(Stage).where(Stage.job_id == job.id, Stage.code == body.stage_code)).scalar_one_or_none()
+    actions = ((stage.guide_vi or {}).get("actions_vi") or []) if stage else []
+    if body.task_index >= len(actions):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Không có việc này trong giai đoạn.")
+    if body.done:
+        db.execute(insert(StageTaskCheck).values(job_id=job.id, stage_code=body.stage_code, task_index=body.task_index)
+                   .on_conflict_do_nothing(constraint="uq_stage_task_checks_task"))
+    else:
+        db.query(StageTaskCheck).filter_by(job_id=job.id, stage_code=body.stage_code, task_index=body.task_index).delete()
+    db.commit()
+
+
+@router.post("/jobs/{job_id}/feedback", status_code=status.HTTP_204_NO_CONTENT)
+def feedback(job_id: uuid.UUID, body: FeedbackIn, user: CurrentUser, db: DB):
+    job = _own_job(db, job_id, user)
+    if job.status not in (JobStatus.done, JobStatus.awaiting_choice):
+        raise HTTPException(status.HTTP_409_CONFLICT, "Chưa có bản thiết kế để đánh giá.")
+    stmt = insert(Feedback).values(job_id=job.id, user_id=user.id, rating=body.rating, reason_tags=body.reason_tags,
+                                   comment=body.comment)
+    db.execute(stmt.on_conflict_do_update(constraint="uq_feedback_job_user",
+                                          set_={"rating": stmt.excluded.rating, "reason_tags": stmt.excluded.reason_tags,
+                                                "comment": stmt.excluded.comment}))
+    db.commit()

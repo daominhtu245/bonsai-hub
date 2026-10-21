@@ -155,7 +155,7 @@ class Candidate:
         return not self.hard_fails and self.total is not None and self.total >= PASS_SCORE
 
 
-def _to_webp(data: bytes, size: tuple[int, int]) -> tuple[bytes, tuple[int, int]]:
+def to_webp(data: bytes, size: tuple[int, int]) -> tuple[bytes, tuple[int, int]]:
     """Đưa ảnh sinh về đúng kích thước ảnh gốc; trả kèm kích thước gốc của ảnh sinh (để kiểm tỉ lệ khung)."""
     img = Image.open(io.BytesIO(data)).convert("RGB")
     raw_size = img.size
@@ -186,7 +186,7 @@ def generate(
             rec = StepRecord.from_trace(step_code, e.trace, prompt_version=prompt_version, ok=False, error=str(e)) if e.trace else None
             return None, rec
         rec = StepRecord.from_trace(step_code, res.trace, prompt_version=prompt_version, ok=True)
-        webp, raw_size = _to_webp(res.response.images[0], size)
+        webp, raw_size = to_webp(res.response.images[0], size)
         cand = Candidate(first_attempt + i, webp, res.response.model, prompt, rec)
         cand.cv["generated_size"] = list(raw_size)
         return cand, rec

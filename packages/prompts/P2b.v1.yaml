@@ -16,6 +16,10 @@ user: |
   Chosen design: {{p2_option_json}}
   Final image description (from judge): {{final_judge_summary}}
 
+  Return exactly four stages in this order: S1 (Tạo khung), S2 (Phục hồi và nuôi cành), S3 (Định tầng tán), S4 (Hoàn thiện).
+  trunk_thicken_pct_vs_original must never decrease from one stage to the next, S1 is 0, and S4 is at most {{max_thicken_pct}}.
+  S4 must describe the approved final image. Keep actions concrete (which branch id, wire size, angle).
+
   Return:
   {
     "stages": [

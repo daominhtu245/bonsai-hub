@@ -174,6 +174,7 @@ class DesignJob(Base):
     inputs: Mapped[dict[str, Any] | None] = mapped_column(JSONB)  # style ưa thích, mục đích
     # Tiến độ chi tiết cho màn 04: {"steps": {"species": {...}, "trunk": ..., ...}}
     progress: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, server_default=text("'{}'::jsonb"))
+    report: Mapped[dict[str, Any] | None] = mapped_column(JSONB)  # P5: nhận xét phôi, lý do chọn thế, lộ trình năm
     error: Mapped[str | None] = mapped_column(Text)
     error_code: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = _created()
@@ -220,6 +221,20 @@ class Stage(Base):
         UniqueConstraint("job_id", "code", name="uq_stages_job_code"),
         CheckConstraint("code IN ('S0','S1','S2','S3','S4')", name="code_valid"),
     )
+
+
+class StageTaskCheck(Base):
+    """Checkbox "Việc cần làm" ở màn 06, lưu theo cây (qua job) để người dùng theo dõi tiến độ thật."""
+
+    __tablename__ = "stage_task_checks"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    job_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("design_jobs.id", ondelete="CASCADE"), index=True)
+    stage_code: Mapped[str] = mapped_column(String(2))
+    task_index: Mapped[int] = mapped_column(SmallInteger)
+    done_at: Mapped[datetime] = _created()
+
+    __table_args__ = (UniqueConstraint("job_id", "stage_code", "task_index", name="uq_stage_task_checks_task"),)
 
 
 class RenderImage(Base):

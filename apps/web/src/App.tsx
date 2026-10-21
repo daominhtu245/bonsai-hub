@@ -34,6 +34,7 @@ export default function App() {
               <Route path="/ket-qua/:jobId" element={guard(<Result />)} />
               <Route path="/vuon" element={<ComingSoon title="Vườn của tôi" />} />
               <Route path="/mua-luot" element={<ComingSoon title="Mua lượt" />} />
+              <Route path="/chia-se/:jobId" element={<ComingSoon title="Chia sẻ ảnh" />} />
               <Route path="*" element={<ComingSoon title="Không tìm thấy trang" />} />
             </Routes>
           </Suspense>

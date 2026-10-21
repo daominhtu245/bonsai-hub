@@ -51,3 +51,14 @@
     to { top: 85%; }
   }
 }
+
+@layer components {
+  /* Đổi ảnh giữa các giai đoạn: mờ dần (ui-spec: 200–300 ms ease-out). */
+  .stage-fade {
+    animation: stage-fade var(--motion-base) var(--easing);
+  }
+  @keyframes stage-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}

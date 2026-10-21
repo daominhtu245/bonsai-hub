@@ -120,3 +120,56 @@ def test_done_job_exposes_final_image(db, client, login):
     out = client.get(f"/api/v1/jobs/{job_id}", headers=headers).json()
     assert out["result"]["low_confidence"] is True and out["result"]["years"] == 4
     assert "S4_1.webp" in out["result"]["final_url"] and out["result"]["chosen_style_vi"] == "Trực uốn"
+
+
+def _done_with_stages(db, client, login):
+    from bonsai_api.db.models import RenderImage, Stage
+
+    headers, job_id, opt_id = _ready_job(db, client, login)
+    j = db.get(DesignJob, job_id)
+    j.status, j.chosen_option_id = JobStatus.done, opt_id
+    j.progress = {"result": {"low_confidence": False, "years": 4}}
+    j.report = {"material_review_vi": "Phôi khỏe", "guide_disclaimer_vi": "Ảnh là minh hoạ định hướng."}
+    imgs = {}
+    for code in ("S1", "S3", "S4"):
+        r = RenderImage(job_id=j.id, stage_code=code, attempt=0, storage_key=f"a/{code}_0.webp", model="m", selected=True)
+        db.add(r)
+        db.flush()
+        imgs[code] = r.id
+    guide = lambda c: {"id": c, "title_vi": f"Giai đoạn {c}", "see_vi": "thấy", "actions_vi": ["việc 1", "việc 2"],
+                       "best_time_vi": "xuân", "care_vi": [], "ready_signs_vi": [], "common_mistakes_vi": ["lỗi"]}
+    for code in ("S0", "S1", "S2", "S3", "S4"):
+        db.add(Stage(job_id=j.id, code=code, time_from_start=f"t{code}", image_id=imgs.get(code), guide_vi=guide(code),
+                     plan={"fallback": "sketch"} if code == "S2" else {"name_vi": f"Tên {code}"}))
+    db.commit()
+    return headers, job_id
+
+
+def test_result_tasks_and_feedback(db, client, login):
+    headers, job_id = _done_with_stages(db, client, login)
+    r = client.get(f"/api/v1/jobs/{job_id}/result", headers=headers).json()
+    st = {s["code"]: s for s in r["stages"]}
+    assert [s["code"] for s in r["stages"]] == ["S0", "S1", "S2", "S3", "S4"]
+    assert st["S2"]["fallback_sketch"] and st["S2"]["image_url"] is None and r["sketch_svg_url"]
+    assert "S3_0.webp" in st["S3"]["image_url"] and st["S0"]["image_url"]  # S0 = ảnh gốc
+    assert st["S1"]["name_vi"] == "Tên S1" and st["S2"]["short_vi"] == "Nuôi cành"
+    assert r["style_vi"] == "Trực uốn" and r["disclaimer_vi"] == "Ảnh là minh hoạ định hướng." and r["my_rating"] is None
+
+    url = f"/api/v1/jobs/{job_id}/tasks"
+    assert client.put(url, headers=headers, json={"stage_code": "S1", "task_index": 1, "done": True}).status_code == 204
+    assert client.put(url, headers=headers, json={"stage_code": "S1", "task_index": 1, "done": True}).status_code == 204
+    assert client.put(url, headers=headers, json={"stage_code": "S1", "task_index": 5, "done": True}).status_code == 400
+    assert client.get(f"/api/v1/jobs/{job_id}/result", headers=headers).json()["stages"][1]["done_tasks"] == [1]
+    client.put(url, headers=headers, json={"stage_code": "S1", "task_index": 1, "done": False})
+    assert client.get(f"/api/v1/jobs/{job_id}/result", headers=headers).json()["stages"][1]["done_tasks"] == []
+
+    fb = f"/api/v1/jobs/{job_id}/feedback"
+    assert client.post(fb, headers=headers, json={"rating": 1}).status_code == 204
+    assert client.post(fb, headers=headers, json={"rating": -1, "reason_tags": ["wrong_style"]}).status_code == 204
+    assert client.get(f"/api/v1/jobs/{job_id}/result", headers=headers).json()["my_rating"] == -1
+    assert client.post(fb, headers=headers, json={"rating": 3}).status_code == 422
+
+
+def test_result_not_ready(db, client, login):
+    headers, job_id, _ = _ready_job(db, client, login)
+    assert client.get(f"/api/v1/jobs/{job_id}/result", headers=headers).status_code == 409

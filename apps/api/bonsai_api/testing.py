@@ -50,7 +50,7 @@ def _clean():
     from bonsai_api.db.session import get_engine
 
     with get_engine().begin() as c:
-        c.execute(text("TRUNCATE users, trees, tree_photos, design_jobs, credit_ledger, payments, pipeline_steps CASCADE"))
+        c.execute(text("TRUNCATE users, trees, tree_photos, design_jobs, credit_ledger, payments, pipeline_steps, feedback CASCADE"))
 
 
 @pytest.fixture

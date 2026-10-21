@@ -12,7 +12,8 @@ from bonsai_api.db.models import (
 from bonsai_api.services.credits import spend_for_render
 from bonsai_pipeline.adapters.base import AIError
 from bonsai_pipeline.adapters.image_client import ImageClient
-from bonsai_pipeline.adapters.providers.fake import DemoImage, FakeImage
+from bonsai_pipeline.adapters.llm_client import LLMClient
+from bonsai_pipeline.adapters.providers.fake import DemoImage, DemoLLM, FakeImage, FakeLLM
 from bonsai_worker.tasks.phase_a import run_phase_a
 from bonsai_worker.tasks.phase_b import run_phase_b
 
@@ -36,10 +37,32 @@ def images(monkeypatch):
     return holder
 
 
+class RoutedLLM(FakeLLM):
+    """P4 lấy điểm từ hàng đợi của test; P2b/P6/P5 trả dữ liệu mẫu (P6 ∥ P5 chạy song song nên không xếp hàng được)."""
+
+    def __init__(self, judge_queue: FakeLLM):
+        super().__init__(model="claude-sonnet-5-5")
+        self.judge, self.demo = judge_queue, DemoLLM()
+        self.steps: list[str] = []
+
+    def complete(self, *, system, messages, images, max_tokens):
+        if "competition judge" in system:
+            self.steps.append("P4")
+            return self.judge.complete(system=system, messages=messages, images=images, max_tokens=max_tokens)
+        self.steps.append("text")
+        r = self.demo.complete(system=system, messages=messages, images=images, max_tokens=max_tokens)
+        r.model = self.model
+        return r
+
+
 @pytest.fixture
-def chosen_job(db, login, bucket, llm, monkeypatch):  # noqa: F811
-    monkeypatch.setattr("bonsai_worker.tasks.phase_b.get_llm_client", lambda: __import__(
-        "bonsai_pipeline.adapters.llm_client", fromlist=["LLMClient"]).LLMClient(llm))
+def routed(llm):  # noqa: F811
+    return RoutedLLM(llm)
+
+
+@pytest.fixture
+def chosen_job(db, login, bucket, llm, routed, monkeypatch):  # noqa: F811
+    monkeypatch.setattr("bonsai_worker.tasks.phase_b.get_llm_client", lambda: LLMClient(routed))
     user, tree, job = _job(db, login, bucket, species="si")
     llm.responses.extend([json.dumps(analysis()), json.dumps(design())])
     run_phase_a(db, job.id)
@@ -59,7 +82,8 @@ def _steps(db, job_id):
 
 
 def _renders(db, job_id):
-    return db.execute(select(RenderImage).where(RenderImage.job_id == job_id).order_by(RenderImage.attempt)).scalars().all()
+    return db.execute(select(RenderImage).where(RenderImage.job_id == job_id, RenderImage.stage_code == "S4")
+                      .order_by(RenderImage.attempt)).scalars().all()
 
 
 def test_passes_first_round(db, chosen_job, images, llm, bucket):
@@ -78,8 +102,10 @@ def test_passes_first_round(db, chosen_job, images, llm, bucket):
     assert Image.open(io.BytesIO(bucket[best.storage_key])).size == (1000, 1500)
     stages = {s.code: s for s in db.execute(select(Stage).where(Stage.job_id == job.id)).scalars()}
     assert stages["S4"].image_id == best.id and stages["S4"].time_from_start == "4 năm"
-    assert _steps(db, job.id)[-7:] == ["P3a", "P3a", "P3a", "P4cv", "P4", "P4", "P4"]
-    # P3a nhận ảnh gốc + sketch; P4 nhận ảnh gốc + ứng viên
+    steps = _steps(db, job.id)
+    i = steps.index("P3a")
+    assert steps[i:i + 7] == ["P3a", "P3a", "P3a", "P4cv", "P4", "P4", "P4"]
+    # P4 nhận ảnh gốc + ứng viên
     assert all(c["images"] == 2 for c in llm.calls)
     assert db.get(User, user.id).credits == 0  # lượt đã dùng, không hoàn
 
@@ -110,14 +136,14 @@ def test_low_confidence_after_two_rounds(db, chosen_job, images, llm):
     assert selected[0].total_score == 6.0
 
 
-def test_cv_rejects_skip_vlm(db, chosen_job, images, llm):
+def test_cv_rejects_skip_vlm(db, chosen_job, images, llm, routed):
     _, job = chosen_job
     images["provider"] = FakeImage()  # ảnh xanh đặc: nền bị đổi hoàn toàn
     run_phase_b(db, job.id)
     db.expire_all()
     job = db.get(DesignJob, job.id)
     assert job.status == JobStatus.done and job.progress["result"]["low_confidence"] is True
-    assert llm.calls == []  # không gọi VLM cho ảnh bị CV loại
+    assert "P4" not in routed.steps  # không gọi VLM cho ảnh bị CV loại
     rows = _renders(db, job.id)
     assert len(rows) == 5 and all("background_changed" in r.cv_checks["fails"] for r in rows)
 

@@ -162,3 +162,52 @@ class JobOut(BaseModel):
     chosen_option_id: uuid.UUID | None
     result: ResultOut | None = None
     credits_left: int
+
+
+class StageGuideOut(BaseModel):
+    title_vi: str
+    see_vi: str
+    actions_vi: list[str]
+    best_time_vi: str
+    care_vi: list[str]
+    ready_signs_vi: list[str]
+    common_mistakes_vi: list[str]
+
+
+class StageOut(BaseModel):
+    code: str
+    short_vi: str
+    name_vi: str
+    time_from_start: str | None
+    image_url: str | None
+    fallback_sketch: bool
+    guide: StageGuideOut | None
+    done_tasks: list[int]
+
+
+class ResultFull(BaseModel):
+    job_id: uuid.UUID
+    tree_id: uuid.UUID
+    tree_nickname: str | None
+    style_vi: str | None
+    style_jp: str | None
+    low_confidence: bool
+    years: int | None
+    front_photo: PhotoRef | None
+    sketch_svg_url: str | None
+    stages: list[StageOut]
+    report: dict | None
+    disclaimer_vi: str
+    my_rating: int | None
+
+
+class TaskToggle(BaseModel):
+    stage_code: Literal["S0", "S1", "S2", "S3", "S4"]
+    task_index: int = Field(ge=0, le=9)
+    done: bool
+
+
+class FeedbackIn(BaseModel):
+    rating: Literal[1, -1]
+    reason_tags: list[str] = Field(default_factory=list, max_length=10)
+    comment: str | None = Field(default=None, max_length=2000)

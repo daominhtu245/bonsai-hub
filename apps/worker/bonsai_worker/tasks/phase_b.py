@@ -1,6 +1,5 @@
-"""Phiên B (trả 1 lượt): B1 P3a render S4 (3 ứng viên song song) → B2 P4 (CV rồi VLM) → P3c tối đa 2 vòng.
-
-Tuần 4 nối tiếp: P2b, S1–S3, P6/P5. Hiện tại xong S4 thì job `done`.
+"""Phiên B (trả 1 lượt): B1 P3a render S4 (3 ứng viên song song) → B2 P4 (CV rồi VLM) → P3c tối đa 2 vòng
+→ B3–B6 lộ trình (tasks/roadmap.py): P2b, S1 → S2 → S3, P6 ∥ P5.
 Lỗi bất kỳ sau khi đã trừ lượt → job_guard đánh dấu `failed` và tự hoàn lượt.
 """
 
@@ -25,6 +24,7 @@ from bonsai_pipeline.phase_b import (
     MAX_REPAIR_ROUNDS, N_CANDIDATES, Candidate, cv_checks, generate, judge, p3a_variables, prompt_hash, repair_inputs,
     select, years_to_final,
 )
+from bonsai_pipeline.dictionaries import MAX_THICKEN_PCT_PER_YEAR
 from bonsai_pipeline.prompts import render
 from bonsai_pipeline.schemas import Analysis, DesignOption
 from bonsai_pipeline.segmentation import get_segmenter
@@ -33,11 +33,13 @@ from bonsai_pipeline.steps import StepRecord
 from ..celery_app import app
 from ..prompts_repo import load_active_prompt
 from ..recording import JobFailure, job_guard, record_step, set_progress, set_status
+from .roadmap import RoadmapContext, run_roadmap
 
 log = logging.getLogger(__name__)
 
 _ACTIVE = {JobStatus.rendering_final, JobStatus.judging}
 MAX_SPECIES_REFS = 3
+DEFAULT_REGION = "south"  # chưa hỏi vùng khí hậu ở màn 03; mặc định miền Nam
 
 
 def _load_mask(key: str | None) -> np.ndarray | None:
@@ -77,9 +79,10 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
         photo = db.get(TreePhoto, job.front_photo_id)
         original = storage.get_bytes(photo.storage_key)
         size = (photo.width, photo.height)
-        images = [ImageInput(original, "image/webp"), ImageInput(storage.get_bytes(option_row.sketch_png_key), "image/png")]
-        for key in (species.ref_image_keys if species else [])[:MAX_SPECIES_REFS]:
-            images.append(ImageInput(storage.get_bytes(key), "image/webp"))
+        sketch_png = storage.get_bytes(option_row.sketch_png_key)
+        refs = [storage.get_bytes(k) for k in (species.ref_image_keys if species else [])[:MAX_SPECIES_REFS]]
+        images = [ImageInput(original, "image/webp"), ImageInput(sketch_png, "image/png")]
+        images += [ImageInput(r, "image/webp") for r in refs]
         original_mask = _load_mask((job.targets or {}).get("mask_key"))
         segmenter = get_segmenter()
 
@@ -153,14 +156,25 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
             raise JobFailure("image_unavailable", "no usable candidate")
         chosen = db.query(RenderImage).filter_by(job_id=job.id, stage_code="S4", attempt=sel.best.attempt).one()
         chosen.selected = True
+        summary = sel.best.judge.summary_en if sel.best.judge else ""
         db.add(Stage(job_id=job.id, code="S0", time_from_start="Hôm nay"))
         db.add(Stage(job_id=job.id, code="S4", time_from_start=f"{years} năm", image_id=chosen.id,
-                     plan={"years": years, "summary_en": sel.best.judge.summary_en if sel.best.judge else ""}))
+                     plan={"years": years, "summary_en": summary}))
         db.commit()
         progress = dict(job.progress or {})
         progress["result"] = {"low_confidence": sel.low_confidence, "years": years, "repair_rounds": rounds,
                               "candidates": len(all_cands)}
         job.progress = progress
+        db.commit()
+
+        run_roadmap(db, job, RoadmapContext(
+            tree_id=tree.id, analysis=analysis, option=option, growth_speed=growth,
+            region=(job.inputs or {}).get("region", DEFAULT_REGION),
+            max_thicken_pct=MAX_THICKEN_PCT_PER_YEAR.get(growth, 10) * years,
+            size=size, original=original, original_mask=original_mask, sketch_png=sketch_png, species_refs=refs,
+            final_image=sel.best.image, final_render_id=chosen.id, final_summary=summary, final_judge=sel.best.judge_raw,
+            segmenter=segmenter, image_client=image_client, llm=llm,
+        ))
         set_status(db, job, JobStatus.done)
 
 
