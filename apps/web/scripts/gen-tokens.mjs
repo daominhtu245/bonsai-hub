@@ -26,7 +26,8 @@ ${vars('light')}
 ${vars('dark').replace(/^/gm, '  ')}
   }
 }
-:root[data-theme='dark'] {
+:root[data-theme='dark'],
+.theme-dark {
   color-scheme: dark;
 ${vars('dark')}
 }

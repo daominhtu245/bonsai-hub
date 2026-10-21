@@ -6,6 +6,7 @@ x-env: &common-env
   DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-bonsai}:${POSTGRES_PASSWORD:-bonsai}@postgres:5432/${POSTGRES_DB:-bonsai}
   REDIS_URL: redis://redis:6379/0
   R2_ENDPOINT: ${R2_ENDPOINT:-}
+  R2_PUBLIC_ENDPOINT: ${R2_PUBLIC_ENDPOINT:-}
   R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
   R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
   R2_BUCKET: ${R2_BUCKET:-bonsai-private}
@@ -18,6 +19,7 @@ services:
       args:
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
         VITE_ZALO_APP_ID: ${VITE_ZALO_APP_ID:-}
+        VITE_DEV_LOGIN: ${VITE_DEV_LOGIN:-false}  # chỉ bật khi APP_ENV=dev
     ports:
       - "${WEB_PORT:-8080}:80"
     depends_on:
@@ -98,6 +100,39 @@ services:
       retries: 10
     restart: unless-stopped
 
+  # S3 local thay R2 khi chưa có key: `--profile local-s3`, đặt R2_ENDPOINT=http://minio:9000,
+  # R2_PUBLIC_ENDPOINT=http://localhost:9000, R2_ACCESS_KEY_ID=minio, R2_SECRET_ACCESS_KEY=minio-secret.
+  minio:
+    profiles: [local-s3]
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${R2_ACCESS_KEY_ID:-minio}
+      MINIO_ROOT_PASSWORD: ${R2_SECRET_ACCESS_KEY:-minio-secret}
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [minio-data:/data]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio-init:
+    profiles: [local-s3]
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "mc alias set local http://minio:9000 $${MINIO_USER} $${MINIO_PASS} &&
+             mc mb -p local/$${BUCKET} &&
+             mc ilm rule add --expire-days 1 --prefix uploads/ local/$${BUCKET} || true"
+    environment:
+      MINIO_USER: ${R2_ACCESS_KEY_ID:-minio}
+      MINIO_PASS: ${R2_SECRET_ACCESS_KEY:-minio-secret}
+      BUCKET: ${R2_BUCKET:-bonsai-private}
+
 volumes:
+  minio-data:
   pg-data:
   redis-data:

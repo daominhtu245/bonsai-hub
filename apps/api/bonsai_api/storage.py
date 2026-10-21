@@ -11,11 +11,11 @@ from .settings import get_settings
 
 
 @lru_cache
-def _s3():
+def _s3(public: bool = False):
     s = get_settings()
     return boto3.client(
         "s3",
-        endpoint_url=s.r2_endpoint,
+        endpoint_url=(s.r2_public_endpoint or s.r2_endpoint) if public else s.r2_endpoint,
         aws_access_key_id=s.r2_access_key_id,
         aws_secret_access_key=s.r2_secret_access_key,
         region_name="auto",
@@ -25,7 +25,7 @@ def _s3():
 
 def presign_put(key: str, content_type: str) -> str:
     s = get_settings()
-    return _s3().generate_presigned_url(
+    return _s3(public=True).generate_presigned_url(
         "put_object",
         Params={"Bucket": s.r2_bucket, "Key": key, "ContentType": content_type},
         ExpiresIn=s.presign_ttl_seconds,
@@ -34,7 +34,7 @@ def presign_put(key: str, content_type: str) -> str:
 
 def presign_get(key: str) -> str:
     s = get_settings()
-    return _s3().generate_presigned_url(
+    return _s3(public=True).generate_presigned_url(
         "get_object", Params={"Bucket": s.r2_bucket, "Key": key}, ExpiresIn=s.presign_ttl_seconds
     )
 

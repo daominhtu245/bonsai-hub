@@ -83,6 +83,7 @@ export const auth = {
   google: (idToken: string) => api<TokenResponse>('/auth/google', { method: 'POST', json: { id_token: idToken } }),
   zalo: (code: string, codeVerifier: string) =>
     api<TokenResponse>('/auth/zalo', { method: 'POST', json: { code, code_verifier: codeVerifier } }),
+  dev: (email: string) => api<TokenResponse>('/auth/dev', { method: 'POST', json: { email } }),
   me: () => api<User>('/me'),
 };
 

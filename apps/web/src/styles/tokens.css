@@ -54,7 +54,8 @@
     --photo-bg: #262B27;
   }
 }
-:root[data-theme='dark'] {
+:root[data-theme='dark'],
+.theme-dark {
   color-scheme: dark;
   --bg: #141815;
   --surface: #1E2420;

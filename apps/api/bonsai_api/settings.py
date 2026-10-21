@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     zalo_app_secret: str | None = None
 
     r2_endpoint: str | None = None
+    # Endpoint trình duyệt dùng cho URL ký sẵn, khi khác endpoint nội bộ (vd. MinIO local: http://localhost:9000).
+    r2_public_endpoint: str | None = None
     r2_access_key_id: str | None = None
     r2_secret_access_key: str | None = None
     r2_bucket: str = "bonsai-private"
