@@ -271,7 +271,9 @@ export default function Result() {
       ) : job.status === 'failed' ? (
         <main className="flex flex-col gap-4 px-gutter pt-2">
           <Notice tone="danger">Tạo ảnh chưa thành công. Đã hoàn lượt cho bạn.</Notice>
-          <ButtonLink to={`/chon/${job.id}`} variant="secondary">Xem lại bản vẽ</ButtonLink>
+          <ButtonLink to={`/chon/${job.id}`} variant={job.can_retry ? 'primary' : 'secondary'}>
+            {job.can_retry ? 'Chọn lại và thử lại' : 'Xem lại bản vẽ'}
+          </ButtonLink>
         </main>
       ) : (
         <main className="flex flex-col gap-4 px-gutter pt-2">

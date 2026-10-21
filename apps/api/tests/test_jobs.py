@@ -173,3 +173,41 @@ def test_result_tasks_and_feedback(db, client, login):
 def test_result_not_ready(db, client, login):
     headers, job_id, _ = _ready_job(db, client, login)
     assert client.get(f"/api/v1/jobs/{job_id}/result", headers=headers).status_code == 409
+
+
+def test_retry_choose_after_phase_b_failure(db, client, login, enqueued):
+    from bonsai_api.services.credits import refund_render
+
+    headers, job_id, opt_id = _ready_job(db, client, login)
+    assert client.post(f"/api/v1/jobs/{job_id}/choose", headers=headers, json={"option_id": str(opt_id)}).status_code == 200
+    j = db.get(DesignJob, job_id)
+    assert j.charge_ref == str(job_id)
+    # phiên B lỗi → worker hoàn lượt
+    refund_render(db, j.user_id, j.id, j.charge_ref)
+    j.status, j.error_code = JobStatus.failed, "image_unavailable"
+    db.commit()
+    view = client.get(f"/api/v1/jobs/{job_id}", headers=headers).json()
+    assert view["can_retry"] and view["credits_left"] == 1
+
+    r = client.post(f"/api/v1/jobs/{job_id}/choose", headers=headers, json={"option_id": str(opt_id)})
+    assert r.status_code == 200 and r.json()["status"] == "rendering_final" and r.json()["credits_left"] == 0
+    db.expire_all()
+    assert db.get(DesignJob, job_id).charge_ref == f"{job_id}#2" and db.get(DesignJob, job_id).error_code is None
+    assert [c for c in enqueued if c[0].endswith("phase_b.run")].__len__() == 2
+
+
+def test_create_job_with_region_and_front(db, client, login):
+    from bonsai_api.db.models import TreePhoto
+
+    headers, _ = login()
+    tree = _tree(client, headers)
+    photo_id = tree["photos"][0]["id"]
+    r = client.post(f"/api/v1/trees/{tree['id']}/jobs", headers=headers, json={"region": "north", "front_photo_id": photo_id})
+    assert r.status_code == 202
+    j = db.get(DesignJob, uuid.UUID(r.json()["id"]))
+    assert j.inputs == {"region": "north"} and str(j.front_photo_id) == photo_id
+    other, _ = login("khac@example.com")
+    other_tree = _tree(client, other)
+    bad = client.post(f"/api/v1/trees/{tree['id']}/jobs", headers=headers, json={"front_photo_id": other_tree["photos"][0]["id"]})
+    assert bad.status_code == 400
+    assert client.post(f"/api/v1/trees/{tree['id']}/jobs", headers=headers, json={"region": "mars"}).status_code == 422

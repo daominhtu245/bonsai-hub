@@ -103,6 +103,8 @@ class StyleOut(ORM):
 class JobCreate(BaseModel):
     style: str | None = Field(default=None, max_length=32)
     goal: Literal["display", "sale", "gift"] | None = None
+    region: Literal["north", "central", "south"] | None = None
+    front_photo_id: uuid.UUID | None = None  # phân tích lại với mặt tiền khác (vd. mặt AI gợi ý)
 
 
 class ChooseIn(BaseModel):
@@ -150,6 +152,12 @@ class ResultOut(BaseModel):
     chosen_style_vi: str | None
 
 
+class TreePhotoRef(BaseModel):
+    id: uuid.UUID
+    url: str
+    is_front: bool
+
+
 class JobOut(BaseModel):
     id: uuid.UUID
     tree_id: uuid.UUID
@@ -159,10 +167,12 @@ class JobOut(BaseModel):
     progress: dict
     created_at: datetime
     front_photo: PhotoRef | None
+    photos: list[TreePhotoRef] = []
     analysis: AnalysisSummary | None
     options: list[OptionOut]
     chosen_option_id: uuid.UUID | None
     result: ResultOut | None = None
+    can_retry: bool = False  # phiên B lỗi (đã hoàn lượt): được chọn lại và trừ lượt mới
     credits_left: int
 
 

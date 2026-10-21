@@ -8,9 +8,14 @@ from sqlalchemy.orm import Session
 
 from .. import storage
 from ..db.models import DesignJob, JobStatus, RenderImage, Style, Tree, TreePhoto, User
-from ..schemas import AnalysisSummary, JobOut, OptionOut, PhotoRef, ResultOut
+from ..schemas import AnalysisSummary, JobOut, OptionOut, PhotoRef, ResultOut, TreePhotoRef
 
 VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
+PHASE_B_ERRORS = {"image_unavailable", "ai_unavailable", "internal", "invalid_state"}
+
+
+def can_retry(job: DesignJob) -> bool:
+    return job.status == JobStatus.failed and job.chosen_option_id is not None and bool(job.options)
 STREAM_END = {"awaiting_choice", "done", "failed"}
 
 
@@ -73,11 +78,17 @@ def job_out(db: Session, job: DesignJob, user: User) -> JobOut:
             result = ResultOut(final_url=storage.presign_get(final.storage_key), years=meta.get("years"),
                                low_confidence=bool(meta.get("low_confidence")),
                                chosen_style_vi=chosen.name_vi if chosen else None)
+    photos = [
+        TreePhotoRef(id=p.id, url=storage.presign_get(p.storage_key), is_front=p.id == (front.id if front else None))
+        for p in db.execute(select(TreePhoto).where(TreePhoto.tree_id == job.tree_id).order_by(TreePhoto.view_index)).scalars()
+        if not p.storage_key.startswith("uploads/")
+    ]
     return JobOut(
         id=job.id, tree_id=job.tree_id, tree_nickname=tree.nickname if tree else None,
         status=job.status.value, error_code=job.error_code, progress=job.progress or {}, created_at=job.created_at,
         front_photo=PhotoRef(id=front.id, url=storage.presign_get(front.storage_key), width=front.width, height=front.height)
         if front else None,
-        analysis=_analysis_summary(job), options=options, chosen_option_id=job.chosen_option_id, result=result,
+        photos=photos, analysis=_analysis_summary(job), options=options, chosen_option_id=job.chosen_option_id,
+        result=result, can_retry=can_retry(job),
         credits_left=user.credits,
     )

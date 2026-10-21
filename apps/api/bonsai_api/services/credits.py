@@ -48,15 +48,25 @@ def _exists(db: Session, user_id: uuid.UUID, reason: CreditReason, ref_id: str) 
     ).first() is not None
 
 
-def spend_for_render(db: Session, user_id: uuid.UUID, job_id: uuid.UUID) -> bool:
-    return apply_credit(db, user_id, -1, CreditReason.render, str(job_id))
+def spend_for_render(db: Session, user_id: uuid.UUID, job_id: uuid.UUID, ref: str | None = None) -> bool:
+    """`ref` mặc định là job_id; lần thử lại dùng "<job_id>#n" để trừ (và hoàn) độc lập."""
+    return apply_credit(db, user_id, -1, CreditReason.render, ref or str(job_id))
 
 
-def refund_render(db: Session, user_id: uuid.UUID, job_id: uuid.UUID) -> bool:
-    """Hoàn lượt khi lỗi sau khi đã trừ. Chỉ hoàn nếu job thực sự đã bị trừ, và chỉ một lần."""
-    if not _exists(db, user_id, CreditReason.render, str(job_id)):
+def refund_render(db: Session, user_id: uuid.UUID, job_id: uuid.UUID, ref: str | None = None) -> bool:
+    """Hoàn lượt khi lỗi sau khi đã trừ. Chỉ hoàn nếu lần trừ đó thực sự có, và chỉ một lần."""
+    ref = ref or str(job_id)
+    if not _exists(db, user_id, CreditReason.render, ref):
         return False
-    return apply_credit(db, user_id, 1, CreditReason.refund, str(job_id))
+    return apply_credit(db, user_id, 1, CreditReason.refund, ref)
+
+
+def next_charge_ref(db: Session, user_id: uuid.UUID, job_id: uuid.UUID) -> str:
+    n = db.execute(select(func.count()).select_from(CreditLedger).where(
+        CreditLedger.user_id == user_id, CreditLedger.reason == CreditReason.render,
+        (CreditLedger.ref_id == str(job_id)) | CreditLedger.ref_id.like(f"{job_id}#%"),
+    )).scalar_one()
+    return str(job_id) if n == 0 else f"{job_id}#{n + 1}"
 
 
 def ledger_balance(db: Session, user_id: uuid.UUID) -> int:

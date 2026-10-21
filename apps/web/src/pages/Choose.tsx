@@ -135,8 +135,9 @@ export default function Choose() {
     );
 
   // Đã chọn và phiên B đã kết thúc → xem lại bản vẽ (chỉ đọc). Đang chạy → về màn chờ.
-  const readOnly = job.status === 'done' || (job.status === 'failed' && job.chosen_option_id !== null);
-  if (job.status !== 'awaiting_choice' && !readOnly) {
+  const retry = job.status === 'failed' && Boolean(job.can_retry);
+  const readOnly = job.status === 'done' || (job.status === 'failed' && job.chosen_option_id !== null && !retry);
+  if (job.status !== 'awaiting_choice' && !readOnly && !retry) {
     if (job.chosen_option_id) return <Navigate to={`/ket-qua/${job.id}`} replace />;
     return <Navigate to={`/phan-tich/${job.id}`} replace />;
   }
@@ -154,6 +155,19 @@ export default function Choose() {
     );
 
   const option = job.options.find((o) => o.id === (readOnly ? job.chosen_option_id : selected)) ?? job.options[0];
+  const front = job.progress.steps?.front;
+  const suggested = front && front.is_current === false ? job.photos?.find((p) => p.id === front.suggested_photo_id) : undefined;
+
+  const reanalyze = async (photoId: string) => {
+    setSubmitting(true);
+    try {
+      const next = await jobsApi.createJob(job.tree_id, { front_photo_id: photoId });
+      navigate(`/phan-tich/${next.id}`);
+    } catch (e) {
+      setSubmitError(e as ApiError);
+      setSubmitting(false);
+    }
+  };
   const a = job.analysis;
   const noCredit = job.credits_left <= 0;
 
@@ -185,6 +199,24 @@ export default function Choose() {
           </div>
           <p className="m-0 text-caption">{a.summary_vi}</p>
         </Card>
+      ) : null}
+
+      {retry ? (
+        <div className="mx-gutter mt-4">
+          <Notice tone="warn">Lần trước tạo ảnh chưa thành công và đã hoàn lượt cho bạn. Bạn có thể chọn lại thế và thử lại.</Notice>
+        </div>
+      ) : null}
+
+      {suggested && !readOnly ? (
+        <div className="mx-gutter mt-4 flex items-center gap-3 rounded-card border border-line bg-surface p-3">
+          <img src={suggested.url} alt="Mặt AI gợi ý làm mặt tiền" className="h-16 w-16 flex-none rounded-img object-cover" />
+          <div className="flex flex-1 flex-col gap-1.5">
+            <span className="text-caption">AI thấy mặt này có thể đẹp hơn để làm mặt tiền.</span>
+            <Button variant="secondary" size="touch" block={false} disabled={submitting} onClick={() => reanalyze(suggested.id)}>
+              Phân tích lại với mặt này · miễn phí
+            </Button>
+          </div>
+        </div>
       ) : null}
 
       <section className="mx-gutter mt-5 overflow-hidden rounded-card border-2 border-primary bg-surface" aria-labelledby="opt-title">
@@ -299,7 +331,7 @@ export default function Choose() {
         ) : (
           <>
             <Button onClick={choose} loading={submitting} loadingLabel="Đang bắt đầu…">
-              Tạo ảnh tương lai · dùng 1 lượt
+              {retry ? 'Thử lại · dùng 1 lượt' : 'Tạo ảnh tương lai · dùng 1 lượt'}
             </Button>
             <span className="text-center text-caption text-ink-muted">
               Bạn còn {job.credits_left} lượt · khoảng 2–4 phút · <Link to="/mua-luot">Mua thêm lượt</Link>

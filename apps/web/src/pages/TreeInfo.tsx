@@ -5,7 +5,7 @@ import { Button, Notice, Skeleton } from '@/components/ui';
 import { ApiError, uploadPhoto } from '@/lib/api';
 import { useCapture, VIEW_LABELS } from '@/lib/capture';
 import { cx } from '@/lib/cx';
-import { jobsApi, type Species } from '@/lib/jobs';
+import { jobsApi, type Region, type Species } from '@/lib/jobs';
 
 const FALLBACK_SPECIES: Species[] = [
   { key: 'si', name_vi: 'Si', growth_speed: 'fast' },
@@ -26,6 +26,7 @@ export default function TreeInfo() {
   const [speciesKey, setSpeciesKey] = useState<string | null>(null);
   const [height, setHeight] = useState('');
   const [nickname, setNickname] = useState('');
+  const [region, setRegion] = useState<Region | null>(null);
   const [submit, setSubmit] = useState<Submit>({ status: 'idle' });
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function TreeInfo() {
         real_height_cm: heightNum,
         photos: shots.map((s, i) => ({ key: keys[i], view_index: i, is_front: s.id === frontId })),
       });
-      const job = await jobsApi.createJob(tree.id);
+      const job = await jobsApi.createJob(tree.id, region ? { region } : {});
       reset();
       navigate(`/phan-tich/${job.id}`, { replace: true });
     } catch (err) {
@@ -148,6 +149,25 @@ export default function TreeInfo() {
           {heightInvalid ? <span id="height-err" className="text-label text-danger">Chiều cao cần là số từ 1 đến 999 cm.</span> : null}
           <span className="text-label text-ink-muted">Có chiều cao thật, bản vẽ sẽ ghi được số đo bằng cm.</span>
         </div>
+        <fieldset className="m-0 flex flex-col gap-1.5 border-0 p-0">
+          <legend className="mb-1.5 text-caption font-medium">
+            Cây đặt ở miền nào? <span className="font-normal text-ink-muted">(không bắt buộc)</span>
+          </legend>
+          <div className="grid grid-cols-3 gap-2">
+            {([['north', 'Miền Bắc'], ['central', 'Miền Trung'], ['south', 'Miền Nam']] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={region === value}
+                onClick={() => setRegion((r) => (r === value ? null : value))}
+                className={cx('min-h-touch rounded-btn text-caption', region === value ? 'border-2 border-primary bg-primary-soft font-semibold text-primary-ink' : 'border border-line-strong bg-surface text-ink')}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <span className="text-label text-ink-muted">Để lịch cắt tỉa, thay chậu hợp mùa ở vùng của bạn.</span>
+        </fieldset>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="nickname" className="text-caption font-medium">
             Đặt tên cho cây <span className="font-normal text-ink-muted">(không bắt buộc)</span>

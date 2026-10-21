@@ -58,6 +58,25 @@ def _store(db: Session, job: DesignJob, tree_id: uuid.UUID, c: Candidate) -> Ren
     return row
 
 
+B_PROGRESS_KEYS = ("render", "judge", "repair", "plan", "S1", "S2", "S3", "guide")
+
+
+def _reset_previous_run(db: Session, job: DesignJob) -> dict[str, int]:
+    """Thử lại sau lỗi: xóa giai đoạn cũ, bỏ chọn ảnh cũ (vẫn giữ làm dataset), trả số lần thử kế tiếp theo giai đoạn."""
+    db.query(Stage).filter(Stage.job_id == job.id).delete()
+    db.query(RenderImage).filter(RenderImage.job_id == job.id).update({"selected": False})
+    progress = dict(job.progress or {})
+    progress["steps"] = {k: v for k, v in (progress.get("steps") or {}).items() if k not in B_PROGRESS_KEYS}
+    progress.pop("result", None)
+    job.progress = progress
+    db.commit()
+    rows = db.query(RenderImage.stage_code, RenderImage.attempt).filter(RenderImage.job_id == job.id).all()
+    base: dict[str, int] = {}
+    for code, attempt in rows:
+        base[code] = max(base.get(code, 0), attempt + 1)
+    return base
+
+
 def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
     with job_guard(db, job_id) as job:
         if job.status not in _ACTIVE:
@@ -66,6 +85,7 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
         if job.chosen_option_id is None or job.analysis is None or job.front_photo_id is None:
             raise JobFailure("invalid_state", "job has no chosen option / analysis / front photo")
 
+        attempt_base = _reset_previous_run(db, job)
         tree = db.get(Tree, job.tree_id)
         option_row = db.get(OptionRow, job.chosen_option_id)
         option = DesignOption.model_validate(option_row.design)
@@ -127,7 +147,7 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
                 db.commit()
 
         set_progress(db, job, "render", "running", candidates=N_CANDIDATES)
-        all_cands = run_generation(base_prompt, N_CANDIDATES, "P3a", p3a.version_tag, 0)
+        all_cands = run_generation(base_prompt, N_CANDIDATES, "P3a", p3a.version_tag, attempt_base.get("S4", 0))
         if not all_cands:
             raise JobFailure("image_unavailable", "no candidate image was generated")
         set_progress(db, job, "render", "done", candidates=len(all_cands))
@@ -173,7 +193,7 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
             max_thicken_pct=MAX_THICKEN_PCT_PER_YEAR.get(growth, 10) * years,
             size=size, original=original, original_mask=original_mask, sketch_png=sketch_png, species_refs=refs,
             final_image=sel.best.image, final_render_id=chosen.id, final_summary=summary, final_judge=sel.best.judge_raw,
-            segmenter=segmenter, image_client=image_client, llm=llm,
+            segmenter=segmenter, image_client=image_client, llm=llm, attempt_base=attempt_base,
         ))
         set_status(db, job, JobStatus.done)
 

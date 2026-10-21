@@ -176,7 +176,9 @@ class DesignJob(Base):
     # Tiến độ chi tiết cho màn 04: {"steps": {"species": {...}, "trunk": ..., ...}}
     progress: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, server_default=text("'{}'::jsonb"))
     report: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
-    share_code: Mapped[str | None] = mapped_column(String(16), unique=True)  # P5: nhận xét phôi, lý do chọn thế, lộ trình năm
+    share_code: Mapped[str | None] = mapped_column(String(16), unique=True)
+    # Mã tham chiếu lần trừ lượt hiện tại trong credit_ledger: "<job_id>" lần đầu, "<job_id>#2"… khi thử lại.
+    charge_ref: Mapped[str | None] = mapped_column(String(64))  # P5: nhận xét phôi, lý do chọn thế, lộ trình năm
     error: Mapped[str | None] = mapped_column(Text)
     error_code: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = _created()

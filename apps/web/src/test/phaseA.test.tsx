@@ -180,3 +180,23 @@ describe('Choose read-only after phase B', () => {
     expect(screen.getByRole('link', { name: 'Về ảnh kết quả' })).toHaveAttribute('href', '/ket-qua/j1');
   });
 });
+
+describe('Choose extras', () => {
+  it('offers re-analysis with the AI-suggested front and retry after failure', async () => {
+    const calls = mockFetch([
+      ['GET /api/v1/me', () => json(user)],
+      ['GET /api/v1/jobs/j1', () => json(job({
+        status: 'failed', chosen_option_id: 'o1', can_retry: true,
+        progress: { steps: { front: { state: 'done', suggested_photo_id: 'p2', is_current: false } } },
+        photos: [{ id: 'p1', url: 'https://r2/p1.webp', is_front: true }, { id: 'p2', url: 'https://r2/p2.webp', is_front: false }],
+      }))],
+      ['POST /api/v1/trees/t1/jobs', () => json(job({ id: 'j2', status: 'queued', options: [] }), 202)],
+    ]);
+    renderAt('/chon/j1', <><Route path="/chon/:jobId" element={<Choose />} /><Route path="/phan-tich/:jobId" element={<div>phân tích lại</div>} /></>);
+    expect(await screen.findByRole('button', { name: 'Thử lại · dùng 1 lượt' })).toBeInTheDocument();
+    expect(screen.getByText(/đã hoàn lượt cho bạn/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Phân tích lại với mặt này/ }));
+    expect(await screen.findByText('phân tích lại')).toBeInTheDocument();
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ front_photo_id: 'p2' });
+  });
+});

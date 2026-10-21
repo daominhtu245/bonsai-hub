@@ -45,11 +45,14 @@ class RoadmapContext:
     segmenter: object | None
     image_client: ImageClient
     llm: LLMClient
+    attempt_base: dict[str, int] | None = None  # thử lại: đánh số tiếp, không ghi đè ảnh cũ
 
 
 def _store_stage(db: Session, job: DesignJob, ctx: RoadmapContext, res: StageResult) -> uuid.UUID | None:
     selected_id = None
+    offset = (ctx.attempt_base or {}).get(res.code, 0)
     for c in res.attempts:
+        c.attempt += offset
         key = storage.job_image_key(ctx.tree_id, job.id, res.code, c.attempt)
         storage.put_bytes(key, c.image, "image/webp")
         row = RenderImage(job_id=job.id, stage_code=res.code, attempt=c.attempt, storage_key=key, model=c.model,

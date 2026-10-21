@@ -172,3 +172,56 @@ def test_skips_when_not_active(db, chosen_job, images, llm):
     db.commit()
     run_phase_b(db, job.id)
     assert _renders(db, job.id) == []
+
+
+def test_retry_after_failure_charges_again_and_keeps_old_images(db, chosen_job, images, llm, bucket):  # noqa: F811
+    from bonsai_api.services.credits import next_charge_ref
+
+    user, job = chosen_job
+    job.charge_ref = str(job.id)
+    db.commit()
+
+    class Down(FakeImage):
+        def edit(self, **kw):
+            raise AIError("503", retryable=False)
+
+    images["provider"] = Down()
+    with pytest.raises(Exception):
+        run_phase_b(db, job.id)
+    db.expire_all()
+    assert db.get(User, user.id).credits == 1  # đã hoàn
+
+    # người dùng chọn lại: trừ lượt mới với mã tham chiếu mới
+    job = db.get(DesignJob, job.id)
+    ref = next_charge_ref(db, user.id, job.id)
+    assert ref == f"{job.id}#2"
+    spend_for_render(db, user.id, job.id, ref)
+    job.charge_ref, job.status, job.error_code = ref, JobStatus.rendering_final, None
+    db.commit()
+
+    images["provider"] = DemoImage()
+    llm.responses.extend([verdict(8)] * 3)
+    run_phase_b(db, job.id)
+    db.expire_all()
+    assert db.get(DesignJob, job.id).status == JobStatus.done
+    assert db.get(User, user.id).credits == 0
+    reasons = [(r.reason.value, r.ref_id) for r in db.execute(select(CreditLedger).order_by(CreditLedger.id)).scalars()]
+    assert reasons[1:] == [("render", str(job.id)), ("refund", str(job.id)), ("render", f"{job.id}#2")]
+
+
+def test_rerun_numbers_attempts_after_previous(db, chosen_job, images, llm):  # noqa: F811
+    _, job = chosen_job
+    llm.responses.extend([verdict(8)] * 6)
+    run_phase_b(db, job.id)
+    db.expire_all()
+    job = db.get(DesignJob, job.id)
+    job.status = JobStatus.rendering_final  # mô phỏng chạy lại
+    db.commit()
+    run_phase_b(db, job.id)
+    db.expire_all()
+    rows = _renders(db, job.id)
+    assert [r.attempt for r in rows] == [0, 1, 2, 3, 4, 5] and sum(r.selected for r in rows) == 1
+    keys = {r.storage_key for r in rows}
+    assert len(keys) == 6  # không ghi đè ảnh cũ
+    stages = db.execute(select(Stage).where(Stage.job_id == job.id)).scalars().all()
+    assert sorted(s.code for s in stages) == ["S0", "S1", "S2", "S3", "S4"]

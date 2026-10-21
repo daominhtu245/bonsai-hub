@@ -38,6 +38,8 @@ export interface Job {
   progress: JobProgress;
   created_at: string;
   front_photo: { id: string; url: string; width: number | null; height: number | null } | null;
+  photos?: { id: string; url: string; is_front: boolean }[];
+  can_retry?: boolean;
   analysis: {
     usable: boolean;
     issues: string[];
@@ -74,13 +76,15 @@ export interface TreeCreate {
   photos: { key: string; view_index: number; is_front: boolean }[];
 }
 
+export type Region = 'north' | 'central' | 'south';
+
 export const PHASE_A_DONE: JobStatus[] = ['awaiting_choice', 'failed'];
 export const TERMINAL: JobStatus[] = ['awaiting_choice', 'done', 'failed'];
 
 export const jobsApi = {
   species: () => api<Species[]>('/species'),
   createTree: (body: TreeCreate) => api<{ id: string }>('/trees', { method: 'POST', json: body }),
-  createJob: (treeId: string, body: { style?: string; goal?: string } = {}) =>
+  createJob: (treeId: string, body: { style?: string; goal?: string; region?: Region; front_photo_id?: string } = {}) =>
     api<Job>(`/trees/${treeId}/jobs`, { method: 'POST', json: body }),
   get: (id: string) => api<Job>(`/jobs/${id}`),
   choose: (id: string, optionId: string) => api<Job>(`/jobs/${id}/choose`, { method: 'POST', json: { option_id: optionId } }),

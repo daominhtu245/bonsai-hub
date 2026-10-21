@@ -82,7 +82,7 @@ def job_guard(db: Session, job_id: uuid.UUID) -> Iterator[DesignJob]:
         job.error = f"{type(e).__name__}: {e}"[:2000]
         job.error_code = getattr(e, "code", None) or "internal"
         tree = db.get(Tree, job.tree_id)
-        refunded = refund_render(db, tree.user_id, job.id)
+        refunded = refund_render(db, tree.user_id, job.id, job.charge_ref)
         set_status(db, job, JobStatus.failed)  # commit cả refund
         log.exception("job %s failed (refunded=%s)", job_id, refunded)
         raise

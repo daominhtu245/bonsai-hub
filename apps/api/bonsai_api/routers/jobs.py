@@ -10,12 +10,12 @@ from sqlalchemy import select
 from .. import queue
 from sqlalchemy.dialects.postgresql import insert
 
-from ..db.models import DesignJob, DesignOption, Feedback, JobStatus, Stage, StageTaskCheck, Tree
+from ..db.models import DesignJob, DesignOption, Feedback, JobStatus, Stage, StageTaskCheck, Tree, TreePhoto
 from ..db.session import get_sessionmaker
 from ..schemas import ChooseIn, FeedbackIn, JobCreate, JobOut, ResultFull, TaskToggle
 from ..security import DB, CurrentUser
-from ..services.credits import InsufficientCredits, spend_for_render
-from ..services.jobs import STREAM_END, job_out, jobs_today
+from ..services.credits import InsufficientCredits, next_charge_ref, spend_for_render
+from ..services.jobs import STREAM_END, can_retry, job_out, jobs_today
 from ..services.results import result_full
 from ..settings import get_settings
 
@@ -41,8 +41,14 @@ def create_job(tree_id: uuid.UUID, body: JobCreate, user: CurrentUser, db: DB):
     if jobs_today(db, user) >= get_settings().phase_a_daily_limit:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS,
                             "Hôm nay bạn đã phân tích đủ số lần cho phép. Ngày mai bạn thử tiếp nhé.")
-    job = DesignJob(tree_id=tree.id, user_id=user.id, status=JobStatus.queued,
-                    inputs=body.model_dump(exclude_none=True), progress={})
+    front_id = None
+    if body.front_photo_id:
+        photo = db.get(TreePhoto, body.front_photo_id)
+        if photo is None or photo.tree_id != tree.id:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Ảnh không thuộc cây này.")
+        front_id = photo.id
+    job = DesignJob(tree_id=tree.id, user_id=user.id, status=JobStatus.queued, front_photo_id=front_id,
+                    inputs=body.model_dump(mode="json", exclude_none=True, exclude={"front_photo_id"}), progress={})
     db.add(job)
     db.commit()
     queue.enqueue("bonsai_worker.tasks.phase_a.run", str(job.id))
@@ -93,21 +99,25 @@ def choose(job_id: uuid.UUID, body: ChooseIn, user: CurrentUser, db: DB):
     job = db.execute(select(DesignJob).where(DesignJob.id == job_id).with_for_update()).scalar_one_or_none()
     if job is None or job.user_id != user.id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy phiên thiết kế.")
-    if job.chosen_option_id == body.option_id and job.status != JobStatus.awaiting_choice:
+    retry = can_retry(job)
+    if job.chosen_option_id == body.option_id and job.status != JobStatus.awaiting_choice and not retry:
         return job_out(db, job, user)  # bấm lại: không trừ lượt lần nữa
-    if job.status != JobStatus.awaiting_choice:
+    if job.status != JobStatus.awaiting_choice and not retry:
         raise HTTPException(status.HTTP_409_CONFLICT, "Phiên này không còn ở bước chọn phương án.")
     option = db.get(DesignOption, body.option_id)
     if option is None or option.job_id != job.id:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Phương án không thuộc phiên này.")
+    ref = next_charge_ref(db, user.id, job.id)
     try:
-        spend_for_render(db, user.id, job.id)
+        spend_for_render(db, user.id, job.id, ref)
     except InsufficientCredits:
         db.rollback()
         raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, "Bạn đã hết lượt. Mua thêm lượt để tạo ảnh tương lai.")
     job.chosen_option_id = option.id
+    job.charge_ref = ref
     job.status = JobStatus.rendering_final
     job.finished_at = None
+    job.error = job.error_code = None
     db.commit()
     db.refresh(user)
     queue.enqueue("bonsai_worker.tasks.phase_b.run", str(job.id), queue="render")
