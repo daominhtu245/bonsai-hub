@@ -23,6 +23,10 @@ PRICES: dict[str, Price] = {
     "gemini-flash": Price(0.30, 2.50),
     "gemini-2.5-flash-image": Price(1.50, 0.0, 0.0336),
     "gemini-3-pro-image": Price(2.0, 0.0, 0.134),
+    # OpenAI: giá niêm yết 2025 — kiểm tra lại trên openai.com/api/pricing trước khi chạy thật.
+    "gpt-5": Price(1.25, 10.0),
+    "gpt-5-mini": Price(0.25, 2.0),
+    "gpt-4.1": Price(2.0, 8.0),
     "gpt-image-1": Price(5.0, 0.0, 0.042),
     "fake": Price(0.0, 0.0, 0.0),
     "demo": Price(0.0, 0.0, 0.0),

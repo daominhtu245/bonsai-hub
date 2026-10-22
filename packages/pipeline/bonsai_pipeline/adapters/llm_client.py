@@ -141,6 +141,10 @@ def build_llm_provider(name: str, model: str, settings: AISettings) -> LLMProvid
         from .providers.gemini import GeminiLLM
 
         return GeminiLLM(model=model, api_key=settings.gemini_api_key)
+    if name == "openai":
+        from .providers.openai_llm import OpenAILLM
+
+        return OpenAILLM(model=model, api_key=settings.openai_api_key, effort=settings.llm_effort)
     if name == "fake":
         from .providers.fake import FakeLLM
 
