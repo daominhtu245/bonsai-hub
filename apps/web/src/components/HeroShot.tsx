@@ -9,7 +9,7 @@ const pins: Array<{ x: number; y: number; label: string; side?: 'left' | 'right'
 export function HeroShot() {
   return (
     <figure className="relative m-0 overflow-hidden rounded-card border border-line bg-photo shadow-raised">
-      <img src="/images/hero.webp" alt="Cây bonsai hoàn thiện, đánh dấu ngọn, tầng tán, thân và rễ" width={960} height={1260} className="block aspect-[4/5] w-full object-cover object-top" fetchPriority="high" />
+      <img src="/images/hero.webp" alt="Cây bonsai hoàn thiện, đánh dấu ngọn, tầng tán, thân và rễ" width={960} height={1260} className="block aspect-[4/5] w-full object-cover object-top" />
       <svg className="theme-light pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 125" preserveAspectRatio="none" aria-hidden="true">
         <polygon points="54,2 1,52 97,47" fill="none" stroke="var(--surface)" strokeOpacity="0.85" strokeWidth="0.35" strokeDasharray="1.6 1.2" vectorEffect="non-scaling-stroke" />
       </svg>
