@@ -40,7 +40,9 @@ up:  ## Toàn bộ stack (cần .env). Build tuần tự: build song song cùng 
 	docker tag bonsai-worker bonsai-beat
 	docker tag bonsai-api bonsai-s3-init
 	$(COMPOSE) up -d --no-build
-	docker image prune -f --filter label=bonsai.project=bonsai  # chỉ xóa bản build cũ không tên của bonsai
+	# Dọn bản build cũ không tên của bonsai > 7 ngày. Không dọn mới hơn: builder cổ điển dùng chính các lớp
+	# trung gian đó làm cache (xóa đi thì lần sau phải cài lại toàn bộ thư viện Python).
+	docker image prune -f --filter label=bonsai.project=bonsai --filter until=168h
 
 down:
 	$(COMPOSE) down
