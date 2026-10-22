@@ -1,5 +1,6 @@
 # Build context: gốc repo (cần design/ cho token).
 FROM node:22-alpine AS build
+LABEL bonsai.project=bonsai
 WORKDIR /app
 COPY design /app/design
 COPY apps/web/package.json apps/web/package-lock.json /app/apps/web/
@@ -15,5 +16,6 @@ ENV VITE_API_BASE=$VITE_API_BASE VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID VI
 RUN npm run build
 
 FROM nginx:1.27-alpine
+LABEL bonsai.project=bonsai
 COPY infra/nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html

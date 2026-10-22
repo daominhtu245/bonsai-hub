@@ -40,6 +40,7 @@ up:  ## Toàn bộ stack (cần .env). Build tuần tự: build song song cùng 
 	docker tag bonsai-worker bonsai-beat
 	docker tag bonsai-api bonsai-s3-init
 	$(COMPOSE) up -d --no-build
+	docker image prune -f --filter label=bonsai.project=bonsai  # chỉ xóa bản build cũ không tên của bonsai
 
 down:
 	$(COMPOSE) down
