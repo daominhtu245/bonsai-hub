@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Check, Loader2 } from 'lucide-react';
 import { cx } from '@/lib/cx';
 
 export type StepState = 'done' | 'current' | 'pending';
@@ -6,25 +7,25 @@ export type StepState = 'done' | 'current' | 'pending';
 function StepIcon({ state }: { state: StepState }) {
   if (state === 'done')
     return (
-      <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-leaf" aria-hidden="true">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--surface)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l4 4 10-10" /></svg>
+      <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-primary text-primary-on" aria-hidden="true">
+        <Check size={14} strokeWidth={2.5} />
       </span>
     );
   if (state === 'current')
     return (
-      <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full border-2 border-primary" aria-hidden="true">
-        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary" />
+      <span className="flex h-6 w-6 flex-none items-center justify-center text-primary" aria-hidden="true">
+        <Loader2 size={18} className="animate-spin" />
       </span>
     );
-  return <span className="h-7 w-7 flex-none rounded-full border-[1.5px] border-line-strong" aria-hidden="true" />;
+  return <span className="h-6 w-6 flex-none rounded-full border border-line-strong" aria-hidden="true" />;
 }
 
-/** Danh sách bước AI đang làm (màn 04 và màn chờ ảnh). Trạng thái đọc được cả bằng chữ, không chỉ bằng màu. */
+/** Danh sách bước đang xử lý. Trạng thái đọc được bằng chữ (sr-only), không chỉ bằng màu. */
 export function StepList({ steps }: { steps: Array<{ key: string; state: StepState; label: ReactNode }> }) {
   return (
-    <ol className="m-0 flex list-none flex-col gap-1 p-0" aria-live="polite">
+    <ol className="m-0 flex list-none flex-col p-0" aria-live="polite">
       {steps.map((s) => (
-        <li key={s.key} className={cx('flex min-h-touch items-center gap-3', s.state === 'pending' && 'text-ink-muted', s.state === 'current' && 'font-semibold')}>
+        <li key={s.key} className={cx('flex min-h-[40px] items-center gap-3 text-caption', s.state === 'pending' && 'text-ink-subtle', s.state === 'current' && 'font-medium text-ink')}>
           <StepIcon state={s.state} />
           <span>
             {s.label}

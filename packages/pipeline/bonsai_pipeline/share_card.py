@@ -1,6 +1,6 @@
 """Ảnh chia sẻ (màn 07): ghép "Hôm nay" + "Minh họa sau ~N năm" thành 9:16 hoặc 1:1, có con dấu watermark.
 
-Bố cục theo design/mockups/Share.dc.html: nền mực, tiêu đề Lora, hai ảnh, chân trang con dấu đỏ son + chữ.
+Phong cách hệ thiết kế v2: nền sáng trung tính, chữ Be Vietnam Pro, biểu tượng thương hiệu màu chủ đạo.
 Ảnh tương lai luôn mang nhãn "Minh họa" (nguyên tắc trung thực với AI).
 """
 
@@ -16,12 +16,14 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 Format = Literal["9x16", "1x1"]
 SIZES: dict[str, tuple[int, int]] = {"9x16": (1080, 1920), "1x1": (1080, 1080)}
 
-# design/tokens.json (bảng sáng, nền tối dùng ink)
-INK = "#1F2421"
-PAPER = "#FBF8F2"
-PAPER_DIM = "#ECE7DD"
-SEAL = "#B23A2B"
-PHOTO_BG = "#E8E1D3"
+# design/tokens.json v2 (bảng sáng)
+BG = "#F6F6F4"
+SURFACE = "#FFFFFF"
+INK = "#191917"
+INK_MUTED = "#62615C"
+LINE = "#E6E5E1"
+PRIMARY = "#2D5B3C"
+PHOTO_BG = "#ECEBE7"
 
 
 @lru_cache
@@ -35,7 +37,7 @@ def _font(name: str, size: int, weight: int | None = None) -> ImageFont.FreeType
 
 
 def title_font(size: int) -> ImageFont.FreeTypeFont:
-    return _font("Lora-Variable.ttf", size, 600)
+    return _font("BeVietnamPro-SemiBold.ttf", size)
 
 
 def body_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
@@ -62,16 +64,15 @@ def wrap(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont, wid
     return lines
 
 
-def draw_seal(img: Image.Image, xy: tuple[int, int], size: int) -> None:
-    """Con dấu đỏ son với hình cây (như logo trong mockup)."""
+def draw_brand_mark(img: Image.Image, xy: tuple[int, int], size: int) -> None:
+    """Ô vuông màu chủ đạo + mầm cây (giống BrandMark ở web)."""
     d = ImageDraw.Draw(img)
     x, y = xy
-    d.rounded_rectangle([x, y, x + size, y + size], radius=max(2, size // 6), fill=SEAL)
-    s, w = size / 24, max(2, round(size / 16))
-    # thân + tán + chậu (đơn giản hóa từ icon SVG)
-    d.line([(x + 12 * s, y + 20 * s), (x + 12 * s, y + 13 * s), (x + 10 * s, y + 10 * s)], fill=PAPER, width=w)
-    d.ellipse([x + 5 * s, y + 6.5 * s, x + 19 * s, y + 11 * s], outline=PAPER, width=w)
-    d.line([(x + 7 * s, y + 20 * s), (x + 17 * s, y + 20 * s)], fill=PAPER, width=w)
+    d.rounded_rectangle([x, y, x + size, y + size], radius=max(3, size // 4), fill=PRIMARY)
+    s, w = size / 24, max(2, round(size / 13))
+    d.line([(x + 12 * s, y + 19 * s), (x + 12 * s, y + 10 * s)], fill=SURFACE, width=w)
+    d.ellipse([x + 5 * s, y + 6 * s, x + 12 * s, y + 11 * s], outline=SURFACE, width=w)
+    d.ellipse([x + 12 * s, y + 4 * s, x + 19 * s, y + 9 * s], outline=SURFACE, width=w)
 
 
 def _contain(photo: bytes, box: tuple[int, int]) -> Image.Image:
@@ -95,7 +96,7 @@ def _chip(canvas: Image.Image, xy: tuple[int, int], text: str, size: int) -> Non
     w = d.textlength(text, font=f)
     pad = size // 2
     x, y = xy
-    d.rounded_rectangle([x, y, x + w + pad * 2, y + size + pad * 1.4], radius=size // 3, fill=PAPER)
+    d.rounded_rectangle([x, y, x + w + pad * 2, y + size + pad * 1.4], radius=size // 4, fill=SURFACE)
     d.text((x + pad, y + pad * 0.55), text, font=f, fill=INK)
 
 
@@ -111,38 +112,39 @@ def compose(
     quality: int = 88,
 ) -> bytes:
     W, H = SIZES[fmt]
-    canvas = Image.new("RGB", (W, H), INK)
+    canvas = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(canvas)
     margin = 48 if fmt == "9x16" else 40
-    gap = 8
 
-    tf = title_font(64 if fmt == "9x16" else 52)
+    tf = title_font(56 if fmt == "9x16" else 46)
     lines = wrap(d, title, tf, W - margin * 2, max_lines=2 if fmt == "1x1" else 3)
     y = margin
     for line in lines:
-        d.text((margin, y), line, font=tf, fill=PAPER_DIM)
-        y += round(tf.size * 1.3)
+        d.text((margin, y), line, font=tf, fill=INK)
+        y += round(tf.size * 1.28)
     top = y + 16
 
     footer_h = 120 if fmt == "9x16" else 96
     area_h = H - top - footer_h
-    radius = 18
+    radius = 20
+    gap = 16
     if fmt == "9x16":
-        box = (W - 32 * 2, (area_h - gap) // 2)
-        slots = [(32, top), (32, top + box[1] + gap)]
+        box = (W - margin * 2, (area_h - gap) // 2)
+        slots = [(margin, top), (margin, top + box[1] + gap)]
     else:
         box = ((W - margin * 2 - gap) // 2, area_h)
         slots = [(margin, top), (margin + box[0] + gap, top)]
     for photo, label, (x, y0) in zip((before, after), (before_label, after_label), slots):
+        d.rounded_rectangle([x - 1, y0 - 1, x + box[0], y0 + box[1]], radius=radius, outline=LINE, width=2)
         _paste_rounded(canvas, _contain(photo, box), (x, y0), radius)
         _chip(canvas, (x + 16, y0 + 16), label, 30 if fmt == "9x16" else 26)
 
-    seal = 52 if fmt == "9x16" else 44
-    fy = H - footer_h + (footer_h - seal) // 2
-    draw_seal(canvas, (margin, fy), seal)
-    ff = body_font(30 if fmt == "9x16" else 26)
-    text = wrap(d, footer, ff, W - margin * 2 - seal - 20, max_lines=1)[0]
-    d.text((margin + seal + 20, fy + (seal - ff.size) // 2 - 2), text, font=ff, fill=PAPER_DIM)
+    mark = 48 if fmt == "9x16" else 40
+    fy = H - footer_h + (footer_h - mark) // 2
+    draw_brand_mark(canvas, (margin, fy), mark)
+    ff = body_font(28 if fmt == "9x16" else 24)
+    text = wrap(d, footer, ff, W - margin * 2 - mark - 20, max_lines=1)[0]
+    d.text((margin + mark + 18, fy + (mark - ff.size) // 2 - 2), text, font=ff, fill=INK_MUTED)
 
     buf = io.BytesIO()
     canvas.save(buf, format="JPEG", quality=quality, optimize=True, progressive=True)

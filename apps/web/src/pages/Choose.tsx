@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { ChevronDown, Maximize2, X } from 'lucide-react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
-import { Button, ButtonLink, Card, Notice, Skeleton, StyleName } from '@/components/ui';
+import { Button, ButtonLink, Notice, Segmented, Skeleton, SketchLegend, StyleName } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { SPECIES_NAME } from '@/lib/copy';
@@ -10,11 +11,6 @@ import { jobsApi, type DesignOptionView, type Job } from '@/lib/jobs';
 
 const fmt = (n: number) => n.toLocaleString('vi-VN', { maximumFractionDigits: 1 });
 const score = (s: number) => Math.round(s * 10);
-
-function firstSentence(text: string) {
-  const m = text.match(/^[^.!?]+[.!?]?/);
-  return (m ? m[0] : text).trim();
-}
 
 function Overlay({ job, option, showSketch, className }: { job: Job; option: DesignOptionView; showSketch: boolean; className?: string }) {
   const photo = job.front_photo;
@@ -33,30 +29,23 @@ function Overlay({ job, option, showSketch, className }: { job: Job; option: Des
   );
 }
 
-function Legend({ option, lowerApexCm }: { option: DesignOptionView; lowerApexCm: number | null }) {
+function Counts({ option, lowerApexCm }: { option: DesignOptionView; lowerApexCm: number | null }) {
   const c = option.counts;
+  const items: Array<[string, string]> = [
+    ['Cắt bỏ', `${c.cut ?? 0} cành${c.chop_apex ? ' + hạ ngọn' : ''}`],
+    ['Giữ lại', `${c.keep ?? 0} cành`],
+  ];
+  if (c.new) items.push(['Nuôi mới', `${c.new} cành`]);
+  if (c.chop_apex && lowerApexCm) items.push(['Hạ ngọn', `khoảng ${fmt(lowerApexCm)} cm`]);
   return (
-    <ul className="m-0 flex list-none flex-wrap gap-x-3.5 gap-y-2 p-0 text-caption">
-      <li className="flex items-center gap-1.5">
-        <svg width="22" height="10" aria-hidden="true"><line x1="1" y1="5" x2="21" y2="5" stroke="var(--seal)" strokeWidth="3" strokeDasharray="4 3" /><path d="m8 1 6 8m0-8-6 8" stroke="var(--seal)" strokeWidth="1.5" /></svg>
-        Cắt bỏ ({c.cut ?? 0} cành{c.chop_apex ? ' + hạ ngọn' : ''})
-      </li>
-      <li className="flex items-center gap-1.5">
-        <svg width="22" height="10" aria-hidden="true"><line x1="1" y1="5" x2="21" y2="5" stroke="var(--leaf)" strokeWidth="3" strokeLinecap="round" /></svg>
-        Giữ lại ({c.keep ?? 0} cành)
-      </li>
-      {c.new ? (
-        <li className="flex items-center gap-1.5">
-          <svg width="22" height="10" aria-hidden="true"><line x1="1" y1="5" x2="16" y2="5" stroke="var(--brass)" strokeWidth="3" strokeLinecap="round" /><path d="m15 1 6 4-6 4" fill="var(--brass)" /></svg>
-          Nuôi cành mới ({c.new})
-        </li>
-      ) : null}
-      <li className="flex items-center gap-1.5">
-        <svg width="22" height="10" aria-hidden="true"><line x1="1" y1="5" x2="21" y2="5" stroke="var(--ink)" strokeWidth="1.5" strokeDasharray="3 2" /></svg>
-        Khung tán
-      </li>
-      {c.chop_apex && lowerApexCm ? <li className="w-full text-ink-muted">Hạ ngọn khoảng {fmt(lowerApexCm)} cm</li> : null}
-    </ul>
+    <dl className="m-0 grid grid-cols-2 gap-px overflow-hidden rounded-btn border border-line bg-line text-caption">
+      {items.map(([k, v], i) => (
+        <div key={k} className={cx('bg-surface px-3 py-2', items.length % 2 === 1 && i === items.length - 1 && 'col-span-2')}>
+          <dt className="text-label text-ink-subtle">{k}</dt>
+          <dd className="tabular m-0 font-medium">{v}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -68,14 +57,14 @@ function ZoomDialog({ job, option, onClose }: { job: Job; option: DesignOptionVi
     return () => d?.close?.();
   }, []);
   return (
-    <dialog ref={ref} onClose={onClose} aria-label="Bản vẽ phóng to" className="m-0 h-dvh max-h-none w-screen max-w-none bg-bg p-0 text-ink backdrop:bg-ink">
+    <dialog ref={ref} onClose={onClose} aria-label="Bản vẽ phóng to" className="m-0 h-dvh max-h-none w-screen max-w-none bg-bg p-0 text-ink">
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between px-gutter py-2">
           <span className="font-semibold">
             <StyleName vi={option.name_vi} jp={option.name_jp} />
           </span>
-          <button type="button" onClick={onClose} aria-label="Đóng" className="flex h-touch w-touch items-center justify-center rounded-btn">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          <button type="button" onClick={onClose} aria-label="Đóng" className="flex h-touch w-touch items-center justify-center rounded-btn hover:bg-surface-2">
+            <X size={20} strokeWidth={1.75} />
           </button>
         </div>
         <div className="flex-1 overflow-auto">
@@ -125,7 +114,7 @@ export default function Choose() {
   if (!job)
     return (
       <div className="mx-auto flex max-w-content flex-col gap-4" aria-busy="true">
-        <BackHeader to="/" title="Chọn thế cho cây" right="Bước 3/3" />
+        <BackHeader to="/" title="Chọn thế" right="3 / 3" />
         <div className="flex flex-col gap-4 px-gutter">
           <Skeleton className="h-28 rounded-card" />
           <Skeleton className="aspect-[3/4] rounded-card" />
@@ -188,92 +177,100 @@ export default function Choose() {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-content flex-col">
-      <BackHeader to="/" title="Chọn thế cho cây" right="Bước 3/3" />
+      <BackHeader to="/" title="Chọn thế" right="3 / 3" />
 
       {a ? (
-        <Card className="mx-gutter mt-1 flex flex-col gap-1.5 px-4 py-3.5">
-          <div className="flex flex-wrap gap-1.5">
-            {a.species_key ? <span className="rounded-full bg-clay-soft px-2.5 py-0.5 text-label font-semibold text-clay">{SPECIES_NAME[a.species_key] ?? a.species_key}</span> : null}
-            {a.height_cm ? <span className="rounded-full bg-clay-soft px-2.5 py-0.5 text-label font-semibold text-clay">Cao {fmt(a.height_cm)} cm</span> : null}
-            {a.base_diameter_cm ? <span className="rounded-full bg-clay-soft px-2.5 py-0.5 text-label font-semibold text-clay">Ø gốc {fmt(a.base_diameter_cm)} cm</span> : null}
-          </div>
-          <p className="m-0 text-caption">{a.summary_vi}</p>
-        </Card>
+        <section className="mx-gutter mt-4 flex flex-col gap-2">
+          <dl className="m-0 grid grid-cols-3 gap-px overflow-hidden rounded-card border border-line bg-line shadow-card">
+            {([
+              ['Loài', a.species_key ? SPECIES_NAME[a.species_key] ?? a.species_key : '—'],
+              ['Chiều cao', a.height_cm ? `${fmt(a.height_cm)} cm` : '—'],
+              ['Ø gốc', a.base_diameter_cm ? `${fmt(a.base_diameter_cm)} cm` : '—'],
+            ] as const).map(([k, v]) => (
+              <div key={k} className="bg-surface px-3 py-2.5">
+                <dt className="text-label text-ink-subtle">{k}</dt>
+                <dd className="tabular m-0 font-semibold">{v}</dd>
+              </div>
+            ))}
+          </dl>
+          {a.summary_vi ? <p className="m-0 text-caption text-ink-muted">{a.summary_vi}</p> : null}
+        </section>
       ) : null}
 
       {retry ? (
         <div className="mx-gutter mt-4">
-          <Notice tone="warn">Lần trước tạo ảnh chưa thành công và đã hoàn lượt cho bạn. Bạn có thể chọn lại thế và thử lại.</Notice>
+          <Notice tone="warn">Lần trước tạo ảnh chưa thành công, đã hoàn lượt cho bạn.</Notice>
         </div>
       ) : null}
 
       {suggested && !readOnly ? (
-        <div className="mx-gutter mt-4 flex items-center gap-3 rounded-card border border-line bg-surface p-3">
-          <img src={suggested.url} alt="Mặt AI gợi ý làm mặt tiền" className="h-16 w-16 flex-none rounded-img object-cover" />
-          <div className="flex flex-1 flex-col gap-1.5">
-            <span className="text-caption">AI thấy mặt này có thể đẹp hơn để làm mặt tiền.</span>
-            <Button variant="secondary" size="touch" block={false} disabled={submitting} onClick={() => reanalyze(suggested.id)}>
-              Phân tích lại với mặt này · miễn phí
+        <div className="mx-gutter mt-4 flex items-center gap-3 rounded-card border border-line bg-surface p-3 shadow-card">
+          <img src={suggested.url} alt="Mặt AI gợi ý làm mặt tiền" className="h-14 w-14 flex-none rounded-[6px] object-cover" />
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="text-caption font-medium">Mặt này có thể đẹp hơn làm mặt tiền</span>
+            <Button variant="secondary" size="touch" block={false} disabled={submitting} onClick={() => reanalyze(suggested.id)} className="self-start">
+              Phân tích lại với mặt này
             </Button>
           </div>
         </div>
       ) : null}
 
-      <section className="mx-gutter mt-5 overflow-hidden rounded-card border-2 border-primary bg-surface" aria-labelledby="opt-title">
-        <div className="flex items-center justify-between gap-2 px-3.5 py-3">
+      {!readOnly && job.options.length > 1 ? (
+        <div className="mx-gutter mt-5 grid gap-2" style={{ gridTemplateColumns: `repeat(${job.options.length}, minmax(0, 1fr))` }} role="tablist" aria-label="Phương án">
+          {job.options.map((o) => (
+            <button key={o.id} type="button" role="tab" aria-selected={o.id === option.id} onClick={() => setSelected(o.id)}
+              className={cx('flex min-h-[56px] flex-col items-start justify-center rounded-btn border px-3 py-2 text-left transition-colors',
+                o.id === option.id ? 'border-ink bg-surface shadow-card' : 'border-line bg-surface-2 text-ink-muted hover:text-ink')}>
+              <span className="text-caption font-semibold [overflow-wrap:anywhere]">{o.name_vi}</span>
+              <span className="tabular text-label text-ink-subtle">{score(o.suitability)}/10</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      <section className="mx-gutter mt-3 overflow-hidden rounded-card border border-line bg-surface shadow-card" aria-labelledby="opt-title">
+        <div className="flex items-start justify-between gap-2 px-4 pb-3 pt-4">
           <div>
-            <h2 id="opt-title" className="text-h2">
+            <h2 id="opt-title" className="text-h1">
               <StyleName vi={option.name_vi} jp={option.name_jp} />
             </h2>
-            <div className="text-caption text-ink-muted">{option.rank === 1 ? 'Phù hợp nhất với phôi này' : `Phương án ${option.rank}`}</div>
+            <div className="text-caption text-ink-muted">{option.rank === 1 ? 'Phù hợp nhất' : `Phương án ${option.rank}`}</div>
           </div>
-          <span className="flex-none rounded-full bg-primary px-2.5 py-1 text-label font-semibold text-primary-on">{readOnly ? 'Đã dùng' : 'Đã chọn'}</span>
+          {readOnly ? <span className="flex-none rounded-chip bg-primary-soft px-2 py-0.5 text-label font-medium text-primary-ink">Đã dùng</span> : null}
         </div>
 
         <div className="border-y border-line">
           <Overlay job={job} option={option} showSketch={showSketch} />
         </div>
 
-        <div className="px-3.5 py-3">
-          <Legend option={option} lowerApexCm={a?.lower_apex_cm ?? null} />
-        </div>
-
-        <div className="flex gap-2 px-3.5 pb-3" role="group" aria-label="Lớp hiển thị">
-          {[
-            [true, 'Bản vẽ'],
-            [false, 'Ảnh gốc'],
-          ].map(([value, label]) => (
-            <button
-              key={String(label)}
-              type="button"
-              aria-pressed={showSketch === value}
-              onClick={() => setShowSketch(value as boolean)}
-              className={cx(
-                'min-h-touch flex-1 rounded-btn border text-caption',
-                showSketch === value ? 'border-primary bg-primary-soft font-medium text-primary-ink' : 'border-line-strong bg-surface text-ink',
-              )}
-            >
-              {label}
-            </button>
-          ))}
-          <button type="button" aria-label="Phóng to bản vẽ" onClick={() => setZoom(true)} className="flex h-touch w-touch items-center justify-center rounded-btn border border-line-strong bg-surface text-ink">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.4-4.4M11 8v6M8 11h6" /></svg>
+        <div className="flex items-center gap-2 px-4 pt-3">
+          <div className="flex-1">
+            <Segmented<'sketch' | 'photo'> label="Lớp hiển thị" value={showSketch ? 'sketch' : 'photo'} onChange={(v) => setShowSketch(v === 'sketch')}
+              options={[['sketch', 'Bản vẽ'], ['photo', 'Ảnh gốc']]} />
+          </div>
+          <button type="button" aria-label="Phóng to bản vẽ" onClick={() => setZoom(true)} className="flex h-touch w-touch items-center justify-center rounded-btn border border-line text-ink-muted hover:bg-surface-2 hover:text-ink">
+            <Maximize2 size={18} strokeWidth={1.75} />
           </button>
         </div>
 
-        <div className="flex flex-col gap-1.5 px-3.5 pb-3.5">
-          <div className="flex justify-between text-caption">
-            <span className="text-ink-muted">Mức phù hợp</span>
-            <span className="font-semibold">{score(option.suitability)}/10</span>
+        <div className="flex flex-col gap-3 p-4">
+          <SketchLegend />
+          <Counts option={option} lowerApexCm={a?.lower_apex_cm ?? null} />
+          <div className="flex items-center gap-3">
+            <span className="text-caption text-ink-muted">Mức phù hợp</span>
+            <div className="h-1 flex-1 rounded-full bg-surface-2" aria-hidden="true">
+              <div className="h-full rounded-full bg-primary" style={{ width: `${score(option.suitability) * 10}%` }} />
+            </div>
+            <span className="tabular text-caption font-semibold">{score(option.suitability)}/10</span>
           </div>
-          <div className="h-1.5 rounded-full bg-line" aria-hidden="true">
-            <div className="h-full rounded-full bg-primary" style={{ width: `${score(option.suitability) * 10}%` }} />
-          </div>
-          <p className="m-0 mt-1 text-caption">{option.why_vi}</p>
+          <p className="m-0 text-caption">{option.why_vi}</p>
           {option.remove_reasons_vi.length || option.new_branch_notes_vi.length || option.care_steps_vi.length ? (
-            <details className="mt-1 text-caption">
-              <summary className="flex min-h-touch cursor-pointer items-center font-medium text-primary-ink">Chi tiết cắt tỉa</summary>
-              <ul className="m-0 flex flex-col gap-1 pl-5 list-disc">
+            <details className="group text-caption">
+              <summary className="flex min-h-touch cursor-pointer list-none items-center gap-1.5 font-medium [&::-webkit-details-marker]:hidden">
+                <ChevronDown size={16} className="text-ink-subtle transition-transform group-open:rotate-180" aria-hidden="true" />
+                Chi tiết cắt tỉa
+              </summary>
+              <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-ink-muted">
                 {option.remove_reasons_vi.map((r, i) => <li key={`r${i}`}>Cắt: {r}</li>)}
                 {option.new_branch_notes_vi.map((r, i) => <li key={`n${i}`}>Nuôi: {r}</li>)}
                 {option.care_steps_vi.map((r, i) => <li key={`c${i}`}>{r}</li>)}
@@ -283,49 +280,18 @@ export default function Choose() {
         </div>
       </section>
 
-      {job.options.length > 1 && !readOnly ? (
-        <section className="mx-gutter mt-3 flex flex-col gap-2.5" aria-label="Phương án khác">
-          {job.options
-            .filter((o) => o.id !== option.id)
-            .map((o) => (
-              <button
-                key={o.id}
-                type="button"
-                onClick={() => {
-                  setSelected(o.id);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="flex items-center gap-3 rounded-card border border-line bg-surface p-3 text-left text-ink"
-              >
-                <div className="w-14 flex-none overflow-hidden rounded-img">
-                  <Overlay job={job} option={o} showSketch />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold">
-                    <StyleName vi={o.name_vi} jp={o.name_jp} />
-                  </div>
-                  <div className="text-caption text-ink-muted">
-                    Phù hợp {score(o.suitability)}/10 · {firstSentence(o.why_vi)}
-                  </div>
-                </div>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
-              </button>
-            ))}
-        </section>
-      ) : null}
-
       {readOnly ? (
-        <div className="mt-auto px-gutter pb-7 pt-5">
+        <div className="mt-auto px-gutter pb-6 pt-5">
           <ButtonLink to={`/ket-qua/${job.id}`} variant="secondary">
             Về ảnh kết quả
           </ButtonLink>
         </div>
       ) : (
-      <div className="sticky bottom-0 mt-auto flex flex-col gap-2 border-t border-line bg-surface px-gutter pb-7 pt-5">
+      <div className="sticky bottom-0 mt-auto flex flex-col gap-2 border-t border-line bg-surface px-gutter pb-6 pt-4">
         {submitError && submitError.status !== 402 ? <Notice tone="danger">{submitError.message}</Notice> : null}
         {noCredit ? (
           <>
-            <Notice tone="warn">Bạn đã hết lượt. Mua thêm lượt để tạo ảnh tương lai cho phương án này.</Notice>
+            <Notice tone="warn">Bạn đã hết lượt.</Notice>
             <ButtonLink to="/mua-luot">Mua lượt</ButtonLink>
           </>
         ) : (
@@ -333,8 +299,8 @@ export default function Choose() {
             <Button onClick={choose} loading={submitting} loadingLabel="Đang bắt đầu…">
               {retry ? 'Thử lại · dùng 1 lượt' : 'Tạo ảnh tương lai · dùng 1 lượt'}
             </Button>
-            <span className="text-center text-caption text-ink-muted">
-              Bạn còn {job.credits_left} lượt · khoảng 2–4 phút · <Link to="/mua-luot">Mua thêm lượt</Link>
+            <span className="tabular text-center text-label text-ink-subtle">
+              Còn {job.credits_left} lượt · <Link to="/mua-luot">Mua thêm</Link>
             </span>
           </>
         )}

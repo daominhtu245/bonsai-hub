@@ -82,7 +82,7 @@ def test_sketch_svg_and_png():
     for layer in ("canopy", "keep", "cut", "new-branch", "apex"):
         assert f'data-layer="{layer}"' in svg
     assert "Ngọn mới" in svg and 'marker-end="url(#arrow)"' in svg
-    assert len(re.findall(r'<polyline[^>]*stroke="#B23A2B"', svg)) == 3  # 2 cành + đoạn ngọn bị hạ
+    assert len(re.findall(r'<polyline[^>]*stroke="#C23B2B"', svg)) == 3  # 2 cành + đoạn ngọn bị hạ
     png = Image.open(io.BytesIO(to_png(scene, _photo())))
     assert png.size == (1000, 1500)
     # nền giảm sáng 30%: 200 → 140

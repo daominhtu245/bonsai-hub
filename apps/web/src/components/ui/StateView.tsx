@@ -8,18 +8,8 @@ export type ViewState<T> =
   | { status: 'error'; message: string; retry?: () => void }
   | { status: 'ready'; data: T };
 
-/** Bắt buộc 4 trạng thái cho mọi màn hình: đang tải (skeleton cùng bố cục), rỗng, lỗi, bình thường. */
-export function StateView<T>({
-  state,
-  skeleton,
-  empty,
-  children,
-}: {
-  state: ViewState<T>;
-  skeleton: ReactNode;
-  empty: ReactNode;
-  children: (data: T) => ReactNode;
-}) {
+/** 4 trạng thái cho mọi màn: đang tải (skeleton cùng bố cục), rỗng, lỗi, bình thường. */
+export function StateView<T>({ state, skeleton, empty, children }: { state: ViewState<T>; skeleton: ReactNode; empty: ReactNode; children: (data: T) => ReactNode }) {
   switch (state.status) {
     case 'loading':
       return (
@@ -32,10 +22,7 @@ export function StateView<T>({
       return <>{empty}</>;
     case 'error':
       return (
-        <Notice
-          tone="danger"
-          action={state.retry ? <Button variant="secondary" size="touch" block={false} onClick={state.retry}>Thử lại</Button> : undefined}
-        >
+        <Notice tone="danger" action={state.retry ? <Button variant="secondary" size="touch" block={false} onClick={state.retry}>Thử lại</Button> : undefined}>
           {state.message}
         </Notice>
       );
@@ -44,11 +31,12 @@ export function StateView<T>({
   }
 }
 
-export function EmptyState({ title, body, action }: { title: string; body?: string; action?: ReactNode }) {
+export function EmptyState({ title, body, action, image }: { title: string; body?: string; action?: ReactNode; image?: string }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-card border border-dashed border-line-strong bg-surface px-6 py-10 text-center">
+    <div className="flex flex-col items-center gap-3 rounded-card border border-line bg-surface px-6 py-8 text-center shadow-card">
+      {image ? <img src={image} alt="" className="h-28 w-auto object-contain" /> : null}
       <h2 className="text-h2">{title}</h2>
-      {body ? <p className="m-0 text-ink-muted">{body}</p> : null}
+      {body ? <p className="m-0 max-w-[22rem] text-caption text-ink-muted">{body}</p> : null}
       {action}
     </div>
   );

@@ -4,7 +4,7 @@ import { BackHeader } from '@/components/BackHeader';
 import { NotifyPrompt } from '@/components/NotifyPrompt';
 import { Button, ButtonLink, Notice, Skeleton, StepList, type StepState } from '@/components/ui';
 import { ApiError } from '@/lib/api';
-import { phaseAError, SPECIES_NAME, TIPS } from '@/lib/copy';
+import { phaseAError, SPECIES_NAME } from '@/lib/copy';
 import { jobsApi, watchJob, type Job, type JobProgress } from '@/lib/jobs';
 
 const STEP_KEYS = ['species', 'trunk', 'branches', 'front', 'design'] as const;
@@ -18,20 +18,20 @@ function stepLabel(key: (typeof STEP_KEYS)[number], progress: JobProgress, done:
         const pct = typeof s.confidence === 'number' ? Math.round(s.confidence * 100) : null;
         return (
           <>
-            Nhận diện loài: <strong className="font-semibold">{SPECIES_NAME[s.key] ?? s.key}</strong>
-            {pct !== null ? <span className="text-caption text-ink-muted"> (chắc chắn {pct}%)</span> : null}
+            Loài: <strong className="font-semibold">{SPECIES_NAME[s.key] ?? s.key}</strong>
+            {pct !== null ? <span className="tabular text-ink-subtle"> · {pct}%</span> : null}
           </>
         );
       }
       return 'Nhận diện loài';
     case 'trunk':
-      return 'Đo độ thuôn thân và rễ nổi';
+      return 'Đo thân và rễ';
     case 'branches':
-      return done && typeof s?.count === 'number' ? `Đã xét ${s.count} cành: giữ cành nào, cắt cành nào` : 'Xét từng cành: giữ cành nào, cắt cành nào';
+      return done && typeof s?.count === 'number' ? `Xét ${s.count} cành` : 'Xét các cành';
     case 'front':
-      return 'Chọn mặt tiền đẹp nhất';
+      return 'Đánh giá mặt tiền';
     case 'design':
-      return 'Đề xuất thế cây và vẽ bản thiết kế';
+      return 'Đề xuất thế và vẽ bản thiết kế';
   }
 }
 
@@ -41,7 +41,6 @@ export default function Analyzing() {
   const navigate = useNavigate();
   const [job, setJob] = useState<Job | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tip, setTip] = useState(() => Math.floor(Math.random() * TIPS.length));
   const [elapsed, setElapsed] = useState(0);
   const [retrying, setRetrying] = useState(false);
 
@@ -70,12 +69,8 @@ export default function Analyzing() {
   }, [jobId, navigate]);
 
   useEffect(() => {
-    const t = window.setInterval(() => setTip((i) => (i + 1) % TIPS.length), 8000);
     const e = window.setInterval(() => setElapsed((s) => s + 1), 1000);
-    return () => {
-      window.clearInterval(t);
-      window.clearInterval(e);
-    };
+    return () => window.clearInterval(e);
   }, []);
 
   const steps = useMemo(() => {
@@ -112,9 +107,9 @@ export default function Analyzing() {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-content flex-col">
-      <BackHeader to="/" title={failed ? 'Chưa phân tích được' : 'Đang đọc phôi của bạn'} />
+      <BackHeader to="/" title={failed ? 'Chưa phân tích được' : 'Đang phân tích'} />
 
-      <div className="relative mx-gutter mt-1 aspect-[300/260] overflow-hidden rounded-card border border-line bg-photo">
+      <div className="relative mx-gutter mt-4 aspect-[4/3] overflow-hidden rounded-card border border-line bg-photo shadow-card">
         {job?.front_photo ? (
           <>
             <img src={job.front_photo.url} alt="Ảnh phôi đang được đo thân và cành" className="h-full w-full object-contain" />
@@ -146,29 +141,22 @@ export default function Analyzing() {
         </div>
       ) : (
         <>
-          <div className="mx-gutter mt-5">
-            <StepList steps={steps} />
-          </div>
-
-          <div className="mx-gutter mt-4 flex gap-3 rounded-card border border-line bg-surface px-4 py-3.5">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--clay)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mt-0.5 flex-none"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3Z" /></svg>
-            <div>
-              <div className="text-caption font-semibold text-clay">Mẹo nhỏ</div>
-              <div className="text-caption">{TIPS[tip]}</div>
+          <div className="mx-gutter mt-4 flex flex-col gap-3 rounded-card border border-line bg-surface p-4 shadow-card">
+            <div className="flex items-center justify-between text-caption">
+              <span className="font-medium">Tiến độ</span>
+              <span className="tabular text-ink-subtle">~{remaining} giây</span>
             </div>
+            <div className="h-1 w-full overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-label="Tiến độ phân tích" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+              <div className="h-full bg-primary transition-[width] duration-base ease-calm" style={{ width: `${pct}%` }} />
+            </div>
+            <StepList steps={steps} />
           </div>
         </>
       )}
 
       {!failed && !error ? (
-        <div className="mt-auto flex flex-col items-center gap-1.5 px-gutter pb-7 pt-4">
+        <div className="mt-auto flex flex-col items-center gap-2 px-gutter pb-7 pt-4">
           <NotifyPrompt />
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-line" role="progressbar" aria-label="Tiến độ phân tích" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-            <div className="h-full bg-primary transition-[width] duration-base ease-calm" style={{ width: `${pct}%` }} />
-          </div>
-          <span className="text-center text-caption text-ink-muted">
-            Còn khoảng {remaining} giây · phân tích miễn phí, chưa trừ lượt
-          </span>
         </div>
       ) : null}
     </div>

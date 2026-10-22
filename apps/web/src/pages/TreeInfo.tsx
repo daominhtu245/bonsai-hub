@@ -1,7 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { Check, Sparkles } from 'lucide-react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
-import { Button, Notice, Skeleton } from '@/components/ui';
+import { Button, Notice, Segmented, Skeleton } from '@/components/ui';
 import { accountApi } from '@/lib/account';
 import { ApiError, uploadPhoto } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -20,16 +21,29 @@ const ORDER = FALLBACK_SPECIES.map((s) => s.key);
 
 type Submit = { status: 'idle' } | { status: 'working'; label: string } | { status: 'error'; message: string };
 
-/** Màn 03 — Thông tin cây (design/mockups/TreeInfo.dc.html). Mọi trường trừ ảnh đều tùy chọn. */
+function Field({ label, htmlFor, optional, children }: { label: string; htmlFor?: string; optional?: boolean; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={htmlFor} className="text-caption font-medium">
+        {label} {optional ? <span className="font-normal text-ink-subtle">· không bắt buộc</span> : null}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+const input = 'min-h-cta w-full rounded-btn border border-line-strong bg-surface px-3.5 text-body text-ink shadow-card placeholder:text-ink-subtle';
+
+/** Màn 03 — Thông tin cây. Mọi trường trừ ảnh đều tùy chọn. */
 export default function TreeInfo() {
   const { shots, frontId, setFront, reset } = useCapture();
   const navigate = useNavigate();
+  const { user, setUser } = useAuth();
   const [species, setSpecies] = useState<Species[] | null>(null);
   const [speciesKey, setSpeciesKey] = useState<string | null>(null);
   const [height, setHeight] = useState('');
   const [nickname, setNickname] = useState('');
-  const [region, setRegion] = useState<Region | null>(null);
-  const { user, setUser } = useAuth();
+  const [region, setRegion] = useState<Region | ''>('');
   const alreadyConsented = user.status === 'ready' && user.data.consent_training;
   const [consent, setConsent] = useState(false);
   const [submit, setSubmit] = useState<Submit>({ status: 'idle' });
@@ -72,140 +86,86 @@ export default function TreeInfo() {
   };
 
   const working = submit.status === 'working';
+  const speciesOptions = species ? [{ key: null as string | null, name_vi: 'AI nhận diện' }, ...species] : null;
 
   return (
     <form onSubmit={onSubmit} className="mx-auto flex min-h-dvh max-w-content flex-col">
-      <BackHeader to="/chup" title="Thông tin cây" right="Bước 2/3" />
+      <BackHeader to="/chup" title="Thông tin cây" right="2 / 3" />
 
-      <section className="flex flex-col gap-2 px-gutter pt-1">
-        <div className="text-caption text-ink-muted" id="front-hint">
-          {shots.length} ảnh đã chụp · chạm để chọn mặt tiền
-        </div>
-        <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-labelledby="front-hint">
-          {shots.map((s, i) => {
-            const selected = s.id === frontId;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                aria-label={`${VIEW_LABELS[i]}${selected ? ', đang là mặt tiền' : ''}`}
-                onClick={() => setFront(s.id)}
-                className={cx('relative aspect-square overflow-hidden rounded-img bg-photo', selected ? 'border-2 border-primary' : 'border border-line')}
-              >
-                <img src={s.url} alt="" className="h-full w-full object-cover" />
-                {selected ? (
-                  <span className="absolute inset-x-0 bottom-1 mx-auto w-max rounded-[4px] bg-primary px-1.5 text-[11px] font-semibold text-primary-on">Mặt tiền</span>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-2.5 px-gutter pt-6">
-        <h2 className="text-h2" id="species-label">Đây là cây gì?</h2>
-        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-labelledby="species-label">
-          {species === null
-            ? Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-[76px] rounded-card" />)
-            : [{ key: null as string | null, name_vi: 'AI nhận diện' }, ...species].map((sp) => {
-                const selected = speciesKey === sp.key;
-                return (
-                  <button
-                    key={sp.key ?? 'ai'}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    onClick={() => setSpeciesKey(sp.key)}
-                    className={cx(
-                      'flex h-[76px] flex-col items-center justify-center gap-1 rounded-card px-1 text-caption',
-                      selected ? 'border-2 border-primary bg-primary-soft font-semibold text-primary-ink' : 'border border-line bg-surface text-ink',
-                    )}
-                  >
-                    {sp.key === null ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9l-4.7 1.8L12 15.5l-1.8-4.7L5.5 9l4.7-1.3L12 3zM18 15l.9 2.1 2.1.9-2.1.9L18 21l-.9-2.1L15 18l2.1-.9L18 15z" /></svg>
-                    ) : null}
-                    {sp.name_vi}
-                  </button>
-                );
-              })}
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-3.5 px-gutter pt-6">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="height" className="text-caption font-medium">
-            Chiều cao hiện tại <span className="font-normal text-ink-muted">(không bắt buộc)</span>
-          </label>
-          <div className={cx('flex min-h-cta items-center rounded-btn border bg-surface px-3.5', heightInvalid ? 'border-danger' : 'border-line-strong')}>
-            <input
-              id="height"
-              type="text"
-              inputMode="decimal"
-              placeholder="Ví dụ 45"
-              value={height}
-              onChange={(e) => setHeight(e.target.value)}
-              aria-invalid={heightInvalid}
-              aria-describedby={heightInvalid ? 'height-err' : undefined}
-              className="min-w-0 flex-1 bg-transparent text-body text-ink outline-none"
-            />
-            <span className="text-ink-muted">cm</span>
+      <div className="flex flex-col gap-6 px-gutter pb-6 pt-5">
+        <section className="flex flex-col gap-2">
+          <h2 className="eyebrow" id="front-label">Mặt tiền</h2>
+          <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-labelledby="front-label">
+            {shots.map((s, i) => {
+              const selected = s.id === frontId;
+              return (
+                <button key={s.id} type="button" role="radio" aria-checked={selected} aria-label={`${VIEW_LABELS[i]}${selected ? ', đang là mặt tiền' : ''}`} onClick={() => setFront(s.id)}
+                  className={cx('relative aspect-square overflow-hidden rounded-img bg-photo ring-offset-2 ring-offset-bg', selected ? 'ring-2 ring-primary' : 'opacity-80 hover:opacity-100')}>
+                  <img src={s.url} alt="" className="h-full w-full object-cover" />
+                  {selected ? (
+                    <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-on">
+                      <Check size={12} strokeWidth={3} aria-hidden="true" />
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
-          {heightInvalid ? <span id="height-err" className="text-label text-danger">Chiều cao cần là số từ 1 đến 999 cm.</span> : null}
-          <span className="text-label text-ink-muted">Có chiều cao thật, bản vẽ sẽ ghi được số đo bằng cm.</span>
-        </div>
-        <fieldset className="m-0 flex flex-col gap-1.5 border-0 p-0">
-          <legend className="mb-1.5 text-caption font-medium">
-            Cây đặt ở miền nào? <span className="font-normal text-ink-muted">(không bắt buộc)</span>
-          </legend>
-          <div className="grid grid-cols-3 gap-2">
-            {([['north', 'Miền Bắc'], ['central', 'Miền Trung'], ['south', 'Miền Nam']] as const).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={region === value}
-                onClick={() => setRegion((r) => (r === value ? null : value))}
-                className={cx('min-h-touch rounded-btn text-caption', region === value ? 'border-2 border-primary bg-primary-soft font-semibold text-primary-ink' : 'border border-line-strong bg-surface text-ink')}
-              >
-                {label}
-              </button>
-            ))}
+        </section>
+
+        <section className="flex flex-col gap-2">
+          <h2 className="eyebrow" id="species-label">Loài cây</h2>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" role="radiogroup" aria-labelledby="species-label">
+            {speciesOptions === null
+              ? Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-12" />)
+              : speciesOptions.map((sp) => {
+                  const selected = speciesKey === sp.key;
+                  return (
+                    <button key={sp.key ?? 'ai'} type="button" role="radio" aria-checked={selected} onClick={() => setSpeciesKey(sp.key)}
+                      className={cx('flex min-h-[48px] items-center gap-2 rounded-btn border px-3 text-left text-caption font-medium transition-colors',
+                        selected ? 'border-primary bg-primary-soft text-primary-ink' : 'border-line bg-surface text-ink hover:border-line-strong')}>
+                      {sp.key === null ? <Sparkles size={16} strokeWidth={1.75} aria-hidden="true" /> : null}
+                      {sp.name_vi}
+                    </button>
+                  );
+                })}
           </div>
-          <span className="text-label text-ink-muted">Để lịch cắt tỉa, thay chậu hợp mùa ở vùng của bạn.</span>
-        </fieldset>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="nickname" className="text-caption font-medium">
-            Đặt tên cho cây <span className="font-normal text-ink-muted">(không bắt buộc)</span>
+        </section>
+
+        <section className="flex flex-col gap-4">
+          <Field label="Chiều cao hiện tại" htmlFor="height" optional>
+            <div className={cx('flex min-h-cta items-center rounded-btn border bg-surface px-3.5 shadow-card', heightInvalid ? 'border-danger' : 'border-line-strong')}>
+              <input id="height" type="text" inputMode="decimal" placeholder="45" value={height} onChange={(e) => setHeight(e.target.value)}
+                aria-invalid={heightInvalid} aria-describedby={heightInvalid ? 'height-err' : undefined}
+                className="tabular min-w-0 flex-1 bg-transparent text-body text-ink outline-none placeholder:text-ink-subtle" />
+              <span className="text-caption text-ink-subtle">cm</span>
+            </div>
+            {heightInvalid ? <span id="height-err" className="text-label text-danger">Chiều cao cần là số từ 1 đến 999 cm.</span> : null}
+          </Field>
+          <Field label="Tên cây" htmlFor="nickname" optional>
+            <input id="nickname" type="text" maxLength={120} placeholder="Si gốc lũa sân sau" value={nickname} onChange={(e) => setNickname(e.target.value)} className={input} />
+          </Field>
+          <Field label="Vùng khí hậu" optional>
+            <Segmented<Region | ''> label="Vùng khí hậu" value={region} onChange={setRegion}
+              options={[['', 'Không rõ'], ['north', 'Bắc'], ['central', 'Trung'], ['south', 'Nam']]} />
+          </Field>
+        </section>
+
+        {!alreadyConsented ? (
+          <label className="flex cursor-pointer items-start gap-3 text-caption text-ink-muted">
+            <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 h-5 w-5 flex-none" />
+            <span>
+              Cho phép dùng ảnh để cải thiện AI · <Link to="/dieu-khoan">Điều khoản</Link>
+            </span>
           </label>
-          <input
-            id="nickname"
-            type="text"
-            maxLength={120}
-            placeholder="Ví dụ Si gốc lũa sân sau"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            className="min-h-cta rounded-btn border border-line-strong bg-surface px-3.5 text-body text-ink"
-          />
-        </div>
-      </section>
+        ) : null}
+      </div>
 
-      {!alreadyConsented ? (
-        <label className="mx-gutter mt-5 flex cursor-pointer items-start gap-3 text-caption">
-          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 h-[22px] w-[22px] flex-none accent-[var(--primary)]" />
-          <span>
-            Cho phép dùng ảnh của tôi để cải thiện AI <span className="text-ink-muted">(không bắt buộc, tắt được trong Tài khoản)</span> ·{' '}
-            <Link to="/dieu-khoan">Điều khoản</Link>
-          </span>
-        </label>
-      ) : null}
-
-      <div className="mt-auto flex flex-col gap-2 px-gutter pb-7 pt-4">
+      <div className="sticky bottom-0 mt-auto flex flex-col gap-2 border-t border-line bg-surface px-gutter pb-6 pt-4">
         {submit.status === 'error' ? <Notice tone="danger">{submit.message}</Notice> : null}
         <Button type="submit" loading={working} loadingLabel={working ? submit.label : undefined} disabled={heightInvalid}>
-          Phân tích phôi · miễn phí
+          Phân tích · miễn phí
         </Button>
-        <span className="text-center text-caption text-ink-muted">Khoảng 30 giây. Chưa trừ lượt.</span>
       </div>
     </form>
   );

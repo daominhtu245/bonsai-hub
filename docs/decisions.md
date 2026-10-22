@@ -41,6 +41,9 @@ Tài liệu kỹ thuật vẫn là nguồn chính. Đây là những chỗ code 
 | 25 | Zoom 200%: timeline S0–S4 cuộn ngang thay vì thu nút dưới 44 px; bảng admin cuộn ngang | Giữ vùng chạm tối thiểu (ui-spec) |
 | 26 | Hình minh họa giữ màu bảng sáng ở chế độ tối (`.theme-light`) | Đóng vai ảnh chụp |
 
+| 27 | **Thiết kế lại v2** (22/10/2026): kiểu công cụ chuyên nghiệp — trung tính + một màu nhấn, chỉ Be Vietnam Pro, icon Lucide, bo nhỏ; bỏ hình vẽ hoạt hình, chip tròn, mẹo/chú thích dài; ảnh thật Unsplash; trang chủ = giới thiệu (khách) / bảng điều khiển (đã đăng nhập) | Yêu cầu sản phẩm chuyên nghiệp, ít chữ |
+| 28 | Ảnh chia sẻ server cũng theo v2 (nền sáng, chữ sans, biểu tượng thương hiệu); màu nét bản vẽ đồng bộ token v2 | Nhất quán thương hiệu |
+
 ## Chưa làm (cố ý)
 - Xóa tài khoản (đã có xóa cây kèm ảnh; xóa tài khoản cần quy định giữ sổ lượt/thanh toán, Nghị định 13/2023).
 - P3b bản vẽ phong cách nghệ nhân, video timelapse, theo dõi tiến độ cây thật (sau MVP theo §1).

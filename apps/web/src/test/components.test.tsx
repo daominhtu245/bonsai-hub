@@ -39,12 +39,12 @@ describe('GuideCard', () => {
     expect(boxes[0]).toBeChecked();
     await userEvent.click(boxes[1]);
     expect(onToggle).toHaveBeenCalledWith(1);
-    expect(screen.getByText('Lỗi hay gặp')).toBeInTheDocument();
+    expect(screen.getByText('Lỗi hay gặp.')).toBeInTheDocument();
   });
 
   it('hides ready section on final stage', () => {
     render(<GuideCard guide={sampleGuides[4]} done={new Set()} onToggle={() => {}} />);
-    expect(screen.queryByText('Sẵn sàng sang giai đoạn sau khi')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sang giai đoạn sau khi')).not.toBeInTheDocument();
   });
 });
 
@@ -65,7 +65,7 @@ describe('StateView', () => {
 });
 
 describe('Home', () => {
-  it('shows hero, CTA and trial chip for guests', () => {
+  it('shows hero and CTA for guests', () => {
     render(
       <AuthProvider>
         <MemoryRouter>
@@ -73,9 +73,9 @@ describe('Home', () => {
         </MemoryRouter>
       </AuthProvider>,
     );
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Phôi hôm nay');
-    expect(screen.getByRole('link', { name: /Chụp phôi của bạn/ })).toHaveAttribute('href', '/chup');
-    expect(screen.getByText('1 lượt miễn phí')).toBeInTheDocument();
-    expect(screen.getByRole('slider')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Thiết kế dáng bonsai từ ảnh phôi');
+    expect(screen.getByRole('link', { name: /Bắt đầu với ảnh phôi/ })).toHaveAttribute('href', '/chup');
+    expect(screen.getByRole('link', { name: 'Đăng nhập' })).toHaveAttribute('href', '/dang-nhap');
+    expect(screen.getByAltText(/Cây bonsai hoàn thiện/)).toHaveAttribute('src', '/images/hero.webp');
   });
 });

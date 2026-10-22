@@ -67,7 +67,7 @@ describe('Result (màn 06)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'S2 ngắn S2' }));
     expect(screen.getByRole('heading', { name: 'Tên S2' })).toBeInTheDocument();
     expect(screen.getByAltText('Bản vẽ thiết kế thay cho ảnh giai đoạn này')).toHaveAttribute('src', 'https://r2/s1.svg');
-    expect(screen.getByText(/chưa tạo được đủ tin cậy/)).toBeInTheDocument();
+    expect(screen.getByText(/hiển thị bản vẽ thay ảnh/)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('checkbox', { name: 'Việc B S2' }));
     expect(screen.getByRole('checkbox', { name: 'Việc B S2' })).toBeChecked();

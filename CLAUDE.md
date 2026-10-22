@@ -14,13 +14,14 @@ Giao diện và nội dung hiển thị: **tiếng Việt**. Prompt gửi cho mo
 | `docs/architecture.md` | Stack, kiến trúc, pipeline A/B, trạng thái job, DB, API, chi phí, hạ tầng, kế hoạch 6 tuần, rủi ro |
 | `docs/prompt_system.md` | Toàn bộ prompt P1→P6, từ điển thế/loài, bộ luật tỉ lệ (YAML), luật chấm P4, kiểm tra đơn điệu giai đoạn |
 | `docs/ui-spec.md` | Nguyên tắc UX, 9 màn hình, trạng thái bắt buộc, giọng văn, trợ năng |
-| `design/tokens.json`, `design/tailwind.tokens.cjs` | Design tokens "Rêu & Gốm" (sáng/tối), chữ, bo góc, khoảng cách |
-| `design/mockups/*.dc.html` | Mockup 9 màn hình + bảng hệ thống thiết kế (HTML tham chiếu bố cục, màu, copy). Bản xem trực tuyến: canvas "Bonsai AI — Mockup MVP" |
+| `design/tokens.json`, `design/tailwind.tokens.cjs` | Hệ thiết kế **v2** (kiểu công cụ chuyên nghiệp: trung tính, một màu nhấn, Be Vietnam Pro), sáng/tối |
+| `design/mockups/*.dc.html` | Mockup 9 màn hình v1 — chỉ còn dùng để tham chiếu **luồng và chức năng**; giao diện đã thay bằng hệ v2 |
+| `/he-thong-thiet-ke` (web) | Thư viện component v2 đang dùng |
 
-Khi tài liệu và mockup lệch nhau: **tài liệu kỹ thuật** quyết định hành vi, **mockup** quyết định giao diện và câu chữ.
+Khi tài liệu và mockup lệch nhau: **tài liệu kỹ thuật** quyết định hành vi; giao diện theo **hệ thiết kế v2** (tokens + thư viện component), không theo màu/chữ của mockup v1.
 
 ## Stack (đã chốt)
-- Frontend: React + Vite + TypeScript + Tailwind, PWA. Font: Lora (tiêu đề), Be Vietnam Pro (nội dung).
+- Frontend: React + Vite + TypeScript + Tailwind, PWA. Font: Be Vietnam Pro (duy nhất). Icon: lucide-react.
 - Backend: FastAPI (Python 3.12), Celery (hoặc Arq) + Redis, PostgreSQL 16 (JSONB), Cloudflare R2 (S3 API).
 - AI: lớp adapter `llm_client` (Claude Sonnet 5.5 mặc định, Gemini Flash dự phòng) và `image_client` (Gemini Nano Banana mặc định, GPT Image dự phòng). Đổi nhà cung cấp bằng cấu hình, không sửa code pipeline.
 - CV: YOLO-seg (thân/cành), SAM làm fallback và công cụ gán nhãn; OpenCV, Pillow.
@@ -46,7 +47,8 @@ docs/                # tài liệu (đã có)
 - Không bao giờ để model ảnh tự quyết thẩm mỹ: thiết kế quyết định ở P2 + rule engine; P3 chỉ thực thi.
 - Ảnh tải lên: xóa EXIF/GPS, chuẩn hóa cạnh dài 1536 px, lưu R2 private, truy cập bằng URL ký sẵn 1 giờ.
 - Lỗi sau khi đã trừ lượt → tự hoàn lượt (ghi `credit_ledger` reason `refund`).
-- UI: chỉ dùng token trong `design/tokens.json`; vùng chạm ≥ 44 px, nút chính 52 px; mọi màn hình có 4 trạng thái (đang tải, rỗng, lỗi, bình thường).
+- UI: chỉ dùng token trong `design/tokens.json`; vùng chạm ≥ 44 px, nút chính 48 px; mọi màn hình có 4 trạng thái (đang tải, rỗng, lỗi, bình thường).
+- UI tối giản chữ: không thêm đoạn mẹo/giải thích/chú thích dài; chỉ giữ chức năng, nhãn bắt buộc ("Minh họa" trên ảnh AI) và thông báo cần thiết. Không dùng hình vẽ hoạt hình; hình minh họa là ảnh thật có giấy phép (`apps/web/public/images/CREDITS.md`).
 - Không lưu khóa API ngoài biến môi trường của `worker`.
 
 ## Thứ tự triển khai (6 tuần, kiểm thử song song khi xây)

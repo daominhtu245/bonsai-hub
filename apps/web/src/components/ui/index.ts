@@ -1,7 +1,7 @@
 export { BeforeAfterSlider } from './BeforeAfterSlider';
 export { Button, ButtonLink } from './Button';
 export { Card } from './Card';
-export { Chip, FilterChip, StyleName } from './Chip';
+export { Chip, FilterChip, Segmented, StyleName } from './Chip';
 export { GuideCard, type StageGuide } from './GuideCard';
 export { Notice } from './Notice';
 export { Skeleton } from './Skeleton';

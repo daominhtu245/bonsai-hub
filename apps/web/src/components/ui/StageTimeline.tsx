@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import { cx } from '@/lib/cx';
 
 export type StageCode = 'S0' | 'S1' | 'S2' | 'S3' | 'S4';
@@ -7,35 +8,28 @@ export interface StageTab {
   short: string;
 }
 
-/** Timeline S0–S4: đã qua · đang xem · chưa tới. */
+/** Tab giai đoạn S0–S4 dạng thanh tiến trình chia đoạn: đã qua (✓) · đang xem · chưa tới. Hẹp quá thì cuộn ngang. */
 export function StageTimeline({ stages, current, onSelect }: { stages: StageTab[]; current: number; onSelect: (index: number) => void }) {
   return (
-    // Màn rất hẹp (zoom 200%): cuộn ngang thay vì thu nhỏ nút dưới 44 px.
     <nav aria-label="Các giai đoạn" className="overflow-x-auto">
-      <ol className="relative m-0 grid min-w-[17rem] list-none p-0" style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}>
-      <li aria-hidden="true" className="pointer-events-none absolute left-[10%] right-[10%] top-[22px] h-px bg-line-strong" />
+      <ol className="m-0 grid min-w-[17rem] list-none gap-1 p-0" style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}>
         {stages.map((s, i) => {
           const state = i === current ? 'current' : i < current ? 'past' : 'future';
           return (
-            <li key={s.code} className="relative flex justify-center">
+            <li key={s.code}>
               <button
                 type="button"
                 onClick={() => onSelect(i)}
                 aria-pressed={state === 'current'}
                 aria-label={`${s.code} ${s.short}`}
-                className="flex min-w-touch flex-col items-center gap-1.5 rounded-btn px-1 pb-1"
+                className="group flex min-h-touch w-full flex-col gap-1.5 rounded-btn pb-1 pt-1 text-left"
               >
-                <span
-                  className={cx(
-                    'flex h-touch w-touch items-center justify-center rounded-full text-caption transition-colors duration-base ease-calm',
-                    state === 'current' && 'bg-primary font-semibold text-primary-on',
-                    state === 'past' && 'bg-primary-soft font-semibold text-primary-ink',
-                    state === 'future' && 'border border-line-strong bg-surface text-ink-muted',
-                  )}
-                >
-                  {s.code}
+                <span className={cx('h-1 w-full rounded-full transition-colors duration-base', state === 'future' ? 'bg-line' : 'bg-primary', state === 'past' && 'opacity-40')} />
+                <span className="flex items-center gap-1 px-0.5">
+                  <span className={cx('tabular text-label font-semibold', state === 'current' ? 'text-ink' : 'text-ink-subtle')}>{s.code}</span>
+                  {state === 'past' ? <Check size={12} strokeWidth={2.5} className="text-primary" aria-hidden="true" /> : null}
                 </span>
-                <span className={cx('text-center text-label leading-tight', state === 'current' ? 'font-semibold text-ink' : 'text-ink-muted')}>{s.short}</span>
+                <span className={cx('px-0.5 text-label leading-tight', state === 'current' ? 'font-medium text-ink' : 'text-ink-muted group-hover:text-ink')}>{s.short}</span>
               </button>
             </li>
           );

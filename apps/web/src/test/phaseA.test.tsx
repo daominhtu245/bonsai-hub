@@ -92,8 +92,8 @@ describe('TreeInfo', () => {
     await userEvent.click(await screen.findByRole('radio', { name: 'Si' }));
     await userEvent.click(screen.getByRole('radio', { name: /Mặt phải/ }));
     await userEvent.type(screen.getByLabelText(/Chiều cao/), '45,5');
-    await userEvent.type(screen.getByLabelText(/Đặt tên/), 'Si sân sau');
-    await userEvent.click(screen.getByRole('button', { name: /Phân tích phôi/ }));
+    await userEvent.type(screen.getByLabelText(/Tên cây/), 'Si sân sau');
+    await userEvent.click(screen.getByRole('button', { name: /Phân tích · miễn phí/ }));
 
     expect(await screen.findByText('đang phân tích')).toBeInTheDocument();
     const tree = calls.find((c) => c.method === 'POST' && c.url.endsWith('/trees'))!.body as Record<string, unknown>;
@@ -109,7 +109,7 @@ describe('TreeInfo', () => {
     renderAt('/chup/thong-tin', <Route path="/chup/thong-tin" element={<WithShots><TreeInfo /></WithShots>} />);
     await userEvent.type(await screen.findByLabelText(/Chiều cao/), 'abc');
     expect(screen.getByText(/Chiều cao cần là số/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Phân tích phôi/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Phân tích · miễn phí/ })).toBeDisabled();
   });
 });
 
@@ -147,15 +147,15 @@ describe('Choose', () => {
     ]);
     renderAt('/chon/j1', <><Route path="/chon/:jobId" element={<Choose />} /><Route path="/ket-qua/:jobId" element={<div>đang tạo ảnh</div>} /></>);
     expect(await screen.findByRole('heading', { name: /Trực uốn/ })).toBeInTheDocument();
-    expect(screen.getByText('Ø gốc 4,2 cm')).toBeInTheDocument();
-    expect(screen.getByText(/Cắt bỏ \(2 cành \+ hạ ngọn\)/)).toBeInTheDocument();
-    expect(screen.getByText('Hạ ngọn khoảng 8 cm')).toBeInTheDocument();
+    expect(screen.getByText('4,2 cm')).toBeInTheDocument();
+    expect(screen.getByText('2 cành + hạ ngọn')).toBeInTheDocument();
+    expect(screen.getByText('khoảng 8 cm')).toBeInTheDocument();
     expect(screen.getByAltText(/Bản vẽ thiết kế thế Trực uốn/)).toHaveAttribute('src', 'https://r2/s1.svg');
 
     await userEvent.click(screen.getByRole('button', { name: 'Ảnh gốc' }));
     expect(screen.queryByAltText(/Bản vẽ thiết kế thế Trực uốn/)).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /Xiêu/ }));
+    await userEvent.click(screen.getByRole('tab', { name: /Xiêu/ }));
     expect(screen.getByRole('heading', { name: /Xiêu/ })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /Tạo ảnh tương lai/ }));
     expect(await screen.findByText('đang tạo ảnh')).toBeInTheDocument();

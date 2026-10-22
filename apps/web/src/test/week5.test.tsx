@@ -38,8 +38,9 @@ describe('Garden', () => {
       ] })],
     ]);
     renderAt('/vuon', '/vuon', <Garden />);
-    expect(await screen.findByText('2 cây · còn 4 lượt')).toBeInTheDocument();
+    expect(await screen.findByText('2 cây · 4 lượt')).toBeInTheDocument();
     expect(screen.getByText('Trực uốn · S1 Tạo khung')).toBeInTheDocument();
+    expect(screen.getByText('Tiếp theo: Uốn dây cành trái')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Mai mới mua/ })).toHaveAttribute('href', '/chon/j2');
     expect(screen.getByRole('img', { name: 'Đã xong 1/5 giai đoạn' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Còn việc cần làm' }));
@@ -50,7 +51,7 @@ describe('Garden', () => {
   it('shows empty state', async () => {
     mockFetch([['GET /api/v1/me', () => json(user)], ['GET /api/v1/garden', () => json({ credits: 1, trees: [] })]]);
     renderAt('/vuon', '/vuon', <Garden />);
-    expect(await screen.findByText('Vườn còn trống')).toBeInTheDocument();
+    expect(await screen.findByText('Chưa có cây nào')).toBeInTheDocument();
   });
 });
 
@@ -98,7 +99,7 @@ describe('Share', () => {
     expect(await screen.findByAltText(/Ảnh chia sẻ/)).toHaveAttribute('src', 'https://r2/9.jpg');
     await userEvent.click(screen.getByRole('button', { name: 'Vuông 1:1' }));
     expect(screen.getByAltText(/Ảnh chia sẻ/)).toHaveAttribute('src', 'https://r2/1.jpg');
-    expect(screen.getByRole('checkbox')).toBeDisabled(); // không phải nhà vườn
+    expect(screen.getByRole('switch')).toBeDisabled(); // không phải nhà vườn
     await userEvent.click(screen.getByRole('button', { name: 'Sao chép link trang kết quả' }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith('http://x/s/abc'));
   });

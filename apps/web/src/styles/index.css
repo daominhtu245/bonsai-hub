@@ -7,17 +7,18 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    font-feature-settings: 'cv11', 'ss01';
   }
   body {
-    @apply bg-bg font-body text-body text-ink antialiased;
+    @apply bg-bg font-sans text-body text-ink antialiased;
     margin: 0;
   }
   h1, h2, h3 {
-    @apply font-display font-semibold;
+    @apply font-sans font-semibold;
     margin: 0;
   }
   a {
-    @apply text-primary;
+    @apply text-primary underline-offset-2;
   }
   a:hover {
     @apply text-primary-ink;
@@ -25,6 +26,9 @@
   :focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
+  }
+  input[type='checkbox'], input[type='radio'] {
+    accent-color: var(--primary);
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -39,26 +43,46 @@
   .scrim {
     background: color-mix(in srgb, var(--bg) 78%, transparent);
   }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @layer components {
   .scan-line {
-    background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--leaf) 35%, transparent), transparent);
+    background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--primary) 28%, transparent), transparent);
     animation: scan 2.4s var(--easing) infinite alternate;
   }
   @keyframes scan {
     from { top: -10%; }
     to { top: 85%; }
   }
-}
-
-@layer components {
-  /* Đổi ảnh giữa các giai đoạn: mờ dần (ui-spec: 200–300 ms ease-out). */
   .stage-fade {
     animation: stage-fade var(--motion-base) var(--easing);
   }
   @keyframes stage-fade {
     from { opacity: 0; }
     to { opacity: 1; }
+  }
+  /* Công tắc trượt từ input checkbox (giữ ngữ nghĩa role="switch", bàn phím, nhãn). */
+  .switch {
+    @apply relative h-6 w-10 flex-none cursor-pointer appearance-none rounded-full bg-line-strong transition-colors duration-fast;
+  }
+  .switch::before {
+    content: '';
+    @apply absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-surface shadow-raised transition-transform duration-fast;
+  }
+  .switch:checked {
+    @apply bg-primary;
+  }
+  .switch:checked::before {
+    transform: translateX(16px);
+  }
+  .switch:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+  /* Nhãn mục nhỏ kiểu công cụ: chữ hoa, giãn chữ. */
+  .eyebrow {
+    @apply text-label font-semibold uppercase tracking-wider text-ink-subtle;
   }
 }

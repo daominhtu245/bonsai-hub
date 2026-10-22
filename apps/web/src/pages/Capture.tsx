@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AlertTriangle, Check, ChevronLeft, CircleHelp, ImagePlus, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Notice } from '@/components/ui';
 import { MAX_SHOTS, useCapture, VIEW_LABELS } from '@/lib/capture';
@@ -18,10 +19,8 @@ function QualityPill({ q }: { q: Quality | null }) {
   if (!q) return null;
   const ok = q.issue === null;
   return (
-    <div className="absolute inset-x-3 bottom-3 flex items-center gap-2 rounded-btn scrim px-3 py-2.5 text-caption" role="status" aria-live="polite">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ok ? 'var(--leaf)' : 'var(--warn)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        {ok ? <path d="M5 12l4 4 10-10" /> : <path d="M12 4 2.5 20h19L12 4Zm0 6v4m0 3h.01" />}
-      </svg>
+    <div className="absolute inset-x-3 bottom-3 flex items-center gap-2 rounded-btn scrim px-3 py-2 text-caption font-medium backdrop-blur" role="status" aria-live="polite">
+      {ok ? <Check size={16} strokeWidth={2.5} className="flex-none text-primary" aria-hidden="true" /> : <AlertTriangle size={16} strokeWidth={2} className="flex-none text-warn" aria-hidden="true" />}
       <span className="truncate">{ok ? 'Đủ sáng · ảnh nét' : issueText[q.issue!]}</span>
     </div>
   );
@@ -102,30 +101,29 @@ export default function Capture() {
       <div className="mx-auto flex w-full max-w-content flex-1 flex-col">
         <header className="flex items-center justify-between px-gutter py-3">
           <Link to="/" aria-label="Quay lại" className="flex h-touch w-touch items-center justify-center rounded-btn text-ink hover:text-ink">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+            <ChevronLeft size={22} strokeWidth={1.75} />
           </Link>
-          <h1 className="font-body text-body font-semibold">
+          <h1 className="text-[15px] font-semibold">
             {full ? 'Đã đủ 4 mặt' : `Mặt ${viewIndex + 1}/4 · ${VIEW_LABELS[viewIndex]}`}
           </h1>
           <button type="button" aria-label="Hướng dẫn chụp" aria-expanded={showHelp} onClick={() => setShowHelp((s) => !s)} className="flex h-touch w-touch items-center justify-center rounded-btn text-ink">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14" /><path d="M12 17.5v.01" /></svg>
+            <CircleHelp size={21} strokeWidth={1.75} />
           </button>
         </header>
 
         <div className="flex gap-2 px-gutter" aria-hidden="true">
           {VIEW_LABELS.map((_, i) => (
-            <div key={i} className={cx('h-1 flex-1 rounded-full', i < shots.length ? 'bg-primary' : 'bg-line-strong')} />
+            <div key={i} className={cx('h-[3px] flex-1 rounded-full', i < shots.length ? 'bg-ink' : 'bg-line-strong')} />
           ))}
         </div>
 
         {showHelp ? (
           <div className="mx-gutter mt-3 rounded-card border border-line bg-surface p-4 text-caption">
-            <p className="m-0 font-semibold">Chụp sao cho AI đọc đúng phôi</p>
+            <p className="m-0 font-semibold">Cách chụp</p>
             <ul className="m-0 mt-2 flex flex-col gap-1 pl-5 list-disc">
-              <li>Chụp 4 mặt: trước, phải, sau, trái. Ít nhất 1 mặt cũng được.</li>
-              <li>Giữ máy ngang tầm gốc, cách khoảng một sải tay, thấy rõ gốc và rễ nổi.</li>
-              <li>Nền trơn (tường, tấm vải) cho kết quả tốt hơn nền cây cối rối.</li>
-              <li>Tránh nắng gắt buổi trưa và chụp ngược sáng.</li>
+              <li>4 mặt: trước, phải, sau, trái (tối thiểu 1).</li>
+              <li>Máy ngang tầm gốc, cách một sải tay, thấy rõ rễ.</li>
+              <li>Nền trơn, tránh nắng gắt và ngược sáng.</li>
             </ul>
           </div>
         ) : null}
@@ -153,7 +151,7 @@ export default function Capture() {
                   <path d="M24 40V24h16M318 24h16v16" />
                 </g>
               </svg>
-              <div className="absolute left-3 top-[58%] max-w-[calc(100%-1.5rem)] truncate rounded-[6px] scrim px-2 py-1 text-label">Mặt đất · đặt gốc trên vạch</div>
+              <div className="absolute left-3 top-[58%] max-w-[calc(100%-1.5rem)] truncate rounded-[6px] scrim px-2 py-1 text-label font-medium backdrop-blur">Đặt gốc trên vạch</div>
               <QualityPill q={live} />
             </>
           )}
@@ -175,18 +173,14 @@ export default function Capture() {
                   aria-label={`Xóa ảnh ${VIEW_LABELS[i]}`}
                   className="absolute -right-2 -top-2 flex h-touch w-touch items-center justify-center"
                 >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-surface text-ink" aria-hidden="true">×</span>
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-surface text-ink shadow-raised" aria-hidden="true"><X size={14} strokeWidth={2.5} /></span>
                 </button>
               </li>
             ))}
           </ul>
-        ) : (
-          <p className="mx-gutter mt-4 text-center text-caption text-ink-muted">
-            Giữ máy ngang tầm gốc cây, cách khoảng một sải tay. Nền trơn sẽ cho kết quả tốt hơn.
-          </p>
-        )}
+        ) : null}
         {shots.some((s) => s.quality?.issue) ? (
-          <p className="mx-gutter mt-2 text-label text-warn">Ảnh có dấu ! có thể mờ hoặc tối. Bạn nên xóa và chụp lại.</p>
+          <p className="mx-gutter mt-2 text-label text-warn">Ảnh có dấu ! mờ hoặc tối — nên chụp lại.</p>
         ) : null}
 
         <div className="mt-auto flex items-center justify-between px-8 pb-8 pt-4">
@@ -198,23 +192,23 @@ export default function Capture() {
             onClick={() => fileInput.current?.click()}
             className="flex h-cta w-cta items-center justify-center rounded-btn border border-line-strong bg-surface text-ink disabled:opacity-50"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.8" /><path d="M21 16l-5-5-8 8" /></svg>
+            <ImagePlus size={22} strokeWidth={1.75} />
           </button>
           <button
             type="button"
             aria-label="Chụp ảnh"
             disabled={camera.status !== 'ready' || full || busy}
             onClick={shoot}
-            className="flex h-[76px] w-[76px] items-center justify-center rounded-full border-4 border-ink p-0 disabled:opacity-40"
+            className="flex h-[72px] w-[72px] items-center justify-center rounded-full border-[3px] border-ink p-0 transition-transform active:scale-95 disabled:opacity-40"
           >
-            <span className="block h-[60px] w-[60px] rounded-full bg-ink" />
+            <span className="block h-[58px] w-[58px] rounded-full bg-ink" />
           </button>
           <button
             type="button"
             disabled={shots.length === 0}
             onClick={() => navigate('/chup/thong-tin')}
             aria-label={full ? 'Tiếp tục' : 'Bỏ qua các mặt còn lại'}
-            className="flex h-cta w-cta items-center justify-center rounded-btn text-caption font-semibold text-ink disabled:opacity-40"
+            className="flex h-cta min-w-cta items-center justify-center rounded-btn px-2 text-caption font-semibold text-ink disabled:opacity-40"
           >
             Xong
           </button>

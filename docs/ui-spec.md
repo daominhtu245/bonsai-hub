@@ -1,6 +1,6 @@
 # Bonsai AI — Đặc tả UX/UI
 
-Phong cách **"vườn trà hiện đại"**: nền giấy dó ấm, xanh rêu làm màu chủ, đỏ son kiểu con dấu làm điểm nhấn, nhiều khoảng trống. Ảnh cây luôn là nhân vật chính. Mockup tham chiếu: `design/mockups/` (canvas "Bonsai AI — Mockup MVP").
+Phong cách **công cụ chuyên nghiệp** (hệ thiết kế v2, từ 22/10/2026): nền trung tính, một màu nhấn xanh rêu đậm dùng tiết kiệm, một font sans, bo góc nhỏ, icon nét mảnh đồng bộ (Lucide), ảnh thật làm minh họa. Ít chữ: chỉ chức năng và nhãn cần thiết. Mockup v1 (`design/mockups/`) chỉ còn tham chiếu luồng; giao diện theo `design/tokens.json` v2 và trang `/he-thong-thiet-ke`.
 
 ## Người dùng
 | Nhóm | Đặc điểm | Yêu cầu |
@@ -13,7 +13,7 @@ Phong cách **"vườn trà hiện đại"**: nền giấy dó ấm, xanh rêu l
 1. Ảnh trước, chữ sau.
 2. Một việc mỗi màn hình; 1 nút chính ở vùng ngón cái.
 3. Trung thực với AI: nhãn "Minh họa", mốc thời gian trên mọi ảnh tương lai.
-4. Chờ mà vẫn học: hiển thị từng bước AI đang làm + mẹo bonsai.
+4. Chờ có thông tin: hiển thị từng bước đang làm và tiến độ (không chèn mẹo, giải thích dài).
 5. Thuật ngữ hai lớp: tên Việt chính, tên Nhật nhỏ bên cạnh.
 6. Màu có nghĩa thống nhất ở mọi nơi (bản vẽ, thẻ, chú thích).
 
@@ -46,11 +46,11 @@ Phong cách **"vườn trà hiện đại"**: nền giấy dó ấm, xanh rêu l
 - Ảnh có cảnh báo từ P4: nhãn nghệ "Độ tin cậy thấp".
 - Giọng văn: xưng "bạn", ngắn, như nghệ nhân chỉ việc; không dùng tiếng Anh trên giao diện.
 - Trợ năng: alt cho ảnh, cỡ chữ hệ thống 200% không vỡ, không dùng màu là tín hiệu duy nhất, tương phản WCAG AA.
-- Chuyển động 200–300 ms ease-out; tôn trọng `prefers-reduced-motion`.
+- Chuyển động 150–220 ms ease-out; tôn trọng `prefers-reduced-motion`.
 
 ## Chữ và lưới
-- Lora 600: tiêu đề 31 / 24 / 20. Be Vietnam Pro 400/500/600: thân 17, chú thích 14, nhãn 13.
-- Lưới 8; lề 16; cột nội dung tối đa 560 trên desktop.
-- Bo: thẻ 12, nút 10, ảnh 8, chip tròn. Gần như không đổ bóng; tách lớp bằng viền 1 px `line`.
-- Vùng chạm ≥ 44; nút chính 52 cao, rộng hết cột.
-- Icon nét 1,5 px (Lucide hoặc Phosphor); bộ icon riêng: kéo cắt, dây uốn, chậu, lá.
+- Be Vietnam Pro 400/500/600: hiển thị 28, tiêu đề 22 / 17, thân 16, phụ 14, nhãn 12 (nhãn mục viết hoa, giãn chữ). Số dùng tabular.
+- Lưới 8; lề 16; cột nội dung tối đa 560 (admin 960).
+- Bo: thẻ 10, nút 8, ảnh 8, nhãn 6. Viền 1 px `line` + bóng rất nhẹ (`shadow-card`).
+- Vùng chạm ≥ 44; nút chính 48 cao, rộng hết cột. Công tắc trượt cho cài đặt bật/tắt.
+- Icon: Lucide, nét 1,75.

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
+import { ChevronRight, Download, Facebook, Link2, Share2 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
-import { Button, Notice, Skeleton } from '@/components/ui';
+import { Notice, Segmented, Skeleton } from '@/components/ui';
 import { accountApi, downloadImage, type Share as ShareData } from '@/lib/account';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -53,100 +54,74 @@ export default function Share() {
     }
   };
 
-  /** Ưu tiên bảng chia sẻ của máy (có Zalo, Facebook, TikTok); không có thì dùng cách thay thế. */
-  const shareTo = (target: 'zalo' | 'facebook' | 'tiktok') =>
+  /** Bảng chia sẻ của máy (Zalo, Messenger, TikTok…) nếu có; không có thì sao chép liên kết. */
+  const nativeShare = () =>
     run(async () => {
       if (!share) return;
       const file = await imageFile(share.images[fmt], filename);
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], text: `Dáng cây sau vài năm — xem lộ trình: ${share.url}` });
+        await navigator.share({ files: [file], text: share.url });
         return;
       }
-      if (target === 'facebook') {
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(share.url)}`, '_blank', 'noopener');
-      } else if (target === 'zalo') {
-        await navigator.clipboard.writeText(share.url);
-        setToast('Đã sao chép link. Mở Zalo và dán vào tin nhắn nhé.');
-      } else {
-        await downloadImage(share.images[fmt], filename);
-        setToast('Đã lưu ảnh. Mở TikTok và chọn ảnh vừa lưu để đăng.');
-      }
+      await navigator.clipboard.writeText(share.url);
+      setToast('Đã sao chép liên kết.');
     });
+
+  const actions = [
+    { key: 'share', label: 'Chia sẻ', hint: 'Zalo, Messenger, TikTok…', Icon: Share2, onClick: nativeShare },
+    { key: 'fb', label: 'Đăng lên Facebook', Icon: Facebook, onClick: () => share && window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(share.url)}`, '_blank', 'noopener') },
+    { key: 'save', label: 'Tải ảnh về máy', Icon: Download, onClick: () => run(async () => { await downloadImage(share!.images[fmt], filename); setToast('Đã lưu ảnh.'); }) },
+    { key: 'copy', label: 'Sao chép link trang kết quả', Icon: Link2, onClick: () => run(async () => { await navigator.clipboard.writeText(share!.url); setToast('Đã sao chép liên kết.'); }) },
+  ];
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-content flex-col">
-      <BackHeader to={`/ket-qua/${jobId}`} title="Chia sẻ kết quả" />
+      <BackHeader to={`/ket-qua/${jobId}`} title="Chia sẻ" />
 
-      <div className="flex gap-2 px-gutter" role="group" aria-label="Khổ ảnh">
-        {(['9x16', '1x1'] as const).map((f) => (
-          <button
-            key={f}
-            type="button"
-            aria-pressed={fmt === f}
-            onClick={() => setFmt(f)}
-            className={cx('min-h-touch flex-1 rounded-btn border text-caption', fmt === f ? 'border-primary bg-primary-soft font-medium text-primary-ink' : 'border-line-strong bg-surface text-ink')}
-          >
-            {f === '9x16' ? 'Dọc 9:16' : 'Vuông 1:1'}
-          </button>
-        ))}
+      <div className="px-gutter pt-4">
+        <Segmented<Fmt> label="Khổ ảnh" value={fmt} onChange={setFmt} options={[['9x16', 'Dọc 9:16'], ['1x1', 'Vuông 1:1']]} />
       </div>
 
-      <div className="mx-auto mt-4 w-[236px] max-w-full">
+      <div className="mx-auto mt-4 w-[220px] max-w-full">
         {error ? (
           <Notice tone="danger">{error}</Notice>
         ) : share ? (
-          <img
-            src={share.images[fmt]}
-            alt="Ảnh chia sẻ: phôi hôm nay và minh họa cây sau vài năm"
-            className={cx('w-full rounded-card border border-line bg-ink', fmt === '9x16' ? 'aspect-[9/16]' : 'aspect-square')}
-          />
+          <img src={share.images[fmt]} alt="Ảnh chia sẻ: phôi hôm nay và minh họa cây sau vài năm"
+            className={cx('w-full rounded-card border border-line bg-surface-2 shadow-raised', fmt === '9x16' ? 'aspect-[9/16]' : 'aspect-square')} />
         ) : (
           <Skeleton className={cx('w-full rounded-card', fmt === '9x16' ? 'aspect-[9/16]' : 'aspect-square')} />
         )}
       </div>
 
-      <label className={cx('mx-gutter mt-4 flex min-h-cta items-center gap-3 rounded-card border border-line bg-surface px-3.5', !isNursery && 'opacity-70')}>
-        <span className="flex-1">
-          <span className="block font-medium">Chèn logo và số điện thoại vườn</span>
-          <span className="block text-caption text-ink-muted">
-            {!isNursery ? 'Dành cho tài khoản nhà vườn' : hasBrandInfo ? `${me?.garden_name ?? ''} ${me?.phone ?? ''}`.trim() : (
-              <>Chưa có tên vườn, SĐT · <Link to="/tai-khoan">Thêm ở Tài khoản</Link></>
-            )}
+      <div className="mx-gutter mt-5 flex flex-col gap-3">
+        <label className={cx('flex min-h-[56px] items-center gap-3 rounded-card border border-line bg-surface px-4 shadow-card', !isNursery && 'opacity-60')}>
+          <span className="flex-1">
+            <span className="block text-caption font-medium">Logo và số điện thoại vườn</span>
+            <span className="block text-label text-ink-subtle">
+              {!isNursery ? 'Dành cho tài khoản nhà vườn' : hasBrandInfo ? `${me?.garden_name ?? ''} ${me?.phone ?? ''}`.trim() : <Link to="/tai-khoan">Thêm tên vườn, SĐT</Link>}
+            </span>
           </span>
-        </span>
-        <input
-          type="checkbox"
-          checked={branded && isNursery}
-          disabled={!isNursery || !hasBrandInfo}
-          onChange={(e) => setBranded(e.target.checked)}
-          className="h-6 w-6 accent-[var(--primary)]"
-        />
-      </label>
+          <input type="checkbox" role="switch" checked={branded && isNursery} disabled={!isNursery || !hasBrandInfo} onChange={(e) => setBranded(e.target.checked)} className="switch" />
+        </label>
 
-      <div className="mx-gutter mt-4 grid grid-cols-4 gap-2">
-        {([['zalo', 'Zalo'], ['facebook', 'Facebook'], ['tiktok', 'TikTok']] as const).map(([k, label]) => (
-          <button key={k} type="button" disabled={!share || busy} onClick={() => shareTo(k)}
-            className="flex min-h-[72px] flex-col items-center justify-center gap-1 rounded-card border border-line bg-surface text-caption text-ink disabled:opacity-50">
-            <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft font-semibold text-primary-ink">{label[0]}</span>
-            {label}
-          </button>
-        ))}
-        <button type="button" disabled={!share || busy} onClick={() => run(async () => { await downloadImage(share!.images[fmt], filename); setToast('Đã lưu ảnh vào máy.'); })}
-          className="flex min-h-[72px] flex-col items-center justify-center gap-1 rounded-card border border-line bg-surface text-caption text-ink disabled:opacity-50">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14" /></svg>
-          Lưu ảnh
-        </button>
+        <ul className="m-0 list-none divide-y divide-line overflow-hidden rounded-card border border-line bg-surface p-0 shadow-card">
+          {actions.map(({ key, label, hint, Icon, onClick }) => (
+            <li key={key}>
+              <button type="button" disabled={!share || busy} onClick={onClick} className="flex min-h-[52px] w-full items-center gap-3 px-4 text-left hover:bg-surface-2 disabled:opacity-50">
+                <Icon size={18} strokeWidth={1.75} className="flex-none text-ink-muted" aria-hidden="true" />
+                <span className="flex-1">
+                  <span className="block text-caption font-medium">{label}</span>
+                  {hint ? <span className="block text-label text-ink-subtle">{hint}</span> : null}
+                </span>
+                <ChevronRight size={16} className="text-ink-subtle" aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      <div className="mx-gutter mt-3">
-        <Button variant="secondary" disabled={!share || busy}
-          onClick={() => run(async () => { await navigator.clipboard.writeText(share!.url); setToast('Đã sao chép link trang kết quả.'); })}>
-          Sao chép link trang kết quả
-        </Button>
-      </div>
-
-      {toast ? <div className="fixed inset-x-gutter bottom-6 mx-auto max-w-content"><Notice tone="success">{toast}</Notice></div> : null}
-      <p className="mx-gutter mb-7 mt-4 text-label text-ink-muted">Ảnh tương lai luôn có nhãn "Minh họa". Trang chia sẻ không hiện thông tin tài khoản của bạn.</p>
+      {toast ? <div className="fixed inset-x-gutter bottom-6 mx-auto max-w-content shadow-raised"><Notice tone="success">{toast}</Notice></div> : null}
+      <div className="h-8" />
     </div>
   );
 }

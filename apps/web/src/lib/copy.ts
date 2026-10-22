@@ -19,15 +19,6 @@ export const PHOTO_ISSUE: Record<string, string> = {
   dark: 'ảnh tối',
 };
 
-export const TIPS = [
-  'Cành thứ nhất đẹp nhất thường nằm ở khoảng một phần ba chiều cao cây.',
-  'Cành xen kẽ trái, phải, sau giúp cây có chiều sâu khi nhìn từ mặt tiền.',
-  'Thân thuôn dần từ gốc lên ngọn trông già và vững hơn.',
-  'Khoảng trống giữa các tầng tán là "khoảng thở" — đừng để tán kín mít.',
-  'Hai cành mọc đối nhau cùng độ cao (cành đối) thường nên bỏ một.',
-  'Đặt cây lệch tâm trong chậu chữ nhật để bố cục tự nhiên hơn.',
-  'Tháo dây uốn kịp lúc, trước khi dây hằn vào vỏ.',
-];
 
 export function phaseAError(code: string | null, issues: string[] = []): { title: string; body: string; recapture: boolean } {
   switch (code) {

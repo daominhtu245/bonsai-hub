@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
+import { BrandMark } from '@/components/BrandMark';
 import { Button, Notice } from '@/components/ui';
 import { ApiError, auth } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -55,9 +56,12 @@ export default function Login() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-content flex-col">
       <BackHeader to="/" title="Đăng nhập" />
-      <main className="flex flex-col gap-4 px-gutter pt-4">
-        <h2 className="text-h1">Lưu cây vào vườn của bạn</h2>
-        <p className="m-0 text-ink-muted">Đăng nhập để lưu ảnh phôi, bản vẽ và lộ trình. Tài khoản mới được tặng 1 lượt tạo ảnh.</p>
+      <main className="flex flex-col gap-4 px-gutter pt-8">
+        <BrandMark size={40} />
+        <div>
+          <h2 className="text-h1">Đăng nhập Bonsai AI</h2>
+          <p className="m-0 mt-1 text-caption text-ink-muted">Tài khoản mới được tặng 1 lượt tạo ảnh.</p>
+        </div>
 
         {error ? <Notice tone="danger">{error}</Notice> : null}
 
@@ -68,7 +72,10 @@ export default function Login() {
           </Button>
         ) : null}
         {!googleEnabled && !zaloEnabled ? (
-          <Notice tone="warn">Đăng nhập Google và Zalo chưa được cấu hình (VITE_GOOGLE_CLIENT_ID, VITE_ZALO_APP_ID).</Notice>
+          <Notice tone="info">
+            Đăng nhập tạm thời chưa khả dụng.
+            {import.meta.env.DEV ? ' (Thiếu VITE_GOOGLE_CLIENT_ID / VITE_ZALO_APP_ID.)' : ''}
+          </Notice>
         ) : null}
 
         <p className="m-0 text-label text-ink-muted">
@@ -76,9 +83,9 @@ export default function Login() {
         </p>
 
         {devLoginEnabled ? (
-          <form onSubmit={onDev} className="flex flex-col gap-2 rounded-card border border-dashed border-line-strong p-4">
-            <label htmlFor="dev-email" className="text-caption font-medium">
-              Đăng nhập thử (chỉ môi trường dev)
+          <form onSubmit={onDev} className="mt-2 flex flex-col gap-2 border-t border-line pt-4">
+            <label htmlFor="dev-email" className="eyebrow">
+              Môi trường dev
             </label>
             <input
               id="dev-email"
@@ -87,7 +94,7 @@ export default function Login() {
               value={devEmail}
               onChange={(e) => setDevEmail(e.target.value)}
               placeholder="ban@example.com"
-              className="min-h-cta rounded-btn border border-line-strong bg-surface px-3.5 text-body text-ink"
+              className="min-h-cta rounded-btn border border-line-strong bg-surface px-3.5 text-body text-ink shadow-card"
             />
             <Button type="submit" variant="secondary" loading={busy}>
               Vào bằng email thử

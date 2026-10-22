@@ -265,8 +265,9 @@ export default function Admin() {
   const [tab, setTab] = useState<'costs' | 'prompts' | 'failed' | 'feedback' | 'gift' | 'species'>('costs');
   if (user.status === 'ready' && user.data.role !== 'admin') return <Navigate to="/" replace />;
   return (
-    <div className="mx-auto flex min-h-dvh max-w-content flex-col">
+    <div className="mx-auto flex min-h-dvh max-w-wide flex-col">
       <BackHeader to="/tai-khoan" title="Quản trị" />
+      <div className="h-3" />
       <div className="flex flex-wrap gap-2 px-gutter pb-3" role="group" aria-label="Mục">
         {([['costs', 'Chi phí'], ['prompts', 'Prompt'], ['failed', 'Job lỗi'], ['feedback', 'Phản hồi'], ['gift', 'Tặng lượt'], ['species', 'Ảnh loài']] as const).map(([k, label]) => (
           <FilterChip key={k} selected={tab === k} onClick={() => setTab(k)}>{label}</FilterChip>

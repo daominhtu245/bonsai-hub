@@ -20,8 +20,8 @@ from PIL import Image, ImageDraw, ImageEnhance
 from .schemas import Analysis, Branch, DesignOption
 
 # Màu từ design/tokens.json (bảng sáng) — test đối chiếu để không lệch token.
-COLORS = {"cut": "#B23A2B", "keep": "#5E8C4F", "new-branch": "#B08D57", "canopy": "#1F2421", "apex": "#1F2421"}
-HALO = "#FBF8F2"
+COLORS = {"cut": "#C23B2B", "keep": "#3E8A57", "new-branch": "#B07F2A", "canopy": "#191917", "apex": "#191917"}
+HALO = "#FFFFFF"
 LAYERS = ("canopy", "keep", "cut", "new-branch", "apex")
 
 _DIR = {

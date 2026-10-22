@@ -1,33 +1,17 @@
-// Tailwind preset cho hệ thống "Rêu & Gốm".
-// Màu dùng CSS variables để chế độ tối đổi theo hệ thống (xem block CSS bên dưới, đưa vào src/index.css).
-//
-// :root {
-//   --bg:#F4EFE6; --surface:#FBF8F2; --line:#E3DCCD; --line-strong:#D9CFBC;
-//   --ink:#1F2421; --ink-muted:#5E625C; --primary:#3F5B3A; --primary-ink:#2C4229;
-//   --primary-soft:#DCE5D3; --on-primary:#FBF8F2; --bark:#6B4F3A; --clay:#8C5A3C;
-//   --clay-soft:#F1E4DA; --seal:#B23A2B; --brass:#B08D57; --leaf:#5E8C4F;
-//   --warn:#C08A2E; --warn-soft:#F7EEDB; --warn-ink:#6E4D12; --danger:#962F23;
-//   --danger-soft:#F6E1DD; --photo-bg:#E8E1D3;
-// }
-// @media (prefers-color-scheme: dark) { :root {
-//   --bg:#141815; --surface:#1E2420; --line:#2F3631; --line-strong:#3A423C;
-//   --ink:#ECE7DD; --ink-muted:#A7A99F; --primary:#8DB07F; --primary-ink:#B9D3AD;
-//   --primary-soft:#2A3A28; --on-primary:#141815; --bark:#C4A68A; --clay:#D19A76;
-//   --clay-soft:#3A2A20; --seal:#E0705F; --brass:#D4B47E; --leaf:#9CC48B;
-//   --warn:#E2B25C; --warn-soft:#3A3020; --warn-ink:#F0D49A; --danger:#E58A7C;
-//   --danger-soft:#3A2220; --photo-bg:#262B27;
-// } }
+// Tailwind preset — hệ thống thiết kế Bonsai AI v2 (kiểu công cụ chuyên nghiệp: trung tính, một màu nhấn, một font sans).
+// Màu dùng CSS variables sinh từ design/tokens.json (apps/web/scripts/gen-tokens.mjs) để đổi sáng/tối.
 
 const v = (name) => `var(--${name})`;
+const sans = ['"Be Vietnam Pro"', 'system-ui', '-apple-system', '"Segoe UI"', 'sans-serif'];
 
 module.exports = {
   theme: {
     extend: {
       colors: {
         bg: v('bg'),
-        surface: v('surface'),
+        surface: { DEFAULT: v('surface'), 2: v('surface-2') },
         line: { DEFAULT: v('line'), strong: v('line-strong') },
-        ink: { DEFAULT: v('ink'), muted: v('ink-muted') },
+        ink: { DEFAULT: v('ink'), muted: v('ink-muted'), subtle: v('ink-subtle') },
         primary: { DEFAULT: v('primary'), ink: v('primary-ink'), soft: v('primary-soft'), on: v('on-primary') },
         bark: v('bark'),
         clay: { DEFAULT: v('clay'), soft: v('clay-soft') },
@@ -38,23 +22,21 @@ module.exports = {
         danger: { DEFAULT: v('danger'), soft: v('danger-soft') },
         photo: v('photo-bg'),
       },
-      fontFamily: {
-        display: ['Lora', 'Georgia', 'serif'],
-        body: ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
-      },
+      fontFamily: { body: sans, display: sans, sans },
       fontSize: {
-        display: ['31px', { lineHeight: '1.25' }],
-        h1: ['24px', { lineHeight: '1.3' }],
-        h2: ['20px', { lineHeight: '1.35' }],
-        body: ['17px', { lineHeight: '1.5' }],
+        display: ['28px', { lineHeight: '1.2', letterSpacing: '-0.02em', fontWeight: '600' }],
+        h1: ['22px', { lineHeight: '1.3', letterSpacing: '-0.015em', fontWeight: '600' }],
+        h2: ['17px', { lineHeight: '1.4', letterSpacing: '-0.01em', fontWeight: '600' }],
+        body: ['16px', { lineHeight: '1.55' }],
         caption: ['14px', { lineHeight: '1.45' }],
-        label: ['13px', { lineHeight: '1.4' }],
+        label: ['12px', { lineHeight: '1.35', letterSpacing: '0.01em' }],
       },
-      borderRadius: { card: '12px', btn: '10px', img: '8px' },
-      spacing: { gutter: '16px', touch: '44px', cta: '52px' },
-      maxWidth: { content: '560px' },
+      borderRadius: { card: '10px', btn: '8px', img: '8px', chip: '6px' },
+      boxShadow: { card: '0 1px 2px rgba(16,16,15,0.04)', raised: '0 4px 16px rgba(16,16,15,0.08)' },
+      spacing: { gutter: '16px', touch: '44px', cta: '48px' },
+      maxWidth: { content: '560px', wide: '960px' },
       transitionTimingFunction: { calm: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
-      transitionDuration: { fast: '200ms', base: '300ms' },
+      transitionDuration: { fast: '150ms', base: '220ms' },
     },
   },
 };

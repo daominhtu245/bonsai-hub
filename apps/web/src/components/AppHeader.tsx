@@ -1,42 +1,40 @@
 import { Link } from 'react-router-dom';
+import { Coins, UserRound } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { Chip, Skeleton } from './ui';
-import { SealLogo } from './illustrations/Bonsai';
+import { Wordmark } from './BrandMark';
+import { Skeleton } from './ui';
 
 function Credits() {
   const { user } = useAuth();
-  switch (user.status) {
-    case 'loading':
-      return <Skeleton className="h-8 w-28 rounded-full" />;
-    case 'ready':
-      return <Chip tone="soft">{user.data.credits > 0 ? `${user.data.credits} lượt` : 'Hết lượt'}</Chip>;
-    case 'error':
-      return null;
-    case 'empty':
-      return <Chip tone="soft">1 lượt miễn phí</Chip>;
-  }
+  if (user.status === 'loading') return <Skeleton className="h-7 w-20" />;
+  if (user.status !== 'ready') return null;
+  return (
+    <Link to="/mua-luot" className="tabular flex min-h-touch items-center gap-1.5 rounded-btn px-2 text-caption font-medium text-ink-muted no-underline hover:text-ink" aria-label={`Còn ${user.data.credits} lượt. Mua thêm`}>
+      <Coins size={16} strokeWidth={1.75} aria-hidden="true" />
+      {user.data.credits} lượt
+    </Link>
+  );
 }
 
+/** Thanh đầu trang chính: thương hiệu, số lượt, tài khoản. */
 export function AppHeader() {
+  const { user } = useAuth();
   return (
-    <header className="flex flex-wrap items-center justify-between gap-2 px-gutter pb-2 pt-4">
-      <Link to="/" className="flex items-center gap-2.5 text-ink no-underline hover:text-ink">
-        <SealLogo />
-        <span className="font-display text-h2 font-semibold">Bonsai AI</span>
+    <header className="sticky top-0 z-10 flex min-h-14 flex-wrap items-center gap-x-2 border-b border-line px-gutter py-1 backdrop-blur" style={{ background: 'color-mix(in srgb, var(--bg) 88%, transparent)' }}>
+      <Link to="/" className="no-underline" aria-label="Bonsai AI — trang chủ">
+        <Wordmark />
       </Link>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-1">
         <Credits />
-        <Link
-          to="/vuon"
-          aria-label="Vườn của tôi"
-          className="flex h-touch w-touch items-center justify-center rounded-btn border border-line bg-surface text-ink"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M6 20h12l-1.5-6h-9L6 20Z" />
-            <path d="M12 14V9" />
-            <path d="M12 9c-3 0-5-2-5-5 3 0 5 2 5 5Zm0 0c3 0 5-2 5-5-3 0-5 2-5 5Z" />
-          </svg>
-        </Link>
+        {user.status === 'ready' ? (
+          <Link to="/tai-khoan" aria-label="Tài khoản" className="flex h-touch w-touch items-center justify-center rounded-btn text-ink-muted hover:bg-surface-2 hover:text-ink">
+            <UserRound size={20} strokeWidth={1.75} />
+          </Link>
+        ) : user.status === 'empty' ? (
+          <Link to="/dang-nhap" className="flex min-h-touch items-center rounded-btn px-3 text-caption font-semibold text-ink no-underline hover:bg-surface-2 hover:text-ink">
+            Đăng nhập
+          </Link>
+        ) : null}
       </div>
     </header>
   );
