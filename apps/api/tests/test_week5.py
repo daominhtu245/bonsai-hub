@@ -114,7 +114,7 @@ def test_extract_code_variants():
 
 def test_payment_flow_sepay_idempotent(db, client, login, bank):
     headers, body = login()
-    assert [p["code"] for p in client.get("/api/v1/packages").json()] == ["le", "player", "nursery"]
+    assert [p["code"] for p in client.get("/api/v1/packages").json()] == ["le", "player", "nursery", "nursery_month"]
     p = client.post("/api/v1/payments", headers=headers, json={"package_code": "player"}).json()
     assert p["amount_vnd"] == 199000 and p["transfer_code_display"].startswith("BONSAI ")
     assert p["qr_url"].startswith("https://img.vietqr.io/image/970436-0123456789-compact2.png?amount=199000")

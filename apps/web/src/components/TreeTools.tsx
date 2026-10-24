@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui';
 import { ApiError } from '@/lib/api';
+import { marketApi, type PartnerPot } from '@/lib/market';
 import { toolsApi, type GraftSpot, type Price, type WirePlan } from '@/lib/tools';
 
 const vnd = (n: number) => `${n.toLocaleString('vi-VN')} đ`;
@@ -22,6 +23,7 @@ export function TreeTools({ jobId }: { jobId: string }) {
   const [wire, setWire] = useState<WirePlan | null | undefined>(undefined);
   const [graft, setGraft] = useState<{ spots: GraftSpot[]; season_vi: string | null } | null | undefined>(undefined);
   const [price, setPrice] = useState<Price | null | undefined>(undefined);
+  const [pots, setPots] = useState<PartnerPot[] | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const fail = (e: ApiError) => setError(e.message);
   return (
@@ -60,6 +62,23 @@ export function TreeTools({ jobId }: { jobId: string }) {
             <span className="text-ink-subtle">{price.note_vi}</span>
           </div>
         ) : <span className="text-ink-muted">Nhập chiều cao thật của cây để định giá.</span>}
+      </Fold>
+      <Fold title="Chậu hợp dáng" onOpen={() => pots === undefined && marketApi.pots(jobId).then(setPots).catch(fail)}>
+        {pots === undefined ? <Skeleton className="h-16" /> : pots.length ? (
+          <ul className="m-0 flex list-none flex-col gap-2 p-0">
+            {pots.map((p) => (
+              <li key={p.id}>
+                <a href={p.url ?? undefined} target="_blank" rel="noreferrer sponsored" className="flex min-h-touch items-center gap-3 text-ink no-underline">
+                  {p.image_url ? <img src={p.image_url} alt="" className="h-14 w-14 flex-none rounded-img object-cover" loading="lazy" /> : null}
+                  <span className="flex flex-col">
+                    <span className="font-medium">{p.name}</span>
+                    <span className="text-ink-muted">{[p.maker, p.length_cm && `dài ${p.length_cm} cm`, p.price_vnd && vnd(p.price_vnd)].filter(Boolean).join(' · ')}</span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : <span className="text-ink-muted">Chưa có chậu phù hợp.</span>}
       </Fold>
     </section>
   );

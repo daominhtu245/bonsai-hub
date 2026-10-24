@@ -24,6 +24,12 @@ const ChallengesPage = lazy(() => import('@/pages/community/Challenges'));
 const ChallengeDetailPage = lazy(() => import('@/pages/community/ChallengeDetail'));
 const PassportPublicPage = lazy(() => import('@/pages/community/PassportPublic'));
 const AdminChallenges = lazy(() => import('@/pages/admin/Challenges'));
+const MarketPage = lazy(() => import('@/pages/market/Market'));
+const ListingPublicPage = lazy(() => import('@/pages/market/ListingPublic'));
+const ListingTagPage = lazy(() => import('@/pages/market/ListingTag'));
+const MyListingsPage = lazy(() => import('@/pages/market/MyListings'));
+const PriceIndexPage = lazy(() => import('@/pages/market/PriceIndex'));
+const AdminPots = lazy(() => import('@/pages/admin/PartnerPots'));
 const CreditHistory = lazy(() => import('@/pages/CreditHistory'));
 const Share = lazy(() => import('@/pages/Share'));
 const Garden = lazy(() => import('@/pages/Garden'));
@@ -94,6 +100,11 @@ export default function App() {
               <Route path="/thu-thach/:challengeId" element={guard(<ChallengeDetailPage />)} />
               <Route path="/thu-thach/:challengeId/thiet-ke" element={guard(<ChallengeStudio />)} />
               <Route path="/so-cay/:code" element={<PassportPublicPage />} />
+              <Route path="/cho" element={<MarketPage />} />
+              <Route path="/tin/:code" element={<ListingPublicPage />} />
+              <Route path="/tin/:code/the" element={<ListingTagPage />} />
+              <Route path="/tin-cua-toi" element={guard(<MyListingsPage />)} />
+              <Route path="/tien-ich/gia" element={<PriceIndexPage />} />
               <Route path="/tien-ich" element={<UtilitiesHub />} />
               <Route path="/tien-ich/mai-tet" element={<MaiTet />} />
               <Route path="/tien-ich/hop-menh" element={<MenhPage />} />
@@ -125,6 +136,7 @@ export default function App() {
                 <Route path="ma-qua-tang" element={<AdminGiftCodes />} />
                 <Route path="thong-bao" element={<AdminBroadcast />} />
                 <Route path="thu-thach" element={<AdminChallenges />} />
+                <Route path="chau-doi-tac" element={<AdminPots />} />
               </Route>
               <Route path="/dieu-khoan" element={<Terms />} />
               <Route path="*" element={<ComingSoon title="Không tìm thấy trang" />} />

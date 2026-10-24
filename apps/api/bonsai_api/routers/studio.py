@@ -131,10 +131,18 @@ class PreviewOut(BaseModel):
     remaining: int
 
 
-def _preview_out(job: DesignJob) -> PreviewOut:
+def preview_limit(db, user) -> int:
+    """Gói nhà vườn tháng còn hạn: nhiều lượt xem thử hơn (Cấu hình vận hành)."""
+    from ..services.market import plan_active
+    from ..services.ops import get_ops
+
+    return int(get_ops(db).get("nursery_preview_limit") or PREVIEW_LIMIT) if plan_active(user) else PREVIEW_LIMIT
+
+
+def _preview_out(job: DesignJob, limit: int = PREVIEW_LIMIT) -> PreviewOut:
     pv = (job.progress or {}).get("preview") or {}
     url = storage.presign_get(pv["key"]) if pv.get("state") == "done" and pv.get("key") else None
-    return PreviewOut(state=pv.get("state", "none"), url=url, remaining=max(0, PREVIEW_LIMIT - int(pv.get("count", 0))))
+    return PreviewOut(state=pv.get("state", "none"), url=url, remaining=max(0, limit - int(pv.get("count", 0))))
 
 
 def _mine(db, job: DesignJob) -> DesignOption:
@@ -149,7 +157,7 @@ def preview_status(job_id: uuid.UUID, user: CurrentUser, db: DB):
     job = db.get(DesignJob, job_id)
     if job is None or job.user_id != user.id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy phiên thiết kế.")
-    return _preview_out(job)
+    return _preview_out(job, preview_limit(db, user))
 
 
 @router.post("/jobs/{job_id}/my-design/preview", response_model=PreviewOut, status_code=status.HTTP_202_ACCEPTED)
@@ -163,15 +171,16 @@ def start_preview(job_id: uuid.UUID, user: CurrentUser, db: DB):
     if ops["pause_render"]:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, ops["pause_message"])
     pv = dict((job.progress or {}).get("preview") or {})
+    limit = preview_limit(db, user)
     if pv.get("state") == "running":
-        return _preview_out(job)
-    if int(pv.get("count", 0)) >= PREVIEW_LIMIT:
-        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Bạn đã xem thử 2 lần cho cây này. Bấm “Tạo ảnh tương lai” để có ảnh đẹp.")
+        return _preview_out(job, limit)
+    if int(pv.get("count", 0)) >= limit:
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, f"Bạn đã xem thử {limit} lần cho cây này. Bấm “Tạo ảnh tương lai” để có ảnh đẹp.")
     pv.update(state="running", count=int(pv.get("count", 0)) + 1)
     job.progress = {**(job.progress or {}), "preview": pv}
     db.commit()
     queue.enqueue("bonsai_worker.tasks.studio.preview", str(job.id), queue="render")
-    return _preview_out(job)
+    return _preview_out(job, limit)
 
 
 # ---------- chia sẻ thiết kế để nhờ góp ý (ảnh ghép từ thư viện, không tốn AI) ----------

@@ -30,7 +30,9 @@ def ops_defaults() -> dict:
         "referral_credits": 1,  # giới thiệu bạn: mỗi bên được tặng
         "diary_reward_credits": 1,  # nhật ký đúng mốc 1 / 3 / 6 tháng
         "consult_credits": 2,  # hỏi nghệ nhân
-        "nursery_listing_free": 3,  # nhà vườn chưa có gói: số tin đăng miễn phí
+        "nursery_listing_free": 3,  # chưa có gói nhà vườn tháng: số tin đang hiện tối đa
+        "nursery_featured_max": 3,  # gói nhà vườn tháng: số tin nổi bật cùng lúc
+        "nursery_preview_limit": 10,  # gói nhà vườn tháng: số lần "Xem thử AI" mỗi phiên (thường: 2)
     }
 
 

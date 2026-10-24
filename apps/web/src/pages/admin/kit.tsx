@@ -293,7 +293,7 @@ interface ConfirmOpts {
   confirmLabel: string;
   danger?: boolean;
   note?: { label: string; required?: boolean; placeholder?: string };
-  fields?: Array<{ name: string; label: string; type?: 'text' | 'number'; required?: boolean; placeholder?: string; defaultValue?: string }>;
+  fields?: Array<{ name: string; label: string; type?: 'text' | 'number'; required?: boolean; placeholder?: string; defaultValue?: string; options?: Array<[string, string]> }>;
 }
 type ConfirmResult = { note: string; values: Record<string, string> } | null;
 
@@ -335,8 +335,15 @@ export function useConfirm(): [(o: ConfirmOpts) => Promise<ConfirmResult>, React
         {(opts.fields ?? []).map((f) => (
           <label key={f.name} className="flex flex-col gap-1 text-caption font-medium">
             {f.label}
-            <input type={f.type ?? 'text'} required={f.required} placeholder={f.placeholder} value={values[f.name] ?? ''}
-              onChange={(e) => setValues({ ...values, [f.name]: e.target.value })} className={input} />
+            {f.options ? (
+              <select required={f.required} value={values[f.name] ?? ''} onChange={(e) => setValues({ ...values, [f.name]: e.target.value })} className={input}>
+                {f.required ? null : <option value="">—</option>}
+                {f.options.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+              </select>
+            ) : (
+              <input type={f.type ?? 'text'} required={f.required} placeholder={f.placeholder} value={values[f.name] ?? ''}
+                onChange={(e) => setValues({ ...values, [f.name]: e.target.value })} className={input} />
+            )}
           </label>
         ))}
         {opts.note ? (

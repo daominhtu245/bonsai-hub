@@ -110,6 +110,7 @@ def test_packages_editable(db, client, login, monkeypatch):
     pub = {p["code"]: p for p in client.get("/api/v1/packages").json()}
     assert "le" not in pub and pub["player"]["credits"] == 6
     client.put("/api/v1/admin/packages/nursery", headers=admin, json={"active": False})
+    client.put("/api/v1/admin/packages/nursery_month", headers=admin, json={"active": False})
     assert client.put("/api/v1/admin/packages/player", headers=admin, json={"active": False}).status_code == 400  # còn ≥ 1 gói
     monkeypatch.setattr(get_settings(), "bank_bin", "970422")
     monkeypatch.setattr(get_settings(), "bank_account", "0123456789")

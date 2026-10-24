@@ -71,6 +71,9 @@ Tài liệu kỹ thuật vẫn là nguồn chính. Đây là những chỗ code 
 | 55 | **Cộng đồng chỉ dùng ảnh người dùng đã chọn công khai**: chọn dáng đẹp lấy phôi có link chia sẻ; thử thách dùng phôi của tài khoản quản trị / nghệ nhân; trang sổ cây chỉ hiện lịch sử khi chủ bật (cây báo mất chỉ hiện cảnh báo + ảnh phôi). Thử thách đang mở ẩn số phiếu, trộn thứ tự theo người xem | Không lộ ảnh riêng tư; tránh bầu theo số đông |
 | 56 | **Dấu vân thân** (`trunk_print.py`): dHash 16×16 vùng thân + bản lật gương, ngưỡng 25% bit khác (thử 40 ảnh tham chiếu: biến thể cùng ảnh ≤ 0,21, khác cây ≥ 0,34). Chỉ gợi ý cho chủ cây xem bằng mắt, không tự kết luận; chụp khác góc sẽ không khớp | Rẻ, chạy ngay khi có tin đăng; mạnh hơn (đặc trưng học máy) để sau khi có dữ liệu |
 | 57 | Mã QR tạo ở máy chủ (`segno`, thuần Python), đường dẫn công khai theo mã sổ (QR chỉ chứa link công khai) | Thẻ `<img>` không gửi được token; không thêm thư viện vào web |
+| 58 | **Chợ phôi chỉ kết nối, không giữ tiền** (C4): liên hệ Zalo / điện thoại trên trang tin, ghi rõ "xem cây tận nơi trước khi trả tiền". Đấu giá (C8) chưa làm | Sàn TMĐT có thanh toán cần đăng ký với Bộ Công Thương (NĐ 52/2013, 85/2021) |
+| 59 | **Gói Nhà vườn tháng** là một gói trong bảng gói (`nursery_month`, cộng hạn `nursery_until` 30 ngày, nối tiếp nếu còn hạn); quyền lợi đọc từ Cấu hình vận hành (số tin miễn phí, số tin nổi bật, số lần xem thử) | Không cần cổng thanh toán định kỳ; VietQR + webhook sẵn có |
+| 60 | Ảnh tin đăng chuẩn hóa ngay ở api (xóa EXIF / GPS, cạnh dài 1536) — `prepare_upload` mất ~0,1 s; dò cây báo mất chạy ở worker | Người bán thấy ảnh ngay; việc nặng (đọc ảnh mọi cây báo mất) không chặn api |
 | 33 | ultralytics/torch chỉ cài vào worker khi `WORKER_WITH_CV=true` | Nặng ~1 GB; chưa có trọng số thì không cần |
 | 31 | OpenAI ảnh: đệm lề ảnh vào vào khổ gần nhất (1024², 1536×1024, 1024×1536) rồi cắt ảnh ra về đúng tỉ lệ gốc | Không thì CV loại vì sai tỉ lệ → sinh lại, tốn tiền |
 

@@ -33,6 +33,11 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | **Thử thách phôi**: cùng một phôi, tự thiết kế bài dự thi (bắt đầu trống), bầu một phiếu (đổi được), đang mở thì ẩn số phiếu | Tiện ích → Thử thách phôi | Quản trị tạo ở Thử thách phôi; phôi phải do quản trị / nghệ nhân tải lên |
 | **Bậc tay nghề** Học trò → Thợ → Nghệ nhân | Tài khoản | Tính từ số thiết kế, ảnh nhật ký, lượt chọn dáng, phiếu thử thách |
 | **Sổ cây**: mã QR, trang công khai lịch sử (bật / tắt), chuyển chủ bằng mã nhận cây (7 ngày), báo mất | Kết quả → Sổ cây; nhận cây ở Vườn | Chủ mới nhận cả ảnh, lộ trình, nhật ký; cây báo mất không chuyển được, trang sổ hiện cảnh báo |
+| **Chợ phôi**: tin đăng kèm dáng tương lai (ảnh S4 + bản vẽ các phương án), lọc loài / tỉnh / loại, tìm kiếm; liên hệ Zalo / gọi | Tiện ích → Chợ phôi; Kết quả → Đăng bán | Không giữ tiền (chỉ kết nối). Chưa có gói: tối đa 3 tin đang hiện. Tin mới có ảnh được so dấu vân thân với cây báo mất |
+| **Thẻ QR treo chậu** (4 thẻ / A4) | Tin của tôi → Thẻ QR; trang tin | Quét ra trang tin công khai `/tin/{mã}` |
+| **Gói Nhà vườn tháng** (690.000 đ / 30 ngày, 20 lượt) | Mua lượt | Đăng tin không giới hạn, 3 tin nổi bật, xem thử AI 10 lần / phiên; giá, số lượt, số tin chỉnh ở quản trị |
+| **Chậu hợp dáng** từ xưởng đối tác | Kết quả → Chậu hợp dáng | Cùng dáng chậu thiết kế, dài ≈ 2/3 chiều cao cây; link mua có mã giới thiệu |
+| **Giá thị trường**: giá mỗi cm gốc theo loài, cả nước và từng miền | Tiện ích → Giá thị trường | Chỉ công bố khi ≥ 5 tin (tránh lộ giá một người bán) |
 | Vườn của tôi | Thanh dưới → Vườn | |
 | Mua lượt (VietQR) | Tài khoản → Mua lượt | Gói, giá do quản trị chỉnh |
 | **Nhập mã quà tặng** | Tài khoản, Mua lượt | |
@@ -53,6 +58,7 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 
 | Nhóm | Trang | Chức năng |
 |---|---|---|
+| **Thử thách phôi** (tạo, xóa) · **Chậu đối tác** (thêm, bật / tắt, xóa) | Quản trị → Người dùng & tiền | Thao tác ghi nhật ký quản trị |
 | Tổng quan | Bảng điều khiển | 12 chỉ số so kỳ trước, biểu đồ phiên / doanh thu–chi phí, phễu, phiên lỗi |
 | Vận hành | Phiên thiết kế | Lọc, tìm (mã phiên, email, mã lỗi), chi tiết pipeline / ảnh (kể cả ảnh xem thử) / phương án, chạy lại miễn phí, hoàn lượt, dừng phiên treo, **xuất Excel** |
 | | Phản hồi | Đánh giá của người dùng, link tới phiên |

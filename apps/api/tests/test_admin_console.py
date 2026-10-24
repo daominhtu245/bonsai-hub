@@ -175,7 +175,7 @@ def test_system_audit_and_catalog(db, client, admin, monkeypatch):
     monkeypatch.setattr("bonsai_api.routers.admin_system._celery", lambda: NoCelery)
     s = client.get("/api/v1/admin/system", headers=headers).json()
     assert s["workers"] == ["celery@w1"] and s["config"]["modes"]["cost_mode"] == "standard"
-    assert {p["code"] for p in s["config"]["packages"]} == {"le", "player", "nursery"}
+    assert {p["code"] for p in s["config"]["packages"]} == {"le", "player", "nursery", "nursery_month"}
 
     from bonsai_api.scripts.seed import seed_dictionaries
 

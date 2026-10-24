@@ -196,21 +196,3 @@ def public_passport(code: str, db: DB):
         "transfers": transfers, "timeline": timeline,
     }
 
-
-def stolen_matches(db, photo: bytes) -> list[Tree]:
-    """Cây đang báo mất có "dấu vân thân" gần ảnh này (F7). Chỉ để gợi ý cho chủ cây xem lại bằng mắt."""
-    from bonsai_pipeline.trunk_print import fingerprint, is_match
-
-    target = fingerprint(photo)
-    out = []
-    for tree in db.execute(select(Tree).where(Tree.stolen_at.is_not(None))).scalars():
-        front = db.execute(select(TreePhoto).where(TreePhoto.tree_id == tree.id, TreePhoto.is_front.is_(True),
-                                                   ~TreePhoto.storage_key.startswith("uploads/"))).scalars().first()
-        if front is None:
-            continue
-        try:
-            if is_match(fingerprint(storage.get_bytes(front.storage_key)), target):
-                out.append(tree)
-        except Exception:  # noqa: BLE001 — ảnh hỏng / đã xóa: bỏ qua
-            continue
-    return out

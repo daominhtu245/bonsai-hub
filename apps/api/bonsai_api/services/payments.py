@@ -29,6 +29,7 @@ class Package:
     note_vi: str
     popular: bool = False
     nursery: bool = False
+    months: int = 0  # gói nhà vườn theo tháng: cộng hạn nursery_until (docs/ideas.md C3)
 
 
 # docs/architecture.md §6: lẻ 49.000 đ; người chơi 199.000 đ/5 lượt; nhà vườn 1.490.000 đ/50 lượt.
@@ -36,6 +37,8 @@ PACKAGES = [
     Package("le", "Lẻ", 1, 49_000, "Thử với một cây"),
     Package("player", "Người chơi", 5, 199_000, "39.800 đ mỗi lượt", popular=True),
     Package("nursery", "Nhà vườn", 50, 1_490_000, "29.800 đ mỗi lượt · ảnh có logo và SĐT", nursery=True),
+    Package("nursery_month", "Nhà vườn tháng", 20, 690_000, "30 ngày: đăng tin không giới hạn, tin nổi bật, trang vườn, xem thử AI nhiều hơn",
+            nursery=True, months=1),
 ]
 PACKAGE_BY_CODE = {p.code: p for p in PACKAGES}
 
@@ -151,6 +154,10 @@ def apply_bank_txn(db: Session, txn: BankTxn) -> str:
         user = db.get(User, payment.user_id)
         if user.role == UserRole.player:
             user.role = UserRole.nursery
+        if package.months:
+            now = datetime.now(UTC)
+            start = user.nursery_until if user.nursery_until and user.nursery_until > now else now
+            user.nursery_until = start + timedelta(days=30 * package.months)
     try:
         db.commit()
     except IntegrityError:

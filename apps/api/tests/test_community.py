@@ -129,7 +129,7 @@ def test_challenge_flow(db, client, login, bucket):  # noqa: F811
 
 
 def test_passport_transfer_and_stolen(db, client, login, bucket):  # noqa: F811
-    from bonsai_api.routers.passport import stolen_matches
+    from bonsai_api.services.stolen import stolen_matches
 
     headers, job = _done_job(db, client, login, bucket)
     tree_id = db.get(DesignJob, job.id).tree_id

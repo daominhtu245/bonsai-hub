@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, Ruler, Share2, Sofa, SquarePen, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Ruler, Share2, Sofa, SquarePen, Store, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { NotifyPrompt } from '@/components/NotifyPrompt';
@@ -249,9 +249,13 @@ function Done({ result, onToggle }: { result: ResultView; onToggle: (code: strin
           <Sofa size={18} strokeWidth={1.75} aria-hidden="true" />
           Đặt vào phòng
         </ButtonLink>
-        <ButtonLink to={`/ket-qua/${result.job_id}/phieu-tap-ve`} variant="secondary" className="col-span-2">
+        <ButtonLink to={`/ket-qua/${result.job_id}/phieu-tap-ve`} variant="secondary">
           <SquarePen size={18} strokeWidth={1.75} aria-hidden="true" />
           Phiếu tập vẽ
+        </ButtonLink>
+        <ButtonLink to={`/tin-cua-toi?job=${result.job_id}&tree=${result.tree_id}&title=${encodeURIComponent(result.tree_nickname ?? '')}`} variant="secondary">
+          <Store size={18} strokeWidth={1.75} aria-hidden="true" />
+          Đăng bán
         </ButtonLink>
       </section>
 

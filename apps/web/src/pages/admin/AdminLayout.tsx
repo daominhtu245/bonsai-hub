@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import {
   Activity, BarChart3, Bell, BookOpen, Brush, ClipboardCheck, CreditCard, FileCode2, Gift, LayoutDashboard, ListChecks, Menu,
   MessageSquare, Receipt, Scale, ScrollText, Search, Settings2, SlidersHorizontal, Users, X,
-  Swords,
+  Swords, Amphora,
 } from 'lucide-react';
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { BrandMark } from '@/components/BrandMark';
@@ -39,6 +39,7 @@ const NAV: NavGroup[] = [
       { to: '/admin/ma-qua-tang', label: 'Mã quà tặng', Icon: Gift },
       { to: '/admin/thong-bao', label: 'Gửi thông báo', Icon: Bell },
       { to: '/admin/thu-thach', label: 'Thử thách phôi', Icon: Swords },
+      { to: '/admin/chau-doi-tac', label: 'Chậu đối tác', Icon: Amphora },
     ],
   },
   {
