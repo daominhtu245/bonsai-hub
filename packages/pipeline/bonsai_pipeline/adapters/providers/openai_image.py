@@ -6,7 +6,7 @@ import io
 import openai
 from PIL import Image
 
-from ..base import AIError, ImageInput, ImageResponse, Usage
+from ..base import AIError, ImageInput, ImageResponse, Usage, out_of_credit
 
 _EXT = {"image/png": "png", "image/jpeg": "jpg", "image/webp": "webp"}
 _FORMAT = {"image/png": "PNG", "image/jpeg": "JPEG", "image/webp": "WEBP"}
@@ -50,6 +50,19 @@ def crop_back(data: bytes, src: tuple[int, int]) -> bytes:
     return buf.getvalue()
 
 
+def openai_mask(mask: bytes, src: tuple[int, int], canvas: tuple[int, int]) -> bytes:
+    """Mặt nạ của ta (trắng = được sửa) → mặt nạ OpenAI (trong suốt = được sửa), đặt đúng chỗ ảnh đã đệm lề."""
+    m = Image.open(io.BytesIO(mask)).convert("L").resize(src, Image.Resampling.NEAREST)
+    box = _content_box(src, canvas)
+    full = Image.new("L", canvas, 0)  # lề đệm: giữ nguyên
+    full.paste(m.resize((box[2] - box[0], box[3] - box[1]), Image.Resampling.NEAREST), box[:2])
+    rgba = Image.new("RGBA", canvas, (0, 0, 0, 255))
+    rgba.putalpha(full.point(lambda v: 0 if v > 127 else 255))
+    buf = io.BytesIO()
+    rgba.save(buf, format="PNG")
+    return buf.getvalue()
+
+
 class OpenAIImage:
     name = "openai"
 
@@ -58,18 +71,23 @@ class OpenAIImage:
         self.quality = quality
         self._client = openai.OpenAI(api_key=api_key) if api_key else openai.OpenAI()
 
-    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1, quality: str | None = None) -> ImageResponse:
+    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1, quality: str | None = None, mask: bytes | None = None) -> ImageResponse:
         src = Image.open(io.BytesIO(images[0].data)).size if images else (1024, 1024)
         size = pick_size(*src)
         padded = _content_box(src, size) != (0, 0, *size)
         inputs = [pad_to(img, size) for img in images] if padded else images
         # (tên, dữ liệu, mimetype): SDK không tự đoán mimetype từ BytesIO → API báo application/octet-stream.
         files = [(f"input_{i}.{_EXT.get(img.media_type, 'png')}", img.data, img.media_type) for i, img in enumerate(inputs)]
+        # mặt nạ phải đúng cỡ ảnh đầu đã gửi: có đệm lề → cỡ khung; không đệm → cỡ ảnh gốc
+        extra = {"mask": ("mask.png", openai_mask(mask, src, size if padded else src), "image/png")} if mask else {}
         try:
             resp = self._client.images.edit(
-                model=self.model, image=files, prompt=prompt, n=n, quality=quality or self.quality, size=f"{size[0]}x{size[1]}"
+                model=self.model, image=files, prompt=prompt, n=n, quality=quality or self.quality, size=f"{size[0]}x{size[1]}",
+                **extra,
             )
         except openai.RateLimitError as e:
+            if out_of_credit(e):  # hết tiền / hết hạn mức: thử lại vô ích
+                raise AIError(f"openai out of credit: {e}", retryable=False) from e
             raise AIError(f"openai rate limited: {e}", retryable=True) from e
         except openai.APIStatusError as e:
             raise AIError(f"openai {e.status_code}: {e}", retryable=e.status_code >= 500) from e

@@ -58,6 +58,15 @@ class RoadmapContext:
     species_key: str | None = None
     style_key: str = ""
     style_desc_en: str = ""
+    regions: object | None = None  # bonsai_pipeline.fidelity.Regions — khóa thân + nền theo ảnh gốc
+
+    def lock(self, *, pot: bool):
+        if self.regions is None:
+            return None
+        from bonsai_pipeline.fidelity import lock_regions
+
+        editable = self.regions.editable(pot=pot)
+        return lambda webp: lock_regions(self.original, webp, editable)
 
 
 def _store_stage(db: Session, job: DesignJob, ctx: RoadmapContext, res: StageResult) -> uuid.UUID | None:
@@ -111,7 +120,7 @@ def run_roadmap(db: Session, job: DesignJob, ctx: RoadmapContext) -> None:
         [ImageInput(ctx.original, "image/webp"), ImageInput(ctx.sketch_png, "image/png")],
         code="S1", size=ctx.size, original=ctx.original, previous=ctx.original, previous_mask=ctx.original_mask,
         segmenter=ctx.segmenter, quality=ctx.profile.stage_quality, max_retries=ctx.profile.stage_retries,
-        prompt_version=s1_tpl.version_tag,
+        prompt_version=s1_tpl.version_tag, postprocess=ctx.lock(pot=False),
     )
     stage_image_ids["S1"] = _store_stage(db, job, ctx, s1)
     if s1.candidate:
@@ -127,7 +136,7 @@ def run_roadmap(db: Session, job: DesignJob, ctx: RoadmapContext) -> None:
             [ImageInput(prev_img, "image/webp"), final, *refs],
             code=code, size=ctx.size, original=ctx.original, previous=prev_img, previous_mask=prev_mask,
             segmenter=ctx.segmenter, quality=ctx.profile.stage_quality, max_retries=ctx.profile.stage_retries,
-            prompt_version=chain_tpl.version_tag,
+            prompt_version=chain_tpl.version_tag, postprocess=ctx.lock(pot=code == "S3"),  # S3 mới đổi chậu
         )
         if "S1" in images_by_stage:
             for c in res.attempts:

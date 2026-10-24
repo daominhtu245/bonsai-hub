@@ -1,7 +1,7 @@
 step_code: P3a
 version: v2
 kind: image
-active: true
+active: false
 description: Render S4 theo bản vẽ — v2 hỗ trợ bố cục tầng lá do người dùng tự ghép (elip nét đứt)
 user: |
   Edit the FIRST image (original photo). Show the SAME tree after {{years}} years of professional bonsai training,

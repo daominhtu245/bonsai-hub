@@ -14,8 +14,8 @@ from sqlalchemy import select
 from bonsai_api import storage
 from bonsai_api.db.models import DesignJob, DesignOption, RenderImage, Species, Style, Tree, TreePhoto
 from bonsai_api.db.session import get_sessionmaker
-from bonsai_pipeline.adapters import AIError, ImageInput, get_image_client
-from bonsai_pipeline.phase_b import p3a_variables, prompt_hash, to_webp, years_to_final
+from bonsai_pipeline.adapters import AIError, get_image_client
+from bonsai_pipeline.phase_b import p3a_variables, prepare_s4, prompt_hash, to_webp, years_to_final
 from bonsai_pipeline.prompts import render
 from bonsai_pipeline.schemas import Analysis
 from bonsai_pipeline.schemas import DesignOption as DesignSchema
@@ -24,6 +24,7 @@ from bonsai_pipeline.steps import StepRecord
 from ..celery_app import app
 from ..prompts_repo import load_active_prompt
 from ..recording import record_step
+from .phase_b import cutout_mask
 
 log = logging.getLogger(__name__)
 USER_RANK = 9
@@ -53,9 +54,12 @@ def run_preview(db, job_id: uuid.UUID) -> None:
             species_name=species.name_vi if species else "bonsai tree", species_desc=species.prompt_desc_en if species else "small leaves",
             growth_speed=growth, years=years,
         ))
-        images = [ImageInput(storage.get_bytes(photo.storage_key), "image/webp"), ImageInput(storage.get_bytes(row.sketch_png_key), "image/png")]
-        res = get_image_client().edit(prompt=prompt, images=images, n=1, quality="low")
+        original = storage.get_bytes(photo.storage_key)
+        s4 = prepare_s4(original, storage.get_bytes(row.sketch_png_key), analysis, option,
+                        species_key=tree.species_key if tree else None, cutout=cutout_mask(job))
+        res = get_image_client().edit(prompt=prompt, images=s4.images, n=1, quality="low", mask=s4.mask_png)
         webp, _ = to_webp(res.response.images[0], (photo.width, photo.height))
+        webp, _ = s4.lock(original)(webp)
         n = int(((job.progress or {}).get("preview") or {}).get("count", 1))
         key = storage.job_image_key(job.tree_id, job.id, "PV", n)
         storage.put_bytes(key, webp, "image/webp")

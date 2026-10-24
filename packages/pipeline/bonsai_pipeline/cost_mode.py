@@ -1,7 +1,8 @@
 """Chế độ chi phí (admin bật/tắt; docs/decisions.md #29).
 
 standard (A): AI chỉ làm phần cần AI — đọc ảnh + thiết kế (P1, P2) và sinh ảnh. Lộ trình (P2b), hướng dẫn (P6),
-    tổng quan (P5) lấy từ bộ luật + thư viện hướng dẫn viết sẵn; chấm ảnh chỉ bằng CV (bỏ P4 VLM);
+    tổng quan (P5) lấy từ bộ luật + thư viện hướng dẫn viết sẵn; ảnh kết quả được khóa thân/nền, đo trung thực
+    trên máy rồi P4 chấm theo bảng chấm (bật lại 25/10/2026 sau phản hồi "đẹp nhưng sai", ~$0,02–0,04/lượt);
     1 ảnh kết quả chất lượng medium, ảnh giai đoạn chất lượng low.
 economy (B): như A nhưng mọi ảnh chất lượng low, LLM dùng LLM_ECONOMY_MODEL.
 full: quy trình đầy đủ ban đầu (3 ứng viên + VLM chấm + LLM viết lộ trình/hướng dẫn) — giữ để so sánh, không hiện ở admin.
@@ -30,7 +31,7 @@ class CostProfile:
 
 PROFILES: dict[str, CostProfile] = {
     "standard": CostProfile("standard", llm_economy=False, llm_effort="low", s4_candidates=1, s4_quality="medium",
-                            stage_quality="low", stage_retries=1, repair_rounds=1, vlm_judge=False, llm_roadmap=False),
+                            stage_quality="low", stage_retries=1, repair_rounds=1, vlm_judge=True, llm_roadmap=False),
     "economy": CostProfile("economy", llm_economy=True, llm_effort="low", s4_candidates=1, s4_quality="low",
                            stage_quality="low", stage_retries=0, repair_rounds=0, vlm_judge=False, llm_roadmap=False),
     "full": CostProfile("full", llm_economy=False, llm_effort="medium", s4_candidates=3, s4_quality="medium",

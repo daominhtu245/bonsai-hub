@@ -1,7 +1,7 @@
 step_code: P3a
 version: v1
 kind: image
-active: true
+active: false
 description: Render S4 photoreal theo bản vẽ (ảnh 1 gốc, ảnh 2 sketch, còn lại tham chiếu loài)
 user: |
   Edit the FIRST image (original photo). Show the SAME tree after {{years}} years of professional bonsai training,

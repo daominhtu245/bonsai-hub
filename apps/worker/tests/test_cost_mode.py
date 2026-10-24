@@ -10,7 +10,7 @@ from bonsai_pipeline.adapters.providers.fake import DemoImage
 from bonsai_worker.tasks.phase_b import run_phase_b
 
 from test_phase_a import bucket, llm  # noqa: F401
-from test_phase_b import chosen_job, routed  # noqa: F401
+from test_phase_b import chosen_job, routed, verdict  # noqa: F401
 
 
 class RecordingImage(DemoImage):
@@ -18,7 +18,7 @@ class RecordingImage(DemoImage):
         super().__init__()
         self.qualities: list[str | None] = []
 
-    def edit(self, *, prompt, images, n=1, quality=None):
+    def edit(self, *, prompt, images, n=1, quality=None, mask=None):
         self.qualities.append(quality)
         return super().edit(prompt=prompt, images=images, n=n, quality=quality)
 
@@ -36,9 +36,10 @@ def _steps(db, job_id):
 
 
 @pytest.mark.parametrize("mode,s4_quality", [("standard", "medium"), ("economy", "low")])
-def test_cheap_modes_skip_llm_after_design(db, chosen_job, provider, routed, mode, s4_quality, monkeypatch):  # noqa: F811
+def test_cheap_modes_skip_llm_after_design(db, chosen_job, provider, routed, llm, mode, s4_quality, monkeypatch):  # noqa: F811
     _, job = chosen_job
     set_cost_mode(db, mode, by="test")
+    llm.responses.extend([verdict(8)] * 2)  # điểm P4 (chỉ chế độ Tiêu chuẩn dùng)
     economy_flags = []
     from bonsai_pipeline.adapters.llm_client import LLMClient
 
@@ -51,10 +52,11 @@ def test_cheap_modes_skip_llm_after_design(db, chosen_job, provider, routed, mod
     assert job.progress["result"]["cost_mode"] == mode and job.progress["result"]["candidates"] == 1
     assert economy_flags == [mode == "economy"]
 
-    assert routed.steps == []  # không gọi LLM ở phiên B: không P4, P2b, P6, P5
+    # Tiêu chuẩn: chỉ P4 chấm ảnh kết quả (bật lại sau phản hồi beta); Tiết kiệm: không LLM nào ở phiên B
+    assert routed.steps == (["P4"] if mode == "standard" else [])
     steps = _steps(db, job.id)
     codes = [s.step_code for s in steps]
-    assert codes.count("P3a") == 1 and codes.count("P3d") == 3 and "P4" not in codes and "P5" not in codes
+    assert codes.count("P3a") == 1 and codes.count("P3d") == 3 and codes.count("P4") == (mode == "standard") and "P5" not in codes
     assert {s.step_code: s.provider for s in steps if s.step_code in ("P2b", "P6")} == {"P2b": "code", "P6": "code"}
     assert provider.qualities == [s4_quality, "low", "low", "low"]
 

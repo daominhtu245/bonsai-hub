@@ -1,7 +1,7 @@
 step_code: P4
 version: v1
 kind: llm
-active: true
+active: false
 description: Judge — VLM chấm ảnh sinh so với ảnh gốc (chạy sau kiểm tra CV)
 system: |
   You are a strict bonsai competition judge. Compare the ORIGINAL raw material photo (first image) with the GENERATED future image (second image).

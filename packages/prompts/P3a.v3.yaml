@@ -1,0 +1,33 @@
+step_code: P3a
+version: v3
+kind: image
+active: true
+description: Render S4 từ ảnh ghép bố cục (tầng lá + chậu thư viện đặt đúng thiết kế); thân và nền được khóa sau khi sinh
+user: |
+  IMAGE 1 is a COLLAGE made from the owner's photo: the real trunk, background and lighting, with flat cut-out foliage pads
+  and a bonsai pot pasted exactly where the approved design wants them. IMAGE 2 is the design sketch (RED = branches to
+  remove, GREEN = branches to keep, dot = apex). IMAGE 3 is the untouched original photo. Any further images are species
+  references only — never copy their trunks or layout.
+
+  TASK: turn IMAGE 1 into ONE realistic photograph of the SAME tree after {{years}} years of professional bonsai training.
+
+  KEEP EXACTLY (these areas will be restored from the original photo anyway):
+  - The trunk from the soil up to the lowest pad: same outline, curves, scars, bark, base position and lean.
+  - Camera angle, framing, background and lighting of IMAGE 1. Same aspect ratio.
+
+  CHANGE:
+  1. Replace every pasted pad with real {{species_foliage_description}} foliage: same position, size and outline as the
+     pasted pad ({{pads}} pads in total), dense but with clear negative space between pads. No foliage outside the pads.
+  2. Each pad grows on a wired branch that visibly connects to the trunk, following the GREEN lines of the sketch.
+     Branches get thinner and shorter toward the top. First branch on the {{first_branch_side}}.
+  3. Remove the RED branches of the sketch completely ({{scar_note}}); show the background where they were. Also remove
+     any original shoot that falls outside the pads.
+  4. Apex at the sketch dot, leaning {{apex_lean}}.
+  5. Render the pasted pot as a real {{pot_description}}, tree placed {{pot_position}}, soil surface natural. {{repot_note}}
+
+  DESIGN: {{style_description}}.
+  REALISM FOR {{years}} YEARS: {{timeline_text}} Ramification and density believable for {{years}} years of
+  {{species_name}} ({{growth_speed}} grower) — not a 50-year-old masterpiece.
+
+  OUTPUT: photorealistic photo, natural daylight, sharp focus. Nothing must look pasted, flat or illustrated.
+  No text, no watermark, no extra objects.

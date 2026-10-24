@@ -234,8 +234,12 @@ def render_stage(
     prompt_version: str,
     quality: str | None = None,
     max_retries: int = MAX_STAGE_RETRIES,
+    postprocess=None,
 ) -> tuple[StageResult, np.ndarray | None]:
-    """Sinh một giai đoạn; vi phạm đơn điệu → sinh lại tối đa `max_retries` lần."""
+    """Sinh một giai đoạn; vi phạm đơn điệu → sinh lại tối đa `max_retries` lần.
+
+    `postprocess`: khóa thân + nền theo ảnh gốc (fidelity.lock_regions) trước khi kiểm tra.
+    """
     attempts: list[Candidate] = []
     records: list[StepRecord] = []
     for attempt in range(max_retries + 1):
@@ -246,12 +250,17 @@ def render_stage(
                 records.append(StepRecord.from_trace("P3d", e.trace, prompt_version=prompt_version, ok=False, error=str(e)))
             continue
         webp, raw_size = to_webp(res.response.images[0], size)
+        lock = None
+        if postprocess is not None:
+            webp, lock = postprocess(webp)
         cand = Candidate(attempt, webp, res.response.model, prompt,
                          StepRecord.from_trace("P3d", res.trace, prompt_version=prompt_version, ok=True,
                                                output={"stage": code, "attempt": attempt}))
         cand.cv["generated_size"] = list(raw_size)
         cand.cv, mask = stage_checks(original, previous, cand, previous_mask=previous_mask, segmenter=segmenter,
                                      pot_changes=code == "S3")  # S3: chuyển sang chậu bonsai (P3d_chain pot_rule)
+        if lock is not None:
+            cand.cv["lock"] = lock
         attempts.append(cand)
         records.append(cand.record)
         if not cand.cv["fails"]:

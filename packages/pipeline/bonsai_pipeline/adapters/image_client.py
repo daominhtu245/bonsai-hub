@@ -32,14 +32,14 @@ class ImageClient:
         self.base_delay_s = base_delay_s
         self._sleep = sleep
 
-    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1, quality: str | None = None) -> ImageResult:
+    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1, quality: str | None = None, mask: bytes | None = None) -> ImageResult:
         trace = CallTrace()
         last: AIError | None = None
         for provider in [self.primary] + ([self.fallback] if self.fallback else []):
             for attempt in range(self.max_retries + 1):
                 started = time.monotonic()
                 try:
-                    resp = provider.edit(prompt=prompt, images=images, n=n, quality=quality)
+                    resp = provider.edit(prompt=prompt, images=images, n=n, quality=quality, mask=mask)
                 except AIError as e:
                     trace.calls.append(ProviderCall(provider.name, provider.model, Usage(), _ms(started), False, str(e)))
                     last = e

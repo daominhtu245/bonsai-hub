@@ -169,6 +169,7 @@ class JobDetail(BaseModel):
     share_code: str | None
     photos: list[dict]
     cutout: dict | None = None  # ảnh đã tách nền + phác họa gửi P1 (bonsai_pipeline/cutout.py)
+    s4_prep: dict | None = None  # ảnh ghép bố cục + vùng được vẽ của S4 (bonsai_pipeline/fidelity.py)
     options: list[OptionOut]
     renders: list[RenderOut]
     stages: list[dict]
@@ -233,7 +234,9 @@ def job_detail(job_id: uuid.UUID, db: DB):
         photos=[{"id": str(p.id), "url": storage.presign_get(p.storage_key), "is_front": p.id == job.front_photo_id,
                  "width": p.width, "height": p.height} for p in photos],
         cutout=({"image_url": storage.presign_get(c["image_key"]), "sketch_url": storage.presign_get(c["sketch_key"]), "box": c.get("box")}
-                if (c := (job.progress or {}).get("cutout")) else None),
+                if (c := (job.progress or {}).get("cutout")) and c.get("image_key") else None),
+        s4_prep=({"collage_url": storage.presign_get(p["collage_key"]), "editable_url": storage.presign_get(p["editable_key"]),
+                  "trunk_source": p.get("trunk_source")} if (p := (job.progress or {}).get("s4_prep")) else None),
         options=[OptionOut(id=o.id, rank=o.rank, style_key=o.style_key, suitability=o.suitability,
                            chosen=o.id == job.chosen_option_id, design=o.design, counts=o.sketch_meta,
                            sketch_svg_url=storage.presign_get(o.sketch_svg_key) if o.sketch_svg_key else None)

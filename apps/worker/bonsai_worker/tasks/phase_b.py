@@ -23,8 +23,9 @@ from bonsai_api.db.session import get_sessionmaker
 from bonsai_api.services.settings import get_cost_mode
 from bonsai_pipeline.adapters import AIError, ImageInput, get_image_client, get_llm_client
 from bonsai_pipeline.cost_mode import get_profile
+from bonsai_pipeline.fidelity import fidelity_checks
 from bonsai_pipeline.phase_b import (
-    Candidate, cv_checks, generate, judge, p3a_variables, prompt_hash, repair_inputs,
+    CV_HARD_FAILS, Candidate, cv_checks, generate, judge, p3a_variables, prepare_s4, prompt_hash, repair_inputs,
     select, years_to_final,
 )
 from bonsai_pipeline.dictionaries import MAX_THICKEN_PCT_PER_YEAR
@@ -49,6 +50,16 @@ def _load_mask(key: str | None) -> np.ndarray | None:
     if not key:
         return None
     return np.asarray(Image.open(io.BytesIO(storage.get_bytes(key))).convert("L")) > 127
+
+
+def cutout_mask(job: DesignJob) -> np.ndarray | None:
+    """Mặt nạ tách nền của phiên A (bonsai_pipeline/cutout.py), nếu có."""
+    c = (job.progress or {}).get("cutout") or {}
+    key = c.get("mask_key") or (f"trees/{job.tree_id}/jobs/{job.id}/cutout_mask.png" if c else None)
+    try:
+        return _load_mask(key)
+    except Exception:  # noqa: BLE001 — thiếu file thì khóa theo hình học
+        return None
 
 
 def _store(db: Session, job: DesignJob, tree_id: uuid.UUID, c: Candidate) -> RenderImage:
@@ -104,10 +115,24 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
         size = (photo.width, photo.height)
         sketch_png = storage.get_bytes(option_row.sketch_png_key)
         refs = [storage.get_bytes(k) for k in (species.ref_image_keys if species else [])[:MAX_SPECIES_REFS]]
-        images = [ImageInput(original, "image/webp"), ImageInput(sketch_png, "image/png")]
-        images += [ImageInput(r, "image/webp") for r in refs]
         original_mask = _load_mask((job.targets or {}).get("mask_key"))
         segmenter = get_segmenter()
+        # Bước 2–3 (docs/quality-plan.md): ảnh ghép bố cục làm khung + vùng khóa (thân dưới, nền) dán lại sau khi sinh.
+        started = time.monotonic()
+        s4 = prepare_s4(original, sketch_png, analysis, option, species_key=tree.species_key,
+                        cutout=cutout_mask(job), seg=original_mask, refs=refs)
+        images = s4.images
+        base = f"trees/{tree.id}/jobs/{job.id}"
+        storage.put_bytes(f"{base}/s4_collage.jpg", s4.collage, "image/jpeg")
+        storage.put_bytes(f"{base}/s4_editable.png", s4.mask_png, "image/png")
+        job.progress = {**(job.progress or {}), "s4_prep": {"collage_key": f"{base}/s4_collage.jpg",
+                                                           "editable_key": f"{base}/s4_editable.png",
+                                                           "trunk_source": s4.regions.trunk_source}}
+        db.commit()
+        record_step(db, job.id, StepRecord("P3prep", "code", "fidelity", None, 0, 0, 0, 0.0,
+                                           int((time.monotonic() - started) * 1000), ok=True,
+                                           output={"trunk_source": s4.regions.trunk_source, "pads": len(s4.regions.pads),
+                                                   "editable_ratio": round(float(s4.editable.mean()), 3)}))
 
         p3a, p3c, p4 = (load_active_prompt(db, c) for c in ("P3a", "P3c", "P4"))
         base_prompt = render(p3a.user, p3a_variables(
@@ -121,7 +146,8 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
 
         def run_generation(prompt: str, n: int, step: str, version: str, first: int) -> list[Candidate]:
             cands, failed = generate(image_client, prompt, images, size=size, n=n, step_code=step,
-                                     prompt_version=version, first_attempt=first, quality=profile.s4_quality)
+                                     prompt_version=version, first_attempt=first, quality=profile.s4_quality,
+                                     mask=s4.mask_png, postprocess=s4.lock(original))
             for rec in failed:
                 record_step(db, job.id, rec)
             for c in cands:
@@ -135,15 +161,18 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
             rows = {}
             for c in cands:
                 c.cv = cv_checks(original, c, original_mask=original_mask, segmenter=segmenter)
+                fid = fidelity_checks(original, c.image, analysis, option, s4.regions)
+                c.cv = {**c.cv, **{k: v for k, v in fid.items() if k != "fails"}, "fails": c.cv["fails"] + fid["fails"]}
                 rows[c.attempt] = _store(db, job, tree.id, c)
             record_step(db, job.id, StepRecord("P4cv", "code", "cv", None, 0, 0, 0, 0.0,
                                                int((time.monotonic() - started) * 1000), ok=True,
                                                output={str(c.attempt): c.cv for c in cands}))
             for c in cands:
-                if c.cv["fails"] or not profile.vlm_judge:
-                    continue  # CV đã loại, hoặc chế độ chi phí không dùng VLM chấm
+                if set(c.cv["fails"]) & CV_HARD_FAILS or not profile.vlm_judge:
+                    continue  # ảnh hỏng rõ (CV), hoặc chế độ chi phí không dùng VLM chấm
                 try:
-                    rec = judge(llm, p4, original, c, option=option, years=years, species_name=species_name)
+                    rec = judge(llm, p4, original, c, option=option, years=years, species_name=species_name,
+                                collage=s4.collage)
                 except AIError as e:
                     raise JobFailure("ai_unavailable", str(e)) from e
                 record_step(db, job.id, rec)
@@ -200,7 +229,7 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
             final_image=sel.best.image, final_render_id=chosen.id, final_summary=summary, final_judge=sel.best.judge_raw,
             segmenter=segmenter, image_client=image_client, llm=llm, attempt_base=attempt_base,
             profile=profile, years=years, species_key=tree.species_key, style_key=option.style_key,
-            style_desc_en=style.prompt_desc_en if style else option.style_key,
+            style_desc_en=style.prompt_desc_en if style else option.style_key, regions=s4.regions,
         ))
         set_status(db, job, JobStatus.done)
 

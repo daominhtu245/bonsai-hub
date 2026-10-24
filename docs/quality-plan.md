@@ -15,10 +15,10 @@ Phản hồi beta (25/10/2026): ảnh kết quả đẹp nhưng không đúng ph
 | 0a | ✅ Bộ luật + bảng chấm nháp từ nguồn công khai (`rules/*.yaml`, `rules/SOURCES.md`) + 380 ảnh tham chiếu có giấy phép (`data/seed/`) | Không | xong 25/10 |
 | 0 | Gom 5–10 phiên bị chê + bảng chấm "đúng chuẩn" (~10 tiêu chí) cùng nghệ nhân | Không | 1–2 buổi |
 | 1 | Nghệ nhân chấm thiết kế P2 trên bản vẽ (Cổng 1) trước khi bàn tới ảnh | Không | công cụ chấm: 1–2 ngày |
-| 2 | **Khóa phần không được đổi**: dùng mặt nạ (tách nền + thân) giữ nguyên pixel thân, gốc, chậu, nền; model chỉ được vẽ vùng tán (inpaint có mask) | Không | 3–4 ngày |
-| 3 | **Dựng bố cục trước, AI chỉ làm thật**: ghép tầng lá đúng vị trí thiết kế + xóa cành cắt (dùng lại `studio_compose`) → AI chỉ tinh chỉnh cho giống ảnh thật trong vùng tán | Không | 3–4 ngày |
-| 4 | **Tự kiểm tra trước khi giao**: đo thân có bị đổi, số / vị trí tầng lá, tỉ lệ tán theo luật, cành cắt có mọc lại, ngọn đúng chỗ + AI chấm theo bảng chấm; không đạt → sửa / vẽ lại; vẫn không đạt → báo độ tin cậy thấp hoặc hoàn lượt | Không | 3–5 ngày |
-| 5 | S1–S3 suy ra từ S4 (gỡ dần tán theo mặt nạ) thay vì vẽ độc lập | Không | 2–3 ngày |
+| 2 | ✅ (25/10) **Khóa phần không được đổi**: dùng mặt nạ (tách nền + thân) giữ nguyên pixel thân, gốc, chậu, nền; model chỉ được vẽ vùng tán (inpaint có mask) | Không | 3–4 ngày |
+| 3 | ✅ (25/10) **Dựng bố cục trước, AI chỉ làm thật**: ghép tầng lá đúng vị trí thiết kế + xóa cành cắt (dùng lại `studio_compose`) → AI chỉ tinh chỉnh cho giống ảnh thật trong vùng tán | Không | 3–4 ngày |
+| 4 | ✅ (25/10) **Tự kiểm tra trước khi giao**: đo thân có bị đổi, số / vị trí tầng lá, tỉ lệ tán theo luật, cành cắt có mọc lại, ngọn đúng chỗ + AI chấm theo bảng chấm; không đạt → sửa / vẽ lại; vẫn không đạt → báo độ tin cậy thấp hoặc hoàn lượt | Không | 3–5 ngày |
+| 5 | ◐ S1–S3 đã khóa thân + nền theo ảnh gốc; còn: suy ra từ S4 thay vì vẽ độc lập. S1–S3 suy ra từ S4 (gỡ dần tán theo mặt nạ) thay vì vẽ độc lập | Không | 2–3 ngày |
 | 6 | Nút "Sai ở đâu" (thân bị đổi / sai số tầng / cành cắt còn / sai loài lá / quá già…) → dữ liệu chỉnh prompt, luật, model | Không | 1–2 ngày |
 | 7 | Train YOLO-seg thân / cành / rễ (300–500 ảnh) → đo và kiểm tra chính xác hơn | Có | khi đủ ảnh |
 | 8 | Train model chấm dáng từ điểm nghệ nhân + quẹt chọn (B6) → lọc ảnh xấu tự động | Có | ~1–2 nghìn lượt chấm |
@@ -30,3 +30,13 @@ huấn luyện chỉ áp dụng cho model riêng (bước 7–9).
 ## Cách đo đã cải thiện
 Bộ 20 phôi cố định; mỗi thay đổi chạy lại cả bộ, nghệ nhân chấm theo bảng chấm; so tỉ lệ đạt trước / sau.
 Mục tiêu Cổng 2: ≥ 70% ảnh đạt ngay lần đầu.
+
+## Kết quả thử thật đầu tiên (25/10/2026)
+Chạy lại phiên B trên 2 phiên cũ (giữ nguyên phôi + thiết kế, chỉ đổi cách tạo ảnh), P3a v3 + khóa vùng + P4 v2:
+- Phôi si (ảnh có tay cầm): ảnh cũ vẽ lại thân và phân cành theo ý model; ảnh mới giữ đúng thân, u sẹo, rễ;
+  tầng lá đúng vị trí bố cục, chậu đúng thiết kế. Bộ đo bắt được lá xòe rộng hơn tầng thiết kế.
+- Phôi sanh: ảnh cũ "bịa" một cây khác; ảnh mới giữ đúng cây nhưng tầng lá quá nhỏ (bộ đo báo `pads_missing`) —
+  phân tích cũ của phiên này kém và tách nền thất bại nên cành cũ ngoài thiết kế không được dọn.
+- Đã sửa sau lần thử: vùng chậu cắt cứng (giờ cả dải dưới), vệt sọc mép sau khi căn (bỏ mép không có dữ liệu),
+  lỗi trung thực là lỗi "mềm" (vẫn chấm P4 để có hướng dẫn sửa), mặt nạ sai cỡ với ảnh vuông.
+- Chưa thử lại được sau khi sửa: tài khoản OpenAI hết tiền.

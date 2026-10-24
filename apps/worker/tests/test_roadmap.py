@@ -50,7 +50,7 @@ def test_stage_falls_back_to_sketch(db, chosen_job, images, llm, monkeypatch):  
     class S2Breaks(DemoImage):
         """Ảnh S2 đổi hẳn nền → vi phạm kiểm tra, sinh lại 2 lần vẫn hỏng → dùng bản vẽ."""
 
-        def edit(self, *, prompt, images, n=1, quality=None):
+        def edit(self, *, prompt, images, n=1, quality=None, mask=None):
             r = super().edit(prompt=prompt, images=images, n=n, quality=quality)
             if 'stage "recovery and branch growth"' in prompt:
                 buf = io.BytesIO()
@@ -59,6 +59,8 @@ def test_stage_falls_back_to_sketch(db, chosen_job, images, llm, monkeypatch):  
             return r
 
     images["provider"] = S2Breaks()
+    # không khóa vùng ở test này: khóa sẽ dán lại nền gốc và "chữa" ảnh hỏng
+    monkeypatch.setattr("bonsai_pipeline.fidelity.lock_regions", lambda original, webp, editable: (webp, {}))
     run_phase_b(db, job.id)
     db.expire_all()
     st = _stages(db, job.id)

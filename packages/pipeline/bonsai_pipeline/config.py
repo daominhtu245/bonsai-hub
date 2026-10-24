@@ -19,7 +19,7 @@ class AISettings(BaseSettings):
     image_provider: str = "gemini"
     image_model: str = "gemini-2.5-flash-image"
     image_fallback_provider: str | None = "openai"
-    image_fallback_model: str | None = "gpt-image-1"
+    image_fallback_model: str | None = "gpt-image-1.5"
 
     anthropic_api_key: str | None = None
     gemini_api_key: str | None = None

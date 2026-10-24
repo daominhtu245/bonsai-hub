@@ -109,7 +109,7 @@ def test_passes_first_round(db, chosen_job, images, llm, bucket):
     i = steps.index("P3a")
     assert steps[i:i + 7] == ["P3a", "P3a", "P3a", "P4cv", "P4", "P4", "P4"]
     # P4 nhận ảnh gốc + ứng viên
-    assert all(c["images"] == 2 for c in llm.calls)
+    assert all(c["images"] == 3 for c in llm.calls)  # ảnh gốc, ảnh sinh, ảnh ghép bố cục (đích)
     assert db.get(User, user.id).credits == 0  # lượt đã dùng, không hoàn
 
 
@@ -139,16 +139,22 @@ def test_low_confidence_after_two_rounds(db, chosen_job, images, llm):
     assert selected[0].total_score == 6.0
 
 
-def test_cv_rejects_skip_vlm(db, chosen_job, images, llm, routed):
+def test_cv_rejects_skip_vlm(db, chosen_job, images, llm, routed, monkeypatch):
     _, job = chosen_job
-    images["provider"] = FakeImage()  # ảnh xanh đặc: nền bị đổi hoàn toàn
+    images["provider"] = FakeImage()
+    # lỗi CV "cứng" (khung ảnh bị đổi tỉ lệ) → không tốn tiền chấm VLM
+    from bonsai_worker.tasks import phase_b as pb
+
+    real = pb.cv_checks
+    monkeypatch.setattr(pb, "cv_checks", lambda *a, **k: {**real(*a, **k), "fails": ["aspect_changed"]})
     run_phase_b(db, job.id)
     db.expire_all()
     job = db.get(DesignJob, job.id)
     assert job.status == JobStatus.done and job.progress["result"]["low_confidence"] is True
     assert "P4" not in routed.steps  # không gọi VLM cho ảnh bị CV loại
     rows = _renders(db, job.id)
-    assert len(rows) == 5 and all("background_changed" in r.cv_checks["fails"] for r in rows)
+    assert len(rows) == 5 and all("aspect_changed" in r.cv_checks["fails"] for r in rows)
+    assert all(r.cv_checks["lock"]["editable_ratio"] > 0 for r in rows)  # mọi ảnh đều đã khóa thân + nền
 
 
 def test_image_model_down_refunds(db, chosen_job, images, llm):
@@ -228,3 +234,37 @@ def test_rerun_numbers_attempts_after_previous(db, chosen_job, images, llm):  # 
     assert len(keys) == 6  # không ghi đè ảnh cũ
     stages = db.execute(select(Stage).where(Stage.job_id == job.id)).scalars().all()
     assert sorted(s.code for s in stages) == ["S0", "S1", "S2", "S3", "S4"]
+
+
+@pytest.mark.fidelity
+def test_s4_uses_collage_mask_and_lock(db, chosen_job, images, llm, bucket):
+    _, job = chosen_job
+    provider = FakeImage()
+    images["provider"] = provider
+    llm.responses.extend([verdict(8)] * 6)
+    run_phase_b(db, job.id)
+    db.expire_all()
+    job = db.get(DesignJob, job.id)
+    base = f"trees/{job.tree_id}/jobs/{job.id}"
+    assert bucket[f"{base}/s4_collage.jpg"][:2] == b"\xff\xd8" and bucket[f"{base}/s4_editable.png"][:4] == b"\x89PNG"
+    prep = db.execute(select(PipelineStep).where(PipelineStep.job_id == job.id, PipelineStep.step_code == "P3prep")).scalar_one()
+    assert prep.output["pads"] == 4 and 0 < prep.output["editable_ratio"] < 1
+    assert provider.masks[0] is not None  # S4 gửi kèm mặt nạ vùng được sửa
+    rows = _renders(db, job.id)
+    assert all("lock" in r.cv_checks and "pad_cover" in r.cv_checks for r in rows)
+    # ảnh xanh đặc của model giả: tầng lá "đủ", nhưng lá tràn ra ngoài thiết kế → bị bắt lỗi, vẫn giao kèm cảnh báo
+    assert all("foliage_outside_design" in r.cv_checks["fails"] for r in rows)
+    assert job.status == JobStatus.done and job.progress["result"]["low_confidence"] is True
+
+
+
+def test_fidelity_fails_are_soft_and_still_judged(db, chosen_job, images, llm, routed, monkeypatch):
+    _, job = chosen_job
+    llm.responses.extend([verdict(8)] * 9)
+    monkeypatch.setattr("bonsai_worker.tasks.phase_b.fidelity_checks", lambda *a, **k: {"pad_cover": [0.1], "fails": ["pads_missing"]})
+    run_phase_b(db, job.id)
+    db.expire_all()
+    job = db.get(DesignJob, job.id)
+    assert "P4" in routed.steps  # vẫn chấm để có điểm + hướng dẫn sửa
+    assert job.status == JobStatus.done and job.progress["result"]["low_confidence"] is True
+    assert job.progress["result"]["repair_rounds"] == 2  # có vòng sửa, prompt sửa nhắc tầng lá

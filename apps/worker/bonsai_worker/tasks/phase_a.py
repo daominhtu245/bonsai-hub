@@ -131,7 +131,8 @@ def run_phase_a(db: Session, job_id: uuid.UUID) -> None:
                     storage.put_bytes(f"{base}/cutout_sketch.png", cut.sketch_png, "image/png")
                     storage.put_bytes(f"{base}/cutout_mask.png", cut.mask_png, "image/png")
                     job.progress = {**(job.progress or {}), "cutout": {
-                        "image_key": f"{base}/cutout.jpg", "sketch_key": f"{base}/cutout_sketch.png", "box": list(cut.box)}}
+                        "image_key": f"{base}/cutout.jpg", "sketch_key": f"{base}/cutout_sketch.png",
+                        "mask_key": f"{base}/cutout_mask.png", "box": list(cut.box)}}
                     db.commit()
                     p1_images = [ImageInput(cut.image_jpeg, "image/jpeg"), *images[1:], ImageInput(cut.sketch_png, "image/png"),
                                  ImageInput(cut.crop_jpeg, "image/jpeg")]

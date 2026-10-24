@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
@@ -19,7 +20,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from .adapters.base import AIError, ImageInput
 from .adapters.image_client import ImageClient
 from .adapters.llm_client import LLMClient
-from .dictionaries import MAX_THICKEN_PCT_PER_YEAR, rule_set_yaml
+from .dictionaries import MAX_THICKEN_PCT_PER_YEAR, judging, rule_set_yaml
+from .fidelity import FIX_HINTS, Regions, layout_collage, lock_regions, regions
 from .phase_a import PromptTemplate
 from .prompts import render
 from .schemas import Analysis, DesignOption
@@ -32,6 +34,8 @@ N_CANDIDATES = 3
 MAX_REPAIR_ROUNDS = 2
 PASS_SCORE = 6.5
 TRUNK_IOU_MIN = 0.75
+# lỗi CV "cứng": ảnh hỏng rõ → không tốn tiền chấm VLM. Lỗi trung thực (fidelity) vẫn được chấm để có hướng dẫn sửa.
+CV_HARD_FAILS = {"aspect_changed", "background_changed", "trunk_changed", "base_moved"}
 BASE_SHIFT_MAX = 0.03  # theo chiều rộng ảnh
 ASPECT_TOLERANCE = 0.02
 BACKGROUND_DIFF_MAX = 0.12  # sai khác trung bình (0–1) ở góc ảnh
@@ -187,19 +191,29 @@ def generate(
     prompt_version: str,
     first_attempt: int,
     quality: str | None = None,
+    mask: bytes | None = None,
+    postprocess: Callable[[bytes], tuple[bytes, dict]] | None = None,
 ) -> tuple[list[Candidate], list[StepRecord]]:
-    """Sinh `n` ảnh song song (mỗi ảnh 1 lời gọi). Ảnh lỗi bị bỏ qua; trả cả bản ghi lỗi để tính chi phí."""
+    """Sinh `n` ảnh song song (mỗi ảnh 1 lời gọi). Ảnh lỗi bị bỏ qua; trả cả bản ghi lỗi để tính chi phí.
+
+    `mask`: vùng được sửa (gợi ý cho model); `postprocess`: khóa vùng (fidelity.lock_regions) sau khi sinh.
+    """
 
     def one(i: int):
         try:
-            res = client.edit(prompt=prompt, images=images, n=1, quality=quality)
+            res = client.edit(prompt=prompt, images=images, n=1, quality=quality, mask=mask)
         except AIError as e:
             rec = StepRecord.from_trace(step_code, e.trace, prompt_version=prompt_version, ok=False, error=str(e)) if e.trace else None
             return None, rec
         rec = StepRecord.from_trace(step_code, res.trace, prompt_version=prompt_version, ok=True)
         webp, raw_size = to_webp(res.response.images[0], size)
+        lock = None
+        if postprocess is not None:
+            webp, lock = postprocess(webp)
         cand = Candidate(first_attempt + i, webp, res.response.model, prompt, rec)
         cand.cv["generated_size"] = list(raw_size)
+        if lock is not None:
+            cand.cv["lock"] = lock
         return cand, rec
 
     with ThreadPoolExecutor(max_workers=n) as pool:
@@ -207,6 +221,32 @@ def generate(
     cands = [c for c, _ in results if c is not None]
     failed = [r for c, r in results if c is None and r is not None]
     return cands, failed
+
+
+# ---------- chuẩn bị S4: vùng khóa + ảnh ghép bố cục (docs/quality-plan.md bước 2–3) ----------
+
+
+@dataclass
+class S4Inputs:
+    images: list[ImageInput]  # [ảnh ghép, bản vẽ, ảnh gốc, ảnh loài…]
+    collage: bytes
+    regions: "Regions"
+    editable: np.ndarray
+    mask_png: bytes
+
+    def lock(self, original: bytes) -> Callable[[bytes], tuple[bytes, dict]]:
+        return lambda webp: lock_regions(original, webp, self.editable)
+
+
+def prepare_s4(original: bytes, sketch_png: bytes, analysis: Analysis, option: DesignOption, *, species_key: str | None,
+               cutout: np.ndarray | None = None, seg: np.ndarray | None = None, refs: list[bytes] = ()) -> S4Inputs:
+    w, h = Image.open(io.BytesIO(original)).size
+    reg = regions(analysis, option, (w, h), species_key=species_key, cutout=cutout, seg=seg)
+    collage = layout_collage(original, analysis, option, reg.pads)
+    editable = reg.editable(pot=True)
+    images = [ImageInput(collage, "image/jpeg"), ImageInput(sketch_png, "image/png"), ImageInput(original, "image/webp")]
+    images += [ImageInput(r, "image/webp") for r in refs]
+    return S4Inputs(images, collage, reg, editable, reg.as_png(editable))
 
 
 # ---------- B2a kiểm tra cấu trúc bằng CV ----------
@@ -290,19 +330,26 @@ def judge(
     option: DesignOption,
     years: int,
     species_name: str,
+    collage: bytes | None = None,
 ) -> StepRecord:
+    """Chấm ảnh theo bộ luật + bảng chấm (rules/judging.yaml); có ảnh ghép bố cục thì gửi kèm làm đích so sánh."""
     variables = {
         "p2_option_json": json.loads(option.model_dump_json()),
         "rule_set_yaml": rule_set_yaml(),
+        "judging_yaml": judging_text(),
         "years": years,
         "species_name": species_name,
+        "fidelity_json": {k: v for k, v in cand.cv.items() if k in ("pad_cover", "outside_foliage", "removed_still_present", "apex_offset")},
     }
+    images = [ImageInput(original, "image/webp"), ImageInput(cand.image, "image/webp")]
+    if collage is not None:
+        images.append(ImageInput(collage, "image/jpeg"))
     try:
         res = llm.complete_json(
             system=render(prompt.system or "", variables),
             user=render(prompt.user, variables),
             schema=JudgeResult,
-            images=[ImageInput(original, "image/webp"), ImageInput(cand.image, "image/webp")],
+            images=images,
             max_tokens=4000,
         )
     except AIError as e:
@@ -312,6 +359,12 @@ def judge(
     cand.judge, cand.judge_raw = res.value, res.raw
     return StepRecord.from_trace("P4", res.trace, prompt_version=prompt.version_tag, ok=True,
                                  output={**res.raw, "total": res.value.total(), "attempt": cand.attempt})
+
+
+def judging_text() -> str:
+    import yaml
+
+    return yaml.safe_dump(judging(), allow_unicode=True, sort_keys=False)
 
 
 # ---------- luật chọn ----------
@@ -362,6 +415,7 @@ def repair_inputs(best: Candidate) -> tuple[str, str]:
         fixes.append("Output exactly the same aspect ratio as the original photo.")
     if {"trunk_changed", "base_moved"} & set(checks):
         fixes.append("Do not redraw the trunk: keep its exact outline, curves, base position and lean from the original.")
+    fixes += [FIX_HINTS[c] for c in checks if c in FIX_HINTS]
     if best.judge and best.judge.fix_instructions:
         fixes.append(best.judge.fix_instructions)
     return ", ".join(checks) or "overall score below threshold", "\n".join(f"- {f}" for f in fixes) or "- Follow the sketch more closely."

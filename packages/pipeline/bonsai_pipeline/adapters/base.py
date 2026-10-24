@@ -79,6 +79,13 @@ class AIError(Exception):
         self.trace = trace
 
 
+def out_of_credit(err: Exception) -> bool:
+    """429 do hết tiền / hết hạn mức tài khoản (khác 429 quá tải tạm thời)."""
+    text = str(err).lower()
+    return any(k in text for k in ("insufficient_quota", "credit_balance_exhausted", "exceeded your current quota",
+                                   "no credits remaining", "billing"))
+
+
 class SchemaValidationError(AIError):
     """Model trả JSON sai schema sau khi đã gọi lại hết số lần cho phép."""
 
@@ -103,6 +110,7 @@ class ImageProvider(Protocol):
     name: str
     model: str
 
-    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1, quality: str | None = None) -> ImageResponse:
-        """`quality`: low | medium | high; nhà cung cấp không hỗ trợ thì bỏ qua."""
+    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1, quality: str | None = None, mask: bytes | None = None) -> ImageResponse:
+        """`quality`: low | medium | high; `mask`: PNG cỡ ảnh đầu, trắng = được sửa (gợi ý vùng sửa);
+        nhà cung cấp không hỗ trợ thì bỏ qua."""
         ...

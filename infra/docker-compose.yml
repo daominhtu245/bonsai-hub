@@ -86,13 +86,13 @@ services:
       CUTOUT_THREADS: ${CUTOUT_THREADS:-}
       LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
       LLM_MODEL: ${LLM_MODEL:-claude-sonnet-5-5}
-      LLM_FALLBACK_PROVIDER: ${LLM_FALLBACK_PROVIDER:-gemini}
-      LLM_FALLBACK_MODEL: ${LLM_FALLBACK_MODEL:-gemini-flash-latest}
+      LLM_FALLBACK_PROVIDER: ${LLM_FALLBACK_PROVIDER-gemini}  # để trống trong .env = tắt dự phòng
+      LLM_FALLBACK_MODEL: ${LLM_FALLBACK_MODEL-gemini-flash-latest}
       LLM_ECONOMY_MODEL: ${LLM_ECONOMY_MODEL:-}
       IMAGE_PROVIDER: ${IMAGE_PROVIDER:-gemini}
       IMAGE_MODEL: ${IMAGE_MODEL:-gemini-2.5-flash-image}
-      IMAGE_FALLBACK_PROVIDER: ${IMAGE_FALLBACK_PROVIDER:-openai}
-      IMAGE_FALLBACK_MODEL: ${IMAGE_FALLBACK_MODEL:-gpt-image-1}
+      IMAGE_FALLBACK_PROVIDER: ${IMAGE_FALLBACK_PROVIDER-openai}  # để trống trong .env = tắt dự phòng
+      IMAGE_FALLBACK_MODEL: ${IMAGE_FALLBACK_MODEL-gpt-image-1.5}
       SENTRY_DSN: ${SENTRY_DSN:-}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}

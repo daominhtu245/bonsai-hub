@@ -63,7 +63,7 @@ class GeminiImage:
         self.model = model
         self._client = _client(api_key)
 
-    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1, quality: str | None = None) -> ImageResponse:
+    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1, quality: str | None = None, mask: bytes | None = None) -> ImageResponse:
         parts = [types.Part.from_bytes(data=img.data, mime_type=img.media_type) for img in images]
         parts.append(types.Part.from_text(text=prompt))
         out: list[bytes] = []

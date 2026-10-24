@@ -6,7 +6,7 @@ import base64
 
 import openai
 
-from ..base import AIError, ImageInput, TextResponse, Usage
+from ..base import AIError, ImageInput, TextResponse, Usage, out_of_credit
 
 # Model suy luận (gpt-5*, o*) nhận reasoning_effort; model thường (gpt-4.1, gpt-4o) báo lỗi nếu gửi.
 _REASONING_PREFIXES = ("gpt-5", "o1", "o3", "o4")
@@ -38,6 +38,8 @@ class OpenAILLM:
                 **extra,
             )
         except openai.RateLimitError as e:
+            if out_of_credit(e):  # hết tiền / hết hạn mức: thử lại vô ích
+                raise AIError(f"openai out of credit: {e}", retryable=False) from e
             raise AIError(f"openai rate limited: {e}", retryable=True) from e
         except openai.APIStatusError as e:
             raise AIError(f"openai {e.status_code}: {e}", retryable=e.status_code >= 500) from e
