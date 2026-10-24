@@ -112,13 +112,13 @@ function Options({ d }: { d: Detail }) {
 
 function Images({ renders }: { renders: RenderRow[] }) {
   const [sel, setSel] = useState<RenderRow | null>(null);
-  const groups = ['S4', 'S1', 'S2', 'S3'].map((code) => [code, renders.filter((r) => r.stage_code === code)] as const).filter(([, rs]) => rs.length);
+  const groups = ['S4', 'S1', 'S2', 'S3', 'PV'].map((code) => [code, renders.filter((r) => r.stage_code === code)] as const).filter(([, rs]) => rs.length);
   if (!renders.length) return <p className="text-caption text-ink-muted">Chưa có ảnh sinh ra.</p>;
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px] 3xl:grid-cols-[minmax(0,1fr)_520px]">
       <div className="flex flex-col gap-4">
         {groups.map(([code, rs]) => (
-          <Panel key={code} title={code === 'S4' ? 'Ảnh kết quả (S4) — mọi ứng viên' : `Giai đoạn ${code}`}>
+          <Panel key={code} title={code === 'S4' ? 'Ảnh kết quả (S4) — mọi ứng viên' : code === 'PV' ? 'Xem thử nhanh (thiết kế của người dùng)' : `Giai đoạn ${code}`}>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-6">
               {rs.map((r) => {
                 const fails = ((r.cv_checks?.fails as string[] | undefined) ?? []);

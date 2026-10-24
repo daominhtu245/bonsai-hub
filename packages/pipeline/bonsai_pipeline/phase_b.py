@@ -103,6 +103,10 @@ def p3a_variables(
             first_side = b.direction
     pot = option.pot
     pot_desc = f"{_POT_SHAPE.get(pot.shape, pot.shape)} bonsai pot, {pot.color.replace('_', ' ')}"
+    if "moss" in option.accents:
+        pot_desc += ", soil covered with green cushion moss"
+    if "rock" in option.accents:
+        pot_desc += ", a small grey accent rock on the soil"
     return {
         "years": years,
         "max_thicken_pct": MAX_THICKEN_PCT_PER_YEAR.get(growth_speed, 10) * years,

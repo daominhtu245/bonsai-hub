@@ -24,6 +24,10 @@ os.environ.update(
 API_DIR = Path(__file__).resolve().parents[1]  # apps/api (chứa alembic.ini)
 
 
+_SEEDED: set[str] = set()
+_SEEDED_ACTIVE: set[str] = set()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _database():
     admin_url, _, name = TEST_DB.rpartition("/")
@@ -41,6 +45,10 @@ def _database():
         seed_dictionaries(db)
         seed_prompts(db, default_prompts_dir())
         db.commit()
+        for step, version, active in db.execute(text("SELECT step_code, version, active FROM prompt_versions")):
+            _SEEDED.add(f"{step}.{version}")
+            if active:
+                _SEEDED_ACTIVE.add(f"{step}.{version}")
     yield
 
 
@@ -51,8 +59,9 @@ def _clean():
 
     with get_engine().begin() as c:
         c.execute(text("TRUNCATE push_subscriptions, users, trees, tree_photos, design_jobs, credit_ledger, payments, pipeline_steps, feedback, app_settings, seg_labels, admin_audit, gift_codes, gift_redemptions CASCADE"))
-        c.execute(text("DELETE FROM prompt_versions WHERE version <> 'v1'"))
-        c.execute(text("UPDATE prompt_versions SET active = true"))
+        # về đúng trạng thái seed: bỏ phiên bản do test tạo, bật lại phiên bản active của seed
+        c.execute(text("DELETE FROM prompt_versions WHERE NOT (step_code || '.' || version = ANY(:seeded))"), {"seeded": list(_SEEDED)})
+        c.execute(text("UPDATE prompt_versions SET active = (step_code || '.' || version = ANY(:active))"), {"active": list(_SEEDED_ACTIVE)})
         c.execute(text("UPDATE species SET ref_image_keys = '[]'::jsonb"))
 
 

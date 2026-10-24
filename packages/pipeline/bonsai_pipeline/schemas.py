@@ -115,6 +115,8 @@ class Pad(_Model):
     rx: float = Field(gt=0)
     ry: float = Field(gt=0)
     rotation: float = 0
+    kind: str | None = None  # ảnh trong thư viện chi tiết cây (assets/studio/manifest.json), vd. "ficus_wide"
+    flip: bool = False
 
 
 class DesignOption(_Model):
@@ -131,6 +133,7 @@ class DesignOption(_Model):
     care_steps_vi: list[str] = []
     source: Literal["ai", "user"] = "ai"
     pads_layout: list[Pad] = []  # chỉ thiết kế người dùng: vị trí từng tầng lá (bản vẽ vẽ elip thay khung tam giác)
+    accents: list[str] = []  # chi tiết trang trí người dùng thêm: "moss", "rock"
 
 
 class DesignResult(_Model):

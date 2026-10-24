@@ -85,3 +85,45 @@ def test_studio_rejects_bad_input(db, client, login, bucket):  # noqa: F811
     opt = db.execute(select(DesignOption).where(DesignOption.job_id == job.id)).scalars().all()
     assert all(o.rank != 9 for o in opt)
     assert uuid.UUID(str(job.id)) and job.status == JobStatus.awaiting_choice
+
+
+SPRITE_DESIGN = {**DESIGN, "pot_kind": "pot_oval_brown", "pot_width": 600, "pot_x": 520,
+                 "pads": [{**p, "kind": "ficus_wide"} for p in DESIGN["pads"]],
+                 "accents": [{"kind": "moss", "center_px": [500, 1290], "width": 300}]}
+
+
+def test_quick_preview_limits_and_share_page(db, client, login, bucket, monkeypatch):  # noqa: F811
+    sent = []
+    monkeypatch.setattr("bonsai_api.queue.enqueue", lambda *a, **kw: sent.append(a) or True)
+    headers, job = _studio_job(db, client, login, bucket)
+    assert client.post(f"/api/v1/jobs/{job.id}/my-design/preview", headers=headers).status_code == 409  # chưa lưu
+    assert client.post(f"/api/v1/jobs/{job.id}/my-design", headers=headers, json=SPRITE_DESIGN).status_code == 200
+    r = client.post(f"/api/v1/jobs/{job.id}/my-design/preview", headers=headers)
+    assert r.status_code == 202 and r.json() == {"state": "running", "url": None, "remaining": 1}
+    assert sent[-1] == ("bonsai_worker.tasks.studio.preview", str(job.id))
+    # worker xong lần 1, chạy lần 2, rồi hết lượt xem thử
+    j = db.get(DesignJob, job.id)
+    j.progress = {**j.progress, "preview": {"state": "done", "count": 1, "key": "trees/x/PV_1.webp"}}
+    db.commit()
+    assert client.post(f"/api/v1/jobs/{job.id}/my-design/preview", headers=headers).json()["remaining"] == 0
+    j = db.get(DesignJob, job.id)
+    db.refresh(j)
+    j.progress = {**j.progress, "preview": {**j.progress["preview"], "state": "done"}}
+    db.commit()
+    r = client.post(f"/api/v1/jobs/{job.id}/my-design/preview", headers=headers)
+    assert r.status_code == 429 and "2 lần" in r.json()["detail"]
+    st = client.get(f"/api/v1/jobs/{job.id}/my-design/preview", headers=headers).json()
+    assert st["state"] == "done" and st["url"] and st["remaining"] == 0
+
+    sh = client.post(f"/api/v1/jobs/{job.id}/my-design/share", headers=headers).json()
+    code = sh["url"].rsplit("/", 1)[1]
+    page = client.get(f"/tk/{code}")
+    assert page.status_code == 200 and "Nhờ góp ý" in page.text and 'property="og:image"' in page.text
+    img = client.get(f"/api/v1/public/designs/{code}.jpg")
+    assert img.status_code == 200 and img.headers["content-type"] == "image/jpeg"
+    again = client.post(f"/api/v1/jobs/{job.id}/my-design/share", headers=headers).json()
+    assert again["url"] == sh["url"]  # giữ nguyên link
+    # lưu lại thiết kế (vd. trước khi xem thử) không làm hỏng link đã gửi
+    assert client.post(f"/api/v1/jobs/{job.id}/my-design", headers=headers, json=SPRITE_DESIGN).status_code == 200
+    assert client.get(f"/tk/{code}").status_code == 200
+    assert client.get("/tk/khongco").status_code == 404

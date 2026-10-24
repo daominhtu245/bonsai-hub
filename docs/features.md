@@ -9,7 +9,9 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 |---|---|---|
 | Chụp / chọn ảnh phôi, nhập loài và chiều cao | Trang chủ → Phân tích phôi mới | Ảnh mờ / tối bị báo chụp lại ngay, không tốn API |
 | Phân tích phôi + 2–3 thế kèm bản vẽ cắt / giữ / nuôi cành | Màn Chọn thế | Miễn phí |
-| **Tự thiết kế**: chạm cành để Giữ / Cắt, kéo tầng lá (A, B, C…), cành mới, điểm ngọn; chọn thế, dáng / màu / vị trí chậu; bắt đầu từ mẫu AI; hoàn tác; gợi ý theo luật (không bắt buộc) | Chọn thế → Tự thiết kế | Lưu miễn phí; "Tạo ảnh tương lai" dùng 1 lượt, model ảnh đặt tầng lá đúng các vị trí người dùng vẽ |
+| **Tự thiết kế**: chạm cành để Giữ / Cắt; ghép từ **thư viện chi tiết cây thật** (tầng lá, ngọn theo 4 kiểu lá, 5 chậu, rêu, đá) — kéo, to / nhỏ, nghiêng, lật, đổi kiểu; cành mới, điểm ngọn; "Xem như thật"; bắt đầu từ mẫu AI; hoàn tác; gợi ý theo luật (không bắt buộc) | Chọn thế → Tự thiết kế | Lưu miễn phí; "Tạo ảnh tương lai" dùng 1 lượt, model ảnh đặt tầng lá đúng các vị trí người dùng ghép |
+| **Xem thử nhanh bằng AI** | Tự thiết kế | Miễn phí 2 lần / phiên, ảnh nháp |
+| **Nhờ góp ý** (link ảnh thiết kế gửi Zalo / Facebook) | Tự thiết kế | Trang công khai `/tk/…` |
 | Giao diện Sáng (mặc định) / Tối / Theo máy | Tài khoản → Giao diện | |
 | Ảnh tương lai + 3 ảnh giai đoạn + hướng dẫn từng giai đoạn | Màn Kết quả | Trả 1 lượt; lỗi tự hoàn lượt |
 | Đánh dấu việc đã làm theo giai đoạn | Màn Kết quả | |
@@ -32,7 +34,7 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | Nhóm | Trang | Chức năng |
 |---|---|---|
 | Tổng quan | Bảng điều khiển | 12 chỉ số so kỳ trước, biểu đồ phiên / doanh thu–chi phí, phễu, phiên lỗi |
-| Vận hành | Phiên thiết kế | Lọc, tìm (mã phiên, email, mã lỗi), chi tiết pipeline / ảnh / phương án, chạy lại miễn phí, hoàn lượt, dừng phiên treo, **xuất Excel** |
+| Vận hành | Phiên thiết kế | Lọc, tìm (mã phiên, email, mã lỗi), chi tiết pipeline / ảnh (kể cả ảnh xem thử) / phương án, chạy lại miễn phí, hoàn lượt, dừng phiên treo, **xuất Excel** |
 | | Phản hồi | Đánh giá của người dùng, link tới phiên |
 | Khách hàng | Người dùng | Hồ sơ, sổ lượt, thanh toán, đổi vai trò, cộng/trừ lượt có lý do, khóa, tặng lượt hàng loạt, **xuất Excel** |
 | | Thanh toán | Đối soát, xác nhận tay theo mã sao kê, hủy đơn, **xuất Excel** |

@@ -46,3 +46,34 @@ def test_sketch_draws_pad_ellipses_and_prompt_note():
     assert 'data-layer="canopy"' in to_svg(scene)
     v = p3a_variables(o, a, style_desc="x", species_name="si", species_desc="y", growth_speed="fast", years=4)
     assert v["pads"] == 4 and "dashed ellipse" in v["silhouette_note"]
+
+
+def test_compose_preview_uses_library():
+    import io
+
+    from PIL import Image
+
+    from bonsai_pipeline.studio_compose import compose, manifest
+    from bonsai_pipeline.user_design import UserDesignIn
+
+    m = manifest()
+    assert {"ficus_wide", "needle_apex", "pot_oval_brown", "moss", "rock"} <= set(m)
+    assert all(0 < x["soil_y"] < 1 for x in m.values() if x["category"] == "pot")
+    a = Analysis.model_validate(analysis())
+    buf = io.BytesIO()
+    Image.new("RGB", (1000, 1500), (200, 190, 170)).save(buf, format="JPEG")
+    d = UserDesignIn(style_key="moyogi", removed=["b2"], pot_kind="pot_oval_brown", pot_width=600, pot_x=500,
+                     pads=[{"center_px": [450, 900], "rx": 200, "ry": 50, "kind": "ficus_wide", "flip": True, "rotation": 5}],
+                     accents=[{"kind": "moss", "center_px": [500, 1290], "width": 300}])
+    out = Image.open(io.BytesIO(compose(buf.getvalue(), a, d))).convert("RGB")
+    assert out.size == (1000, 1500)
+    r, g, b = out.getpixel((450, 900))
+    assert g > r and g > b  # tầng lá xanh đã được ghép
+    assert out.getpixel((50, 50)) == (200, 190, 170) or abs(out.getpixel((50, 50))[0] - 200) < 4  # nền giữ nguyên
+
+
+def test_accents_reach_prompt():
+    a, t, _ = _setup()
+    o = build_user_option(a, t, UserDesignIn(style_key="moyogi", accents=[{"kind": "moss", "center_px": [500, 1290], "width": 300}]))
+    v = p3a_variables(o, a, style_desc="x", species_name="si", species_desc="y", growth_speed="fast", years=4)
+    assert o.accents == ["moss"] and "cushion moss" in v["pot_description"]

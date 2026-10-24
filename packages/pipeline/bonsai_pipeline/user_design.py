@@ -26,6 +26,14 @@ class UserNewBranch(BaseModel):
     direction: Literal["left", "right", "up"]
 
 
+class Accent(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    kind: Literal["moss", "rock"]
+    center_px: Point
+    width: float = Field(gt=0)
+    flip: bool = False
+
+
 class UserDesignIn(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -35,6 +43,10 @@ class UserDesignIn(BaseModel):
     pads: list[Pad] = Field(default=[], max_length=MAX_PADS)
     apex: Point | None = None
     pot: Pot = Pot(shape="oval", color="unglazed_brown", position="center")
+    pot_kind: str | None = None  # ảnh chậu trong thư viện
+    pot_width: float | None = Field(default=None, gt=0)
+    pot_x: float | None = None  # tâm chậu theo chiều ngang (px ảnh); gốc cây ở mặt đất của chậu
+    accents: list[Accent] = Field(default=[], max_length=6)
 
 
 def _clamp(p: list[float], w: int, h: int) -> list[float]:
@@ -64,8 +76,8 @@ def build_user_option(analysis: Analysis, targets: Targets, d: UserDesignIn) -> 
             role = "other"
         keep.append(KeepBranch(id=b.id, role=role))
 
-    pads = [Pad(center_px=_clamp(p.center_px, w, h), rx=min(p.rx, w), ry=min(p.ry, h), rotation=p.rotation % 360)
-            for p in d.pads]
+    pads = [Pad(center_px=_clamp(p.center_px, w, h), rx=min(p.rx, w), ry=min(p.ry, h), rotation=p.rotation % 360,
+                kind=p.kind, flip=p.flip) for p in d.pads]
     if pads:
         xs = [p.center_px[0] + s * p.rx for p in pads for s in (-1, 1)]
         ys = [p.center_px[1] + s * p.ry for p in pads for s in (-1, 1)]
@@ -86,6 +98,7 @@ def build_user_option(analysis: Analysis, targets: Targets, d: UserDesignIn) -> 
         apex=Apex(point_px=apex_pt, lean=lean), keep_branches=keep,
         remove_branches=[RemoveBranch(id=i, reason_vi="Bạn chọn cắt") for i in removed],
         new_branches_needed=new, silhouette=sil, pot=d.pot, care_steps_vi=care, source="user", pads_layout=pads,
+        accents=list(dict.fromkeys(a.kind for a in d.accents)),
     )
 
 

@@ -24,6 +24,7 @@ export interface StudioTemplate {
 }
 
 export interface StudioData {
+  species_key: string | null;
   photo_url: string;
   width: number;
   height: number;
@@ -40,13 +41,41 @@ export interface DesignInput {
   style_key: string;
   removed: string[];
   new_branches: { at_px: [number, number]; direction: 'left' | 'right' | 'up' }[];
-  pads: { center_px: [number, number]; rx: number; ry: number; rotation: number }[];
+  pads: { center_px: [number, number]; rx: number; ry: number; rotation: number; kind?: string | null; flip?: boolean }[];
   apex: [number, number] | null;
   pot: { shape: PotShape; color: PotColor; position: PotPosition };
+  pot_kind?: string | null;
+  pot_width?: number | null;
+  pot_x?: number | null;
+  accents?: { kind: 'moss' | 'rock'; center_px: [number, number]; width: number; flip?: boolean }[];
+}
+
+/** Một chi tiết trong thư viện (apps/web/public/studio/manifest.json, tạo bởi tools/studio/generate_sprites.py). */
+export interface Sprite {
+  key: string;
+  label_vi: string;
+  category: 'pad' | 'apex' | 'pot' | 'accent';
+  leaf?: 'ficus' | 'fine' | 'needle' | 'strap';
+  species?: string[];
+  file: string;
+  aspect: number;
+  pot_shape?: PotShape;
+  pot_color?: PotColor;
+  soil_y?: number;
+}
+
+export interface Preview {
+  state: 'none' | 'running' | 'done' | 'failed';
+  url: string | null;
+  remaining: number;
 }
 
 export const studioApi = {
   get: (jobId: string) => api<StudioData>(`/jobs/${jobId}/studio`),
+  library: async (): Promise<Sprite[]> => (await fetch('/studio/manifest.json')).json(),
+  preview: (jobId: string) => api<Preview>(`/jobs/${jobId}/my-design/preview`),
+  startPreview: (jobId: string) => api<Preview>(`/jobs/${jobId}/my-design/preview`, { method: 'POST' }),
+  share: (jobId: string) => api<{ url: string; image_url: string }>(`/jobs/${jobId}/my-design/share`, { method: 'POST' }),
   save: (jobId: string, body: DesignInput) =>
     api<{ option_id: string; hints: string[]; sketch_svg_url: string }>(`/jobs/${jobId}/my-design`, { method: 'POST', json: body }),
 };

@@ -1,0 +1,204 @@
+[
+ {
+  "key": "ficus_wide",
+  "label_vi": "Tầng rộng · Lá si / sanh",
+  "category": "pad",
+  "leaf": "ficus",
+  "species": [
+   "si",
+   "sanh"
+  ],
+  "file": "ficus_wide.webp",
+  "aspect": 0.253
+ },
+ {
+  "key": "ficus_flat",
+  "label_vi": "Tầng dẹt · Lá si / sanh",
+  "category": "pad",
+  "leaf": "ficus",
+  "species": [
+   "si",
+   "sanh"
+  ],
+  "file": "ficus_flat.webp",
+  "aspect": 0.145
+ },
+ {
+  "key": "ficus_apex",
+  "label_vi": "Ngọn · Lá si / sanh",
+  "category": "apex",
+  "leaf": "ficus",
+  "species": [
+   "si",
+   "sanh"
+  ],
+  "file": "ficus_apex.webp",
+  "aspect": 0.422
+ },
+ {
+  "key": "fine_wide",
+  "label_vi": "Tầng rộng · Lá nhỏ li ti",
+  "category": "pad",
+  "leaf": "fine",
+  "species": [
+   "mai_chieu_thuy",
+   "linh_sam"
+  ],
+  "file": "fine_wide.webp",
+  "aspect": 0.225
+ },
+ {
+  "key": "fine_flat",
+  "label_vi": "Tầng dẹt · Lá nhỏ li ti",
+  "category": "pad",
+  "leaf": "fine",
+  "species": [
+   "mai_chieu_thuy",
+   "linh_sam"
+  ],
+  "file": "fine_flat.webp",
+  "aspect": 0.159
+ },
+ {
+  "key": "fine_apex",
+  "label_vi": "Ngọn · Lá nhỏ li ti",
+  "category": "apex",
+  "leaf": "fine",
+  "species": [
+   "mai_chieu_thuy",
+   "linh_sam"
+  ],
+  "file": "fine_apex.webp",
+  "aspect": 0.305
+ },
+ {
+  "key": "needle_wide",
+  "label_vi": "Tầng rộng · Lá kim (tùng, thông)",
+  "category": "pad",
+  "leaf": "needle",
+  "species": [
+   "other"
+  ],
+  "file": "needle_wide.webp",
+  "aspect": 0.244
+ },
+ {
+  "key": "needle_flat",
+  "label_vi": "Tầng dẹt · Lá kim (tùng, thông)",
+  "category": "pad",
+  "leaf": "needle",
+  "species": [
+   "other"
+  ],
+  "file": "needle_flat.webp",
+  "aspect": 0.166
+ },
+ {
+  "key": "needle_apex",
+  "label_vi": "Ngọn · Lá kim (tùng, thông)",
+  "category": "apex",
+  "leaf": "needle",
+  "species": [
+   "other"
+  ],
+  "file": "needle_apex.webp",
+  "aspect": 0.384
+ },
+ {
+  "key": "strap_wide",
+  "label_vi": "Tầng rộng · Lá dải (tùng la hán)",
+  "category": "pad",
+  "leaf": "strap",
+  "species": [
+   "tung_la_han"
+  ],
+  "file": "strap_wide.webp",
+  "aspect": 0.267
+ },
+ {
+  "key": "strap_flat",
+  "label_vi": "Tầng dẹt · Lá dải (tùng la hán)",
+  "category": "pad",
+  "leaf": "strap",
+  "species": [
+   "tung_la_han"
+  ],
+  "file": "strap_flat.webp",
+  "aspect": 0.145
+ },
+ {
+  "key": "strap_apex",
+  "label_vi": "Ngọn · Lá dải (tùng la hán)",
+  "category": "apex",
+  "leaf": "strap",
+  "species": [
+   "tung_la_han"
+  ],
+  "file": "strap_apex.webp",
+  "aspect": 0.391
+ },
+ {
+  "key": "pot_oval_brown",
+  "label_vi": "Chậu bầu dục nâu",
+  "category": "pot",
+  "pot_shape": "oval",
+  "pot_color": "unglazed_brown",
+  "file": "pot_oval_brown.webp",
+  "aspect": 0.308,
+  "soil_y": 0.22
+ },
+ {
+  "key": "pot_rect_brown",
+  "label_vi": "Chậu chữ nhật nâu",
+  "category": "pot",
+  "pot_shape": "rectangle",
+  "pot_color": "unglazed_brown",
+  "file": "pot_rect_brown.webp",
+  "aspect": 0.345,
+  "soil_y": 0.16
+ },
+ {
+  "key": "pot_rect_cream",
+  "label_vi": "Chậu chữ nhật men kem",
+  "category": "pot",
+  "pot_shape": "rectangle",
+  "pot_color": "glazed_cream",
+  "file": "pot_rect_cream.webp",
+  "aspect": 0.322,
+  "soil_y": 0.2
+ },
+ {
+  "key": "pot_round_blue",
+  "label_vi": "Chậu tròn men xanh",
+  "category": "pot",
+  "pot_shape": "round",
+  "pot_color": "glazed_blue",
+  "file": "pot_round_blue.webp",
+  "aspect": 0.464,
+  "soil_y": 0.14
+ },
+ {
+  "key": "pot_cascade",
+  "label_vi": "Chậu sâu (dáng huyền)",
+  "category": "pot",
+  "pot_shape": "cascade_deep",
+  "pot_color": "unglazed_brown",
+  "file": "pot_cascade.webp",
+  "aspect": 1.362,
+  "soil_y": 0.05
+ },
+ {
+  "key": "moss",
+  "label_vi": "Rêu",
+  "category": "accent",
+  "file": "moss.webp",
+  "aspect": 0.305
+ },
+ {
+  "key": "rock",
+  "label_vi": "Đá trang trí",
+  "category": "accent",
+  "file": "rock.webp",
+  "aspect": 0.527
+ }
+]
