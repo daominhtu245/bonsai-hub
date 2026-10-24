@@ -176,12 +176,13 @@ def generate(
     step_code: str,
     prompt_version: str,
     first_attempt: int,
+    quality: str | None = None,
 ) -> tuple[list[Candidate], list[StepRecord]]:
     """Sinh `n` ảnh song song (mỗi ảnh 1 lời gọi). Ảnh lỗi bị bỏ qua; trả cả bản ghi lỗi để tính chi phí."""
 
     def one(i: int):
         try:
-            res = client.edit(prompt=prompt, images=images, n=1)
+            res = client.edit(prompt=prompt, images=images, n=1, quality=quality)
         except AIError as e:
             rec = StepRecord.from_trace(step_code, e.trace, prompt_version=prompt_version, ok=False, error=str(e)) if e.trace else None
             return None, rec
@@ -205,6 +206,12 @@ def _gray_small(img: Image.Image, edge: int = 256) -> np.ndarray:
     scale = edge / max(img.size)
     small = img.convert("L").resize((max(1, round(img.width * scale)), max(1, round(img.height * scale))))
     return np.asarray(small, dtype=np.float32) / 255.0
+
+
+def background_failed(corners: list[float], *, pot_changes: bool) -> bool:
+    """Nền đổi khi ≥ 2 góc sai khác lớn. Khi chậu được thay (S3, S4), 2 góc dưới thường là chậu/đất → chỉ xét 2 góc trên."""
+    checked = corners[:2] if pot_changes else corners
+    return sum(d > BACKGROUND_DIFF_MAX for d in checked) >= 2
 
 
 def background_diff(original: Image.Image, candidate: Image.Image) -> list[float]:
@@ -238,7 +245,7 @@ def cv_checks(
 
     corners = background_diff(orig, candidate)
     out["background_corner_diff"] = corners
-    if sum(d > BACKGROUND_DIFF_MAX for d in corners) >= 2:
+    if background_failed(corners, pot_changes=True):  # S4 đã chuyển sang chậu bonsai
         fails.append("background_changed")
 
     out["trunk_iou"] = None
@@ -307,8 +314,18 @@ class Selection:
     low_confidence: bool
 
 
-def select(cands: list[Candidate]) -> Selection:
-    """Loại ảnh có hard_fail; chọn total cao nhất; nếu không ảnh nào đạt ngưỡng → chưa đạt (P3c hoặc trả kèm cảnh báo)."""
+def select(cands: list[Candidate], *, judged: bool = True) -> Selection:
+    """Loại ảnh có hard_fail; chọn total cao nhất; nếu không ảnh nào đạt ngưỡng → chưa đạt (P3c hoặc trả kèm cảnh báo).
+
+    `judged=False` (không chạy VLM, chỉ CV): ảnh không có hard_fail là đạt.
+    """
+    if not judged:
+        clean = [c for c in cands if not c.hard_fails]
+        if clean:
+            return Selection(clean[0], True, False)
+        if not cands:
+            return Selection(None, False, True)
+        return Selection(min(cands, key=lambda c: len(c.hard_fails)), False, True)
     clean = [c for c in cands if not c.hard_fails and c.total is not None]
     if clean:
         best = max(clean, key=lambda c: c.total)

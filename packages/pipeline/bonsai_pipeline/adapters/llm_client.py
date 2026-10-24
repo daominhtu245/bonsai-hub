@@ -132,11 +132,12 @@ def _ms(started: float) -> int:
     return int((time.monotonic() - started) * 1000)
 
 
-def build_llm_provider(name: str, model: str, settings: AISettings) -> LLMProvider:
+def build_llm_provider(name: str, model: str, settings: AISettings, effort: str | None = None) -> LLMProvider:
+    effort = effort or settings.llm_effort
     if name == "anthropic":
         from .providers.anthropic_llm import AnthropicLLM
 
-        return AnthropicLLM(model=model, api_key=settings.anthropic_api_key, effort=settings.llm_effort)
+        return AnthropicLLM(model=model, api_key=settings.anthropic_api_key, effort=effort)
     if name == "gemini":
         from .providers.gemini import GeminiLLM
 
@@ -144,7 +145,7 @@ def build_llm_provider(name: str, model: str, settings: AISettings) -> LLMProvid
     if name == "openai":
         from .providers.openai_llm import OpenAILLM
 
-        return OpenAILLM(model=model, api_key=settings.openai_api_key, effort=settings.llm_effort)
+        return OpenAILLM(model=model, api_key=settings.openai_api_key, effort=effort)
     if name == "fake":
         from .providers.fake import FakeLLM
 
@@ -163,9 +164,11 @@ def has_key(provider: str, settings: AISettings) -> bool:
     return provider not in key or bool(key[provider])
 
 
-def get_llm_client(settings: AISettings | None = None) -> LLMClient:
+def get_llm_client(settings: AISettings | None = None, *, economy: bool = False, effort: str | None = None) -> LLMClient:
+    """`economy`: dùng LLM_ECONOMY_MODEL (nếu có) thay model chính; `effort`: mức suy nghĩ, ghi đè LLM_EFFORT."""
     s = settings or get_ai_settings()
-    primary = build_llm_provider(s.llm_provider, s.llm_model, s)
+    model = (s.llm_economy_model if economy else None) or s.llm_model
+    primary = build_llm_provider(s.llm_provider, model, s, effort)
     fallback = None
     if s.llm_fallback_provider and s.llm_fallback_model and has_key(s.llm_fallback_provider, s):
         fallback = build_llm_provider(s.llm_fallback_provider, s.llm_fallback_model, s)

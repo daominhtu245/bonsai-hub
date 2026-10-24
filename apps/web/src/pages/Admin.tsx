@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { Button, FilterChip, Notice, Skeleton, StateView, type ViewState } from '@/components/ui';
-import { adminApi, type Costs, type FailedJob, type FeedbackRow, type PromptRow, type SpeciesRefs } from '@/lib/admin';
+import { adminApi, type CostMode, type Costs, type FailedJob, type FeedbackRow, type PromptRow, type SpeciesRefs } from '@/lib/admin';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -202,6 +202,51 @@ function GiftTab() {
   );
 }
 
+const MODES: { key: CostMode; title: string; detail: string; cost: string }[] = [
+  { key: 'standard', title: 'Tiêu chuẩn', detail: 'Ảnh kết quả chất lượng vừa · ảnh giai đoạn chất lượng thấp', cost: '≈ $0,40' },
+  { key: 'economy', title: 'Tiết kiệm', detail: 'Mọi ảnh chất lượng thấp · model chữ rẻ hơn', cost: '≈ $0,17' },
+];
+
+/** Chế độ chi phí AI (bonsai_pipeline/cost_mode.py) — áp dụng cho job bắt đầu sau khi đổi. */
+function AiModeTab() {
+  const [state, reload] = useLoad(adminApi.settings);
+  const [saving, setSaving] = useState<CostMode | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const choose = async (mode: CostMode) => {
+    setSaving(mode);
+    setError(null);
+    try {
+      await adminApi.setCostMode(mode);
+      reload();
+    } catch (e) {
+      setError((e as ApiError).message);
+    } finally {
+      setSaving(null);
+    }
+  };
+  return (
+    <StateView state={state} skeleton={<Skeleton className="h-40 rounded-card" />} empty={null}>
+      {(s) => (
+        <fieldset className="m-0 flex flex-col gap-2 border-0 p-0 text-caption">
+          <legend className="mb-2 font-semibold">Chế độ AI</legend>
+          {MODES.map((m) => (
+            <label key={m.key} className={`flex min-h-[64px] cursor-pointer items-center gap-3 rounded-card border bg-surface px-4 py-3 ${s.cost_mode === m.key ? 'border-primary' : 'border-line'}`}>
+              <input type="radio" name="cost-mode" checked={s.cost_mode === m.key} disabled={saving !== null}
+                onChange={() => choose(m.key)} className="h-5 w-5 accent-[var(--primary)]" />
+              <span className="flex-1">
+                <span className="block font-medium text-body">{m.title}</span>
+                <span className="block text-ink-muted">{m.detail}</span>
+              </span>
+              <span className="tabular text-ink-muted">{saving === m.key ? 'Đang lưu…' : `${m.cost} / lượt`}</span>
+            </label>
+          ))}
+          {error ? <Notice tone="danger">{error}</Notice> : null}
+        </fieldset>
+      )}
+    </StateView>
+  );
+}
+
 function SpeciesTab() {
   const [state, reload] = useLoad<SpeciesRefs[]>(adminApi.species);
   const [busy, setBusy] = useState<string | null>(null);
@@ -262,19 +307,19 @@ function SpeciesTab() {
 /** Trang quản trị: chi phí (pipeline_steps), prompt (phiên bản trong DB), job lỗi, phản hồi, tặng lượt, ảnh tham chiếu loài. */
 export default function Admin() {
   const { user } = useAuth();
-  const [tab, setTab] = useState<'costs' | 'prompts' | 'failed' | 'feedback' | 'gift' | 'species'>('costs');
+  const [tab, setTab] = useState<'costs' | 'ai' | 'prompts' | 'failed' | 'feedback' | 'gift' | 'species'>('costs');
   if (user.status === 'ready' && user.data.role !== 'admin') return <Navigate to="/" replace />;
   return (
     <div className="mx-auto flex min-h-dvh max-w-wide flex-col">
       <BackHeader to="/tai-khoan" title="Quản trị" />
       <div className="h-3" />
       <div className="flex flex-wrap gap-2 px-gutter pb-3" role="group" aria-label="Mục">
-        {([['costs', 'Chi phí'], ['prompts', 'Prompt'], ['failed', 'Job lỗi'], ['feedback', 'Phản hồi'], ['gift', 'Tặng lượt'], ['species', 'Ảnh loài']] as const).map(([k, label]) => (
+        {([['costs', 'Chi phí'], ['ai', 'Chế độ AI'], ['prompts', 'Prompt'], ['failed', 'Job lỗi'], ['feedback', 'Phản hồi'], ['gift', 'Tặng lượt'], ['species', 'Ảnh loài']] as const).map(([k, label]) => (
           <FilterChip key={k} selected={tab === k} onClick={() => setTab(k)}>{label}</FilterChip>
         ))}
       </div>
       <main className="px-gutter pb-8">
-        {{ costs: <CostsTab />, prompts: <PromptsTab />, failed: <FailedTab />, feedback: <FeedbackTab />, gift: <GiftTab />, species: <SpeciesTab /> }[tab]}
+        {{ costs: <CostsTab />, ai: <AiModeTab />, prompts: <PromptsTab />, failed: <FailedTab />, feedback: <FeedbackTab />, gift: <GiftTab />, species: <SpeciesTab /> }[tab]}
       </main>
     </div>
   );

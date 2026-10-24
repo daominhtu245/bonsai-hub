@@ -50,8 +50,8 @@ def test_stage_falls_back_to_sketch(db, chosen_job, images, llm, monkeypatch):  
     class S2Breaks(DemoImage):
         """Ảnh S2 đổi hẳn nền → vi phạm kiểm tra, sinh lại 2 lần vẫn hỏng → dùng bản vẽ."""
 
-        def edit(self, *, prompt, images, n=1):
-            r = super().edit(prompt=prompt, images=images, n=n)
+        def edit(self, *, prompt, images, n=1, quality=None):
+            r = super().edit(prompt=prompt, images=images, n=n, quality=quality)
             if 'stage "recovery and branch growth"' in prompt:
                 buf = io.BytesIO()
                 Image.new("RGB", Image.open(io.BytesIO(r.images[0])).size, (10, 80, 10)).save(buf, format="PNG")

@@ -18,7 +18,7 @@ from .adapters.base import AIError, ImageInput
 from .adapters.image_client import ImageClient
 from .adapters.llm_client import LLMClient
 from .phase_a import PromptTemplate
-from .phase_b import ASPECT_TOLERANCE, BACKGROUND_DIFF_MAX, Candidate, background_diff, to_webp
+from .phase_b import ASPECT_TOLERANCE, Candidate, background_diff, background_failed, to_webp
 from .prompts import render
 from .schemas import Analysis, DesignOption
 from .segmentation import measure_mask
@@ -45,6 +45,7 @@ class StagePlanItem(_M):
     id: str
     name_vi: str
     time_from_start: str
+    time_en: str = ""  # mốc thời gian tiếng Anh cho prompt ảnh (P2b của LLM có thể để trống)
     visual_state_en: str
     foliage_density_pct: int = Field(ge=0, le=100)
     trunk_thicken_pct_vs_original: float = Field(ge=0)
@@ -128,7 +129,7 @@ def chain_prompt(tpl: PromptTemplate, plan: StagePlan, code: str) -> str:
     return render(tpl.user, {
         "prev_stage_name": STAGE_NAME_EN[prev],
         "stage_name_en": STAGE_NAME_EN[code],
-        "time_from_start": s[code].time_from_start,
+        "time_from_start": s[code].time_en or s[code].time_from_start,
         "trunk_thicken_pct": round(s[code].trunk_thicken_pct_vs_original),
         "pot_rule": pot_rule,
         "visual_state_en": s[code].visual_state_en,
@@ -150,6 +151,7 @@ def stage_checks(
     *,
     previous_mask: np.ndarray | None = None,
     segmenter=None,
+    pot_changes: bool = False,
 ) -> tuple[dict, np.ndarray | None]:
     """So bước k với bước k-1 (và nền với ảnh gốc). Trả (kết quả, mask thân của bước k nếu đo được)."""
     orig, cur = _rgb(original), _rgb(current.image)
@@ -164,7 +166,7 @@ def stage_checks(
 
     corners = background_diff(orig, cur)
     out["background_corner_diff"] = corners
-    if sum(d > BACKGROUND_DIFF_MAX for d in corners) >= 2:
+    if background_failed(corners, pot_changes=pot_changes):
         fails.append("background_changed")
 
     cur_mask = None
@@ -230,13 +232,15 @@ def render_stage(
     previous_mask: np.ndarray | None,
     segmenter,
     prompt_version: str,
+    quality: str | None = None,
+    max_retries: int = MAX_STAGE_RETRIES,
 ) -> tuple[StageResult, np.ndarray | None]:
-    """Sinh một giai đoạn; vi phạm đơn điệu → sinh lại tối đa MAX_STAGE_RETRIES lần."""
+    """Sinh một giai đoạn; vi phạm đơn điệu → sinh lại tối đa `max_retries` lần."""
     attempts: list[Candidate] = []
     records: list[StepRecord] = []
-    for attempt in range(MAX_STAGE_RETRIES + 1):
+    for attempt in range(max_retries + 1):
         try:
-            res = client.edit(prompt=prompt, images=images, n=1)
+            res = client.edit(prompt=prompt, images=images, n=1, quality=quality)
         except AIError as e:
             if e.trace:
                 records.append(StepRecord.from_trace("P3d", e.trace, prompt_version=prompt_version, ok=False, error=str(e)))
@@ -246,7 +250,8 @@ def render_stage(
                          StepRecord.from_trace("P3d", res.trace, prompt_version=prompt_version, ok=True,
                                                output={"stage": code, "attempt": attempt}))
         cand.cv["generated_size"] = list(raw_size)
-        cand.cv, mask = stage_checks(original, previous, cand, previous_mask=previous_mask, segmenter=segmenter)
+        cand.cv, mask = stage_checks(original, previous, cand, previous_mask=previous_mask, segmenter=segmenter,
+                                     pot_changes=code == "S3")  # S3: chuyển sang chậu bonsai (P3d_chain pot_rule)
         attempts.append(cand)
         records.append(cand.record)
         if not cand.cv["fails"]:

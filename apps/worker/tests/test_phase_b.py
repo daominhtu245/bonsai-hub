@@ -34,6 +34,8 @@ def images(monkeypatch):
     holder = {"provider": DemoImage()}
     monkeypatch.setattr("bonsai_worker.tasks.phase_b.get_image_client",
                         lambda: ImageClient(holder["provider"], max_retries=0, sleep=lambda _: None))
+    # Các test ở đây kiểm tra quy trình đầy đủ (3 ứng viên + VLM chấm + LLM viết lộ trình); chế độ A/B: test_cost_mode.py.
+    monkeypatch.setattr("bonsai_worker.tasks.phase_b.get_cost_mode", lambda db: "full")
     return holder
 
 
@@ -62,7 +64,7 @@ def routed(llm):  # noqa: F811
 
 @pytest.fixture
 def chosen_job(db, login, bucket, llm, routed, monkeypatch):  # noqa: F811
-    monkeypatch.setattr("bonsai_worker.tasks.phase_b.get_llm_client", lambda: LLMClient(routed))
+    monkeypatch.setattr("bonsai_worker.tasks.phase_b.get_llm_client", lambda **kw: LLMClient(routed))
     user, tree, job = _job(db, login, bucket, species="si")
     llm.responses.extend([json.dumps(analysis()), json.dumps(design())])
     run_phase_a(db, job.id)
@@ -93,7 +95,8 @@ def test_passes_first_round(db, chosen_job, images, llm, bucket):
     db.expire_all()
     job = db.get(DesignJob, job.id)
     assert job.status == JobStatus.done, job.error
-    assert job.progress["result"] == {"low_confidence": False, "years": 4, "repair_rounds": 0, "candidates": 3}
+    assert job.progress["result"] == {"low_confidence": False, "years": 4, "repair_rounds": 0, "candidates": 3,
+                                       "cost_mode": "full"}
     rows = _renders(db, job.id)
     assert len(rows) == 3 and sum(r.selected for r in rows) == 1
     assert all(r.cv_checks["fails"] == [] and r.judge for r in rows)

@@ -45,7 +45,17 @@ def test_non_reasoning_model_omits_effort():
     assert "reasoning_effort" not in comp.kwargs
 
 
-def test_image_edit_sends_explicit_mimetype():
+def _img(size, fmt="WEBP") -> bytes:
+    import io
+
+    from PIL import Image
+
+    buf = io.BytesIO()
+    Image.new("RGB", size, (200, 220, 200)).save(buf, format=fmt)
+    return buf.getvalue()
+
+
+def _fake_openai_image(out_size):
     import base64
 
     from bonsai_pipeline.adapters.providers.openai_image import OpenAIImage
@@ -54,11 +64,32 @@ def test_image_edit_sends_explicit_mimetype():
 
     def edit(**kwargs):
         sent.update(kwargs)
-        return SimpleNamespace(data=[SimpleNamespace(b64_json=base64.b64encode(b"png").decode())],
+        return SimpleNamespace(data=[SimpleNamespace(b64_json=base64.b64encode(_img(out_size, "PNG")).decode())],
                                usage=SimpleNamespace(input_tokens=10, output_tokens=200))
 
     p = OpenAIImage(model="gpt-image-2", api_key="test")
     p._client = SimpleNamespace(images=SimpleNamespace(edit=edit))
-    resp = p.edit(prompt="x", images=[ImageInput(b"abc", "image/webp")])
-    assert sent["image"] == [("input_0.webp", b"abc", "image/webp")] and sent["quality"] == "medium"
+    return p, sent
+
+
+def test_image_edit_sends_mimetype_quality_and_size():
+    p, sent = _fake_openai_image((1024, 1024))
+    resp = p.edit(prompt="x", images=[ImageInput(_img((512, 512)), "image/webp")], quality="low")
+    name, data, mime = sent["image"][0]
+    assert (name, mime) == ("input_0.webp", "image/webp")
+    assert sent["quality"] == "low" and sent["size"] == "1024x1024"
     assert resp.usage.tokens_out == 200 and resp.usage.images_out == 1
+
+
+def test_image_edit_keeps_original_aspect():
+    import io
+
+    from PIL import Image
+
+    # 16:9 → khổ gần nhất 1536x1024; ảnh vào được đệm lề, ảnh ra cắt về 16:9.
+    p, sent = _fake_openai_image((1536, 1024))
+    resp = p.edit(prompt="x", images=[ImageInput(_img((1600, 900)), "image/webp")])
+    assert sent["size"] == "1536x1024" and sent["quality"] == "medium"
+    assert Image.open(io.BytesIO(sent["image"][0][1])).size == (1536, 1024)
+    w, h = Image.open(io.BytesIO(resp.images[0])).size
+    assert abs(w / h - 16 / 9) < 0.01

@@ -238,3 +238,14 @@ def test_admin_species_refs(db, client, login, monkeypatch):
     r = client.request("DELETE", "/api/v1/admin/species/si/refs", headers=admin, json={"key": p["key"]}).json()
     assert r["refs"] == []
     assert client.get("/api/v1/admin/species", headers=admin).status_code == 200
+
+
+def test_admin_cost_mode(db, client, login, monkeypatch):
+    user, _ = login("user@example.com")
+    assert client.get("/api/v1/admin/settings", headers=user).status_code == 403
+    admin = _admin(client, login, monkeypatch)
+    assert client.get("/api/v1/admin/settings", headers=admin).json() == {"cost_mode": "standard"}
+    r = client.put("/api/v1/admin/settings", headers=admin, json={"cost_mode": "economy"})
+    assert r.status_code == 200 and r.json() == {"cost_mode": "economy"}
+    assert client.get("/api/v1/admin/settings", headers=admin).json() == {"cost_mode": "economy"}
+    assert client.put("/api/v1/admin/settings", headers=admin, json={"cost_mode": "full"}).status_code == 422

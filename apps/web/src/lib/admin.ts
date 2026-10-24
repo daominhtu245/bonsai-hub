@@ -43,7 +43,11 @@ export interface SpeciesRefs {
   refs: { key: string; url: string }[];
 }
 
+export type CostMode = 'standard' | 'economy';
+
 export const adminApi = {
+  settings: () => api<{ cost_mode: CostMode }>('/admin/settings'),
+  setCostMode: (cost_mode: CostMode) => api<{ cost_mode: CostMode }>('/admin/settings', { method: 'PUT', json: { cost_mode } }),
   prompts: () => api<PromptRow[]>('/admin/prompts'),
   createPrompt: (body: { step_code: string; system: string | null; user: string; description?: string }) =>
     api<PromptRow>('/admin/prompts', { method: 'POST', json: body }),

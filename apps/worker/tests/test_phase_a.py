@@ -29,7 +29,7 @@ def bucket(monkeypatch):
 @pytest.fixture
 def llm(monkeypatch):
     fake = FakeLLM(model="claude-sonnet-5-5")
-    monkeypatch.setattr("bonsai_worker.tasks.phase_a.get_llm_client", lambda: LLMClient(fake))
+    monkeypatch.setattr("bonsai_worker.tasks.phase_a.get_llm_client", lambda **kw: LLMClient(fake))
     return fake
 
 

@@ -1,5 +1,6 @@
-"""Phiên B (trả 1 lượt): B1 P3a render S4 (3 ứng viên song song) → B2 P4 (CV rồi VLM) → P3c tối đa 2 vòng
-→ B3–B6 lộ trình (tasks/roadmap.py): P2b, S1 → S2 → S3, P6 ∥ P5.
+"""Phiên B (trả 1 lượt): B1 P3a render S4 → B2 kiểm tra CV (+ P4 VLM ở chế độ full) → P3c sửa khi trượt
+→ B3–B6 lộ trình (tasks/roadmap.py): kế hoạch giai đoạn, S1 → S2 → S3, hướng dẫn + tổng quan.
+Số ứng viên, chất lượng ảnh, số vòng sửa, có dùng LLM hay không: theo chế độ chi phí (bonsai_pipeline/cost_mode.py).
 Lỗi bất kỳ sau khi đã trừ lượt → job_guard đánh dấu `failed` và tự hoàn lượt.
 """
 
@@ -19,9 +20,11 @@ from bonsai_api.db.models import (
     DesignJob, DesignOption as OptionRow, JobStatus, RenderImage, Species, Stage, Style, Tree, TreePhoto,
 )
 from bonsai_api.db.session import get_sessionmaker
+from bonsai_api.services.settings import get_cost_mode
 from bonsai_pipeline.adapters import AIError, ImageInput, get_image_client, get_llm_client
+from bonsai_pipeline.cost_mode import get_profile
 from bonsai_pipeline.phase_b import (
-    MAX_REPAIR_ROUNDS, N_CANDIDATES, Candidate, cv_checks, generate, judge, p3a_variables, prompt_hash, repair_inputs,
+    Candidate, cv_checks, generate, judge, p3a_variables, prompt_hash, repair_inputs,
     select, years_to_final,
 )
 from bonsai_pipeline.dictionaries import MAX_THICKEN_PCT_PER_YEAR
@@ -112,11 +115,13 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
             species_name=species_name, species_desc=species.prompt_desc_en if species else "small leaves",
             growth_speed=growth, years=years,
         ))
-        image_client, llm = get_image_client(), get_llm_client()
+        profile = get_profile(get_cost_mode(db))
+        image_client = get_image_client()
+        llm = get_llm_client(economy=profile.llm_economy)
 
         def run_generation(prompt: str, n: int, step: str, version: str, first: int) -> list[Candidate]:
             cands, failed = generate(image_client, prompt, images, size=size, n=n, step_code=step,
-                                     prompt_version=version, first_attempt=first)
+                                     prompt_version=version, first_attempt=first, quality=profile.s4_quality)
             for rec in failed:
                 record_step(db, job.id, rec)
             for c in cands:
@@ -135,8 +140,8 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
                                                int((time.monotonic() - started) * 1000), ok=True,
                                                output={str(c.attempt): c.cv for c in cands}))
             for c in cands:
-                if c.cv["fails"]:
-                    continue  # CV đã loại: không tốn tiền VLM
+                if c.cv["fails"] or not profile.vlm_judge:
+                    continue  # CV đã loại, hoặc chế độ chi phí không dùng VLM chấm
                 try:
                     rec = judge(llm, p4, original, c, option=option, years=years, species_name=species_name)
                 except AIError as e:
@@ -146,17 +151,17 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
                 row.judge, row.total_score = c.judge_raw, c.total
                 db.commit()
 
-        set_progress(db, job, "render", "running", candidates=N_CANDIDATES)
-        all_cands = run_generation(base_prompt, N_CANDIDATES, "P3a", p3a.version_tag, attempt_base.get("S4", 0))
+        set_progress(db, job, "render", "running", candidates=profile.s4_candidates)
+        all_cands = run_generation(base_prompt, profile.s4_candidates, "P3a", p3a.version_tag, attempt_base.get("S4", 0))
         if not all_cands:
             raise JobFailure("image_unavailable", "no candidate image was generated")
         set_progress(db, job, "render", "done", candidates=len(all_cands))
         set_progress(db, job, "judge", "running")
         evaluate(all_cands)
 
-        sel = select(all_cands)
+        sel = select(all_cands, judged=profile.vlm_judge)
         rounds = 0
-        while not sel.passed and rounds < MAX_REPAIR_ROUNDS and sel.best is not None:
+        while not sel.passed and rounds < profile.repair_rounds and sel.best is not None:
             rounds += 1
             set_status(db, job, JobStatus.rendering_final)
             set_progress(db, job, "repair", "running", round=rounds)
@@ -167,7 +172,7 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
                 break
             evaluate(new)
             all_cands += new
-            sel = select(all_cands)
+            sel = select(all_cands, judged=profile.vlm_judge)
         if rounds:
             set_progress(db, job, "repair", "done", rounds=rounds)
         set_progress(db, job, "judge", "done")
@@ -183,7 +188,7 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
         db.commit()
         progress = dict(job.progress or {})
         progress["result"] = {"low_confidence": sel.low_confidence, "years": years, "repair_rounds": rounds,
-                              "candidates": len(all_cands)}
+                              "candidates": len(all_cands), "cost_mode": profile.key}
         job.progress = progress
         db.commit()
 
@@ -194,6 +199,8 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
             size=size, original=original, original_mask=original_mask, sketch_png=sketch_png, species_refs=refs,
             final_image=sel.best.image, final_render_id=chosen.id, final_summary=summary, final_judge=sel.best.judge_raw,
             segmenter=segmenter, image_client=image_client, llm=llm, attempt_base=attempt_base,
+            profile=profile, years=years, species_key=tree.species_key, style_key=option.style_key,
+            style_desc_en=style.prompt_desc_en if style else option.style_key,
         ))
         set_status(db, job, JobStatus.done)
 

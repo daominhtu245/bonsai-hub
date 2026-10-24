@@ -1,0 +1,159 @@
+# Thư viện hướng dẫn chăm (thay P2b/P5/P6 ở chế độ chi phí standard/economy).
+# BẢN NHÁP — cần nghệ nhân duyệt trước khi mở cho người dùng thật (docs/beta-checklist.md).
+# Ghép: hướng dẫn theo giai đoạn + lưu ý theo loài + mẹo theo thế + việc cụ thể từ thiết kế P2 (cành cắt / nuôi).
+
+version: 1
+
+stages:
+  S0:
+    title: Dưỡng cây trước khi tạo khung
+    see: Phôi hiện tại, chưa cắt tỉa.
+    actions:
+      - Để cây ở chỗ đủ nắng, tưới đều cho cây khỏe trước buổi cắt tạo khung
+      - Bón phân chậm tan liều nhẹ 3–4 tuần trước khi cắt
+      - Chuẩn bị kéo cắt cành, kìm cắt lõm, dây nhôm và keo liền sẹo
+    ready:
+      - Cây ra đọt non đều, lá xanh không vàng
+      - Rễ không úng, giá thể khô ráo sau tưới 1–2 ngày
+    mistakes:
+      - Cắt tạo khung khi cây đang yếu hoặc vừa mới chuyển chậu
+
+  S1:
+    title: Tạo khung
+    see: Ngay sau buổi cắt tạo khung — cành thừa đã bỏ, cành giữ lại được uốn dây, tán thưa.
+    actions:
+      - Uốn dây nhôm cho cành giữ lại (đánh dấu xanh) theo hướng trên bản vẽ
+    care:
+      - Để cây chỗ sáng nhưng tránh nắng gắt 2–3 tuần sau khi cắt
+      - Tưới vừa đủ, không bón phân trong 3–4 tuần đầu
+      - Bôi keo liền sẹo lên mọi vết cắt lớn
+    ready:
+      - Cây ra chồi mới đều sau cắt
+      - Dây bắt đầu hằn nhẹ vào vỏ — tháo dây ngay, uốn lại nếu cành chưa giữ dáng
+    mistakes:
+      - Để dây quá lâu làm hằn sẹo vào cành
+      - Cắt hết lá một lần khiến cây suy
+
+  S2:
+    title: Nuôi cành, lớn thân
+    see: Cành giữ lại mọc dài tự do, tán dày lên nhưng chưa gọn; thân và cành to dần.
+    actions:
+      - Để cành mọc tự do để lên mập; chỉ tỉa cành mọc sai hướng hoặc che ngọn
+      - Bón phân định kỳ theo mùa sinh trưởng
+      - Tháo dây đúng lúc, uốn lại cành chưa giữ dáng
+    care:
+      - Cây cần nhiều nắng để cành mập và lóng ngắn
+      - Kiểm tra sâu bệnh hằng tuần khi tán dày
+    ready:
+      - Cành chính đã to đủ theo tỉ lệ thân
+      - Cành mới ở vị trí đánh dấu vàng đã bén và dài 15–20 cm
+    mistakes:
+      - Cắt ngắn quá sớm làm cành không lên mập
+      - Bón quá nhiều khi trời nắng nóng gây cháy rễ
+
+  S3:
+    title: Tạo tầng tán
+    see: Cành đã được cắt ngắn và tạo thành các tầng tán; dáng đã rõ nhưng tán còn thưa.
+    actions:
+      - Cắt ngắn cành, giữ 2–3 mắt lá để tạo nhánh phụ
+      - Tạo các tầng tán theo khung trên bản vẽ, chừa khoảng trống giữa các tầng
+      - Chuyển sang chậu bonsai khi cây khỏe, đúng mùa
+    care:
+      - Ngắt đọt thường xuyên để tán dày và lóng ngắn
+      - Sau khi chuyển chậu, để chỗ râm mát 2 tuần, không bón phân
+    ready:
+      - Mỗi tầng tán có nhiều nhánh nhỏ phân nhánh đều
+      - Cây đã ổn định trong chậu mới, ra đọt đều
+    mistakes:
+      - Để các tầng dính vào nhau, mất khoảng trống
+      - Chuyển chậu và cắt rễ mạnh cùng lúc với cắt cành mạnh
+
+  S4:
+    title: Hoàn thiện và duy trì
+    see: Dáng hoàn thiện — tầng tán dày, gọn, chi tiết nhánh nhỏ.
+    actions:
+      - Ngắt đọt, tỉa giữ dáng theo mùa
+      - Tỉa thưa bên trong tán để ánh sáng vào sâu
+      - Thay đất, tỉa rễ định kỳ theo loài
+    care:
+      - Bón phân cân đối, giảm đạm khi cây đã đạt dáng
+    ready:
+      - Dáng giữ ổn định qua một mùa sinh trưởng
+    mistakes:
+      - Để tán mọc tràn làm mất khoảng trống giữa các tầng
+
+species:
+  si:
+    care:
+      - Si ưa nắng, chịu cắt tỉa tốt; tưới khi mặt đất khô
+      - Có thể tuốt lá để lá nhỏ lại khi cây khỏe
+      - Vết cắt chảy nhựa mủ — để khô rồi bôi keo liền sẹo
+    season:
+      north: Tháng 3–5, khi trời ấm
+      central: Tháng 2–4, trước mùa nắng nóng
+      south: Đầu mùa mưa, tháng 5–7
+    repot_years: 2
+  sanh:
+    care:
+      - Sanh ưa nắng, chịu cắt tỉa và tuốt lá tốt
+      - Rễ nổi khỏe — giữ ẩm gốc để rễ phát triển đẹp
+      - Vết cắt chảy nhựa mủ — để khô rồi bôi keo liền sẹo
+    season:
+      north: Tháng 3–5, khi trời ấm
+      central: Tháng 2–4, trước mùa nắng nóng
+      south: Đầu mùa mưa, tháng 5–7
+    repot_years: 2
+  mai_chieu_thuy:
+    care:
+      - Mai chiếu thủy ưa nắng nhẹ đến nắng cả ngày, sợ úng — đất phải thoát nước tốt
+      - Cắt tỉa sau đợt hoa để không mất hoa mùa sau
+      - Cành giòn — uốn dây nhẹ tay, uốn khi cành còn non
+    season:
+      north: Tháng 3–5, sau đợt hoa
+      central: Tháng 2–4, sau đợt hoa
+      south: Tháng 2–4, sau đợt hoa
+    repot_years: 2
+  tung_la_han:
+    care:
+      - Tùng la hán lớn chậm — không cắt mạnh quá 1/3 tán mỗi lần
+      - Ưa nắng sáng, tránh nắng gắt buổi trưa mùa hè
+      - Vỏ mềm dễ hằn dây — kiểm tra dây mỗi 2–3 tuần
+    season:
+      north: Tháng 2–4, đầu xuân
+      central: Tháng 1–3
+      south: Tháng 12–2, mùa khô mát
+    repot_years: 3
+  linh_sam:
+    care:
+      - Linh sam ưa nắng nhiều, lá nhỏ và nhánh mịn khi đủ nắng
+      - Tưới đều, không để khô kiệt; đất thoát nước tốt
+      - Ngắt đọt thường xuyên để tán dày, mịn
+    season:
+      north: Tháng 2–5
+      central: Tháng 2–4
+      south: Tháng 1–4
+    repot_years: 2
+  default:
+    care:
+      - Để cây đủ nắng theo đặc tính loài, tưới khi mặt đất se khô
+      - Không cắt mạnh quá 1/3 tán mỗi lần nếu chưa rõ sức cây
+      - Bôi keo liền sẹo lên vết cắt lớn
+    season:
+      north: Mùa xuân, tháng 2–4
+      central: Tháng 2–4
+      south: Đầu mùa mưa, tháng 5–7
+    repot_years: 2
+
+# Một dòng mẹo uốn cho buổi tạo khung (S1) theo thế đã chọn.
+styles:
+  chokkan: Giữ thân thẳng đứng; cành xếp so le, nhỏ dần lên ngọn
+  moyogi: Cành đặt ở mặt ngoài các khúc cong của thân; ngọn nằm trên đường thẳng qua gốc
+  shakan: Giữ độ nghiêng của thân; cành phía đối diện hướng nghiêng dài hơn để cân dáng
+  kengai: Uốn thân đổ xuống thấp hơn miệng chậu; cành xếp tầng theo thân đổ
+  han_kengai: Uốn thân đổ ngang khoảng miệng chậu; ngọn nhỏ phía trên gốc
+  bunjingi: Giữ ít cành, tán chỉ ở phần trên; thân thanh và uyển chuyển
+  fukinagashi: Uốn mọi cành về cùng một phía như bị gió thổi
+  sokan: Giữ thân phụ nhỏ và thấp hơn thân chính; tán hai thân hòa thành một khối
+  sekijoju: Ép rễ ôm sát đá, buộc cố định cho đến khi rễ bám chắc
+  vn_truc_quan_tu: Giữ thân thẳng, các tầng cành cân đối và rõ lớp
+  vn_long: Nhấn các khúc uốn của thân; cành theo nhịp uốn, ngọn vươn lên

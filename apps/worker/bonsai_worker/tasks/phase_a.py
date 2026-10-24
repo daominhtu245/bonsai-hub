@@ -11,7 +11,9 @@ from sqlalchemy.orm import Session
 from bonsai_api import storage
 from bonsai_api.db.models import DesignJob, DesignOption, JobStatus, Species, Tree, TreePhoto
 from bonsai_api.db.session import get_sessionmaker
+from bonsai_api.services.settings import get_cost_mode
 from bonsai_pipeline.adapters import AIError, ImageInput, get_llm_client
+from bonsai_pipeline.cost_mode import get_profile
 from bonsai_pipeline.phase_a import run_p1, run_p2
 from bonsai_pipeline.rule_engine import compute_targets
 from bonsai_pipeline.segmentation import segment_trunk
@@ -69,8 +71,10 @@ def run_phase_a(db: Session, job_id: uuid.UUID) -> None:
         images = [ImageInput(storage.get_bytes(p.storage_key), "image/webp") for p in photos]
         size = (front.width, front.height)
 
-        # A1 — P1
-        llm = get_llm_client()
+        # A1 — P1 (model + mức suy nghĩ theo chế độ chi phí admin chọn)
+        profile = get_profile(get_cost_mode(db))
+        job.progress = {**(job.progress or {}), "cost_mode_a": profile.key}
+        llm = get_llm_client(economy=profile.llm_economy, effort=profile.llm_effort)
         p1 = load_active_prompt(db, "P1")
         try:
             analysis, rec = run_p1(llm, p1, images, image_size=size, species_key=tree.species_key,

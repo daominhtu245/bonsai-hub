@@ -398,3 +398,14 @@ class Style(Base):
     prompt_desc_en: Mapped[str] = mapped_column(Text)
     growth_speed: Mapped[str | None] = mapped_column(String(16))
     ref_image_keys: Mapped[list[Any]] = mapped_column(JSONB, default=list)
+
+
+class AppSetting(Base):
+    """Cấu hình vận hành đổi được lúc chạy từ trang admin (vd. `cost_mode`)."""
+
+    __tablename__ = "app_settings"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_by: Mapped[str | None] = mapped_column(String(320))

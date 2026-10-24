@@ -13,6 +13,7 @@ class AISettings(BaseSettings):
     llm_fallback_provider: str | None = "gemini"
     llm_fallback_model: str | None = "gemini-flash-latest"
     llm_effort: str = "medium"
+    llm_economy_model: str | None = None  # chế độ tiết kiệm (admin bật); trống → dùng llm_model
     llm_max_tokens: int = 16000
 
     image_provider: str = "gemini"

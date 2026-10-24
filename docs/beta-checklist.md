@@ -27,6 +27,8 @@ Các bước cần người vận hành làm tay. Code đã sẵn; mục nào ch
 - [ ] **Cổng 2**: ≥ 70% lượt qua P4 ngay vòng đầu (xem `/admin` → Chi phí → tỉ lệ P3c).
 - [ ] Huấn luyện YOLO-seg thân (`packages/pipeline/tools/seg/README.md`) → `TRUNK_SEG_WEIGHTS`.
 - [ ] Nạp ảnh tham chiếu loài vào `species.ref_image_keys`.
+- [ ] Nghệ nhân duyệt thư viện hướng dẫn chăm `packages/pipeline/bonsai_pipeline/rules/care_guide.yaml` (bản nháp; dùng ở chế độ AI Tiêu chuẩn/Tiết kiệm).
+- [ ] Chọn chế độ AI ở `/admin` → Chế độ AI; đối chiếu chi phí `/admin` → Chi phí với hóa đơn nhà cung cấp.
 
 ## 5. Thanh toán
 - [ ] Tài khoản nhận tiền → `BANK_BIN`, `BANK_ACCOUNT`, `BANK_ACCOUNT_NAME`, `BANK_NAME`.

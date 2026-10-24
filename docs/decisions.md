@@ -44,6 +44,10 @@ Tài liệu kỹ thuật vẫn là nguồn chính. Đây là những chỗ code 
 | 27 | **Thiết kế lại v2** (22/10/2026): kiểu công cụ chuyên nghiệp — trung tính + một màu nhấn, chỉ Be Vietnam Pro, icon Lucide, bo nhỏ; bỏ hình vẽ hoạt hình, chip tròn, mẹo/chú thích dài; ảnh thật Unsplash; trang chủ = giới thiệu (khách) / bảng điều khiển (đã đăng nhập) | Yêu cầu sản phẩm chuyên nghiệp, ít chữ |
 | 28 | Ảnh chia sẻ server cũng theo v2 (nền sáng, chữ sans, biểu tượng thương hiệu); màu nét bản vẽ đồng bộ token v2 | Nhất quán thương hiệu |
 
+| 29 | **Chế độ chi phí AI** (24/10/2026), admin chọn ở `/admin` → Chế độ AI (bảng `app_settings`, áp dụng cho job mới): **Tiêu chuẩn** (mặc định) — LLM chỉ làm P1 + P2 (mức suy nghĩ thấp); 1 ảnh kết quả `medium`, 3 ảnh giai đoạn `low`; bỏ P4 VLM (chỉ kiểm tra CV, sửa tối đa 1 vòng); P2b/P6/P5 thay bằng bộ luật + thư viện `rules/care_guide.yaml`. **Tiết kiệm** — như trên, mọi ảnh `low`, LLM = `LLM_ECONOMY_MODEL`, không sinh lại. Quy trình đầy đủ cũ giữ trong code (`full`) nhưng không mở ở admin | Chạy thử thật: quy trình đầy đủ ≈ $1,23/lượt (14 lời gọi). Hướng dẫn chăm viết sẵn rẻ và đáng tin hơn để LLM viết mỗi lần; **thư viện là bản nháp, cần nghệ nhân duyệt** |
+| 30 | P1 và P2 vẫn là 2 lời gọi (không gộp) | Rule engine + segment thân chạy giữa P1 và P2 để tính khung tỉ lệ cho P2 |
+| 31 | OpenAI ảnh: đệm lề ảnh vào vào khổ gần nhất (1024², 1536×1024, 1024×1536) rồi cắt ảnh ra về đúng tỉ lệ gốc | Không thì CV loại vì sai tỉ lệ → sinh lại, tốn tiền |
+
 ## Chưa làm (cố ý)
 - Xóa tài khoản (đã có xóa cây kèm ảnh; xóa tài khoản cần quy định giữ sổ lượt/thanh toán, Nghị định 13/2023).
 - P3b bản vẽ phong cách nghệ nhân, video timelapse, theo dõi tiến độ cây thật (sau MVP theo §1).

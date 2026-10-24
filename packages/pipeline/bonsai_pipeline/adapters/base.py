@@ -103,4 +103,6 @@ class ImageProvider(Protocol):
     name: str
     model: str
 
-    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1) -> ImageResponse: ...
+    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1, quality: str | None = None) -> ImageResponse:
+        """`quality`: low | medium | high; nhà cung cấp không hỗ trợ thì bỏ qua."""
+        ...

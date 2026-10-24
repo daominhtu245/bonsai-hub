@@ -35,9 +35,11 @@ class FakeImage:
         self.model = model
         self.fail_times = fail_times
         self.calls = 0
+        self.qualities: list[str | None] = []
 
-    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1) -> ImageResponse:
+    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1, quality: str | None = None) -> ImageResponse:
         self.calls += 1
+        self.qualities.append(quality)
         if self.fail_times > 0:
             self.fail_times -= 1
             raise AIError("fake transient failure", retryable=True)
@@ -151,7 +153,7 @@ class DemoImage:
         self.model = model
         self.calls = 0
 
-    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1) -> ImageResponse:
+    def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1, quality: str | None = None) -> ImageResponse:
         from PIL import ImageDraw
 
         self.calls += 1

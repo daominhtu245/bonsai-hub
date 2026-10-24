@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -13,6 +14,7 @@ from ..db.models import (
 )
 from ..security import DB, require_admin
 from ..services.credits import apply_credit
+from ..services.settings import get_cost_mode, set_cost_mode
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -191,6 +193,24 @@ def gift_credits(body: GiftIn, db: DB):
     db.commit()
     db.refresh(user)
     return GiftOut(email=user.email, credited=credited, credits=user.credits)
+
+
+# ---------- chế độ chi phí AI (bonsai_pipeline/cost_mode.py) ----------
+
+
+class SettingsOut(BaseModel):
+    cost_mode: Literal["standard", "economy"]
+
+
+@router.get("/settings", response_model=SettingsOut)
+def get_settings(db: DB):
+    return SettingsOut(cost_mode=get_cost_mode(db))
+
+
+@router.put("/settings", response_model=SettingsOut)
+def put_settings(body: SettingsOut, db: DB, admin: Annotated[User, Depends(require_admin)]):
+    """Áp dụng cho job bắt đầu sau khi đổi; job đang chạy giữ chế độ cũ."""
+    return SettingsOut(cost_mode=set_cost_mode(db, body.cost_mode, by=admin.email))
 
 
 # ---------- ảnh tham chiếu loài (đưa vào P3a/P3d) ----------
