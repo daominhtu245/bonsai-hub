@@ -124,3 +124,25 @@ def test_job_event_task(db, login, monkeypatch):
     user.deleted_at = __import__("datetime").datetime.now(__import__("datetime").UTC)
     db.commit()
     assert notify.job_event.run(str(job.id)) == {"sent": False}
+
+
+def test_user_message_sends_push(db, login, monkeypatch):
+    import uuid
+
+    from bonsai_worker.tasks import notify as n
+
+    sent = []
+    monkeypatch.setattr(n, "send_web_push", lambda db, uid, msg, base: sent.append((uid, msg.event, msg.path)) or 1)
+
+    class _Ctx:
+        def __enter__(self):
+            return db
+
+        def __exit__(self, *a):
+            return False
+
+    monkeypatch.setattr(n, "get_sessionmaker", lambda: (lambda: _Ctx()))
+    _, body = login()
+    uid = body["user"]["id"]
+    assert n.user_message(uid, "consult_answered", "Nghệ nhân đã trả lời", "Ổn", "/hoi-nghe-nhan/x") == 1
+    assert sent == [(uuid.UUID(uid), "consult_answered", "/hoi-nghe-nhan/x")]
