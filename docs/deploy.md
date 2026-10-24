@@ -19,7 +19,7 @@ Thời gian: khoảng 30–45 phút cho lần đầu.
 
 | Cần có | Ghi chú |
 |---|---|
-| VPS Ubuntu 22.04/24.04, **≥ 2 vCPU / 4 GB RAM**, trống ≥ 15 GB | Build lần đầu tốn RAM (npm + pip). Máy 2 GB thì thêm swap (bước 1). |
+| VPS Ubuntu 22.04/24.04, **≥ 2 vCPU / 4 GB RAM**, trống ≥ 15 GB | Build lần đầu tốn RAM (npm + pip). Máy 2 GB thì thêm swap (bước 1). Tách nền trước khi phân tích dùng thêm ~0,8 GB RAM trong vài giây mỗi lần phân tích |
 | Docker Engine + Docker Compose v2 | `docker compose version` phải chạy được |
 | Nginx + certbot | Nginx đã có; certbot cài ở bước 1 |
 | 1 domain/subdomain trỏ A record về IP VPS | Ví dụ `bonsai.tenban.vn`. Nếu dùng Cloudflare: để **DNS only** (mây xám) khi chạy certbot |
@@ -131,7 +131,14 @@ IMAGE_MODEL=gpt-image-2
 IMAGE_FALLBACK_PROVIDER=
 IMAGE_FALLBACK_MODEL=
 DAILY_COST_ALERT_USD=5
+
+# ---- tách nền trên máy trước khi phân tích (admin → Chế độ AI bật/tắt) ----
+WORKER_WITH_CUTOUT=true
+CUTOUT_THREADS=2        # máy chủ dùng chung: giới hạn số luồng CPU
 ```
+
+> Muốn tách nền đẹp hơn và máy còn **≥ 6 GB RAM trống**: tải BiRefNet-lite vào `models/` rồi đặt
+> `CUTOUT_MODEL=/models/birefnet-general-lite.onnx` (xem `docs/decisions.md` #47). Mặc định ISNet nhẹ (~0,8 GB).
 
 > `POSTGRES_PASSWORD` chỉ có tác dụng ở **lần chạy đầu**, khi volume database được tạo. Đổi về sau phải đổi cả
 > trong Postgres.

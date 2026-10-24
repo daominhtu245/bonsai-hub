@@ -1,7 +1,7 @@
 step_code: P1
 version: v1
 kind: llm
-active: true
+active: false
 description: Analyze — mô tả phôi từ 1–4 ảnh
 system: |
   You are a senior bonsai master and a precise visual analyst.

@@ -189,10 +189,10 @@ def test_admin_requires_role_and_works(db, client, login, monkeypatch):
     prompts = client.get("/api/v1/admin/prompts", headers=admin).json()
     assert {p["step_code"] for p in prompts} >= {"P1", "P2", "P4", "P6"}
     r = client.post("/api/v1/admin/prompts", headers=admin, json={"step_code": "P1", "system": "s", "user": "new user prompt {{n_images}}"})
-    assert r.status_code == 201 and r.json()["version"] == "v2" and not r.json()["active"]
+    assert r.status_code == 201 and r.json()["version"] == "v3" and not r.json()["active"]
     client.post(f"/api/v1/admin/prompts/{r.json()['id']}/activate", headers=admin)
     active = db.execute(select(PromptVersion.version).where(PromptVersion.step_code == "P1", PromptVersion.active)).scalars().all()
-    assert active == ["v2"]
+    assert active == ["v3"]
 
     db.add(PipelineStep(step_code="P3a", provider="gemini", model="m", tokens_in=0, tokens_out=0, images_out=1,
                         cost_usd=Decimal("0.0336"), latency_ms=900, ok=True))
@@ -246,13 +246,15 @@ def test_admin_ai_settings(db, client, login, monkeypatch):
     user, _ = login("user@example.com")
     assert client.get("/api/v1/admin/settings", headers=user).status_code == 403
     admin = _admin(client, login, monkeypatch)
-    defaults = {"cost_mode": "standard", "analysis_mode": "hybrid", "design_mode": "api", "seg_model_ready": False,
-                "app_env": get_settings().app_env}
+    defaults = {"cost_mode": "standard", "analysis_mode": "hybrid", "design_mode": "api", "cutout_mode": "on",
+                "cutout_model": None, "seg_model_ready": False, "app_env": get_settings().app_env}
     assert client.get("/api/v1/admin/settings", headers=admin).json() == defaults
     r = client.put("/api/v1/admin/settings", headers=admin, json={"cost_mode": "economy", "design_mode": "rules"})
     assert r.status_code == 200 and r.json() == defaults | {"cost_mode": "economy", "design_mode": "rules"}
     r = client.put("/api/v1/admin/settings", headers=admin, json={"analysis_mode": "api"})
     assert r.json() == defaults | {"cost_mode": "economy", "design_mode": "rules", "analysis_mode": "api"}
+    r = client.put("/api/v1/admin/settings", headers=admin, json={"cutout_mode": "off"})
+    assert r.json()["cutout_mode"] == "off"
     assert client.put("/api/v1/admin/settings", headers=admin, json={"cost_mode": "full"}).status_code == 422
     assert client.put("/api/v1/admin/settings", headers=admin, json={"design_mode": "magic"}).status_code == 422
 

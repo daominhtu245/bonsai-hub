@@ -74,7 +74,7 @@ def test_phase_a_happy_path(db, login, bucket, llm):
     job = db.get(DesignJob, job.id)
     assert job.status == JobStatus.awaiting_choice, job.error
     assert job.front_photo_id == next(p.id for p in tree.photos if p.is_front)
-    assert job.prompt_version == "P1.v1+P2.v1"
+    assert job.prompt_version == "P1.v2+P2.v1"
     assert job.targets["target_height_px"] == 720 and job.targets["cv"]["cv_fallback"] is True
     assert {k: v["state"] for k, v in job.progress["steps"].items()} == dict.fromkeys(
         ["species", "trunk", "branches", "front", "design"], "done")
@@ -137,3 +137,48 @@ def run_phase_a_safe(db, job_id, fn=run_phase_a):
     with pytest.raises(Exception):
         fn(db, job_id)
     db.expire_all()
+
+
+def test_cutout_feeds_p1_and_shifts_coordinates(db, login, bucket, llm, monkeypatch):
+    import numpy as np
+
+    class FakeRemover:
+        name = "fake-cutout"
+
+        def alpha(self, img):
+            a = np.zeros((img.height, img.width), np.float32)
+            a[300:1400, 350:650] = 1
+            return a
+
+    monkeypatch.setattr("bonsai_worker.tasks.phase_a.get_remover", lambda: FakeRemover())
+    user, tree, job = _job(db, login, bucket)
+    llm.responses.extend([json.dumps(analysis()), json.dumps(design())])
+    run_phase_a(db, job.id)
+    db.expire_all()
+    job = db.get(DesignJob, job.id)
+    assert job.status == JobStatus.awaiting_choice, job.error
+    box = job.progress["cutout"]["box"]
+    assert box[0] > 0 and box[1] > 0
+    # P1: ảnh đã tách + 1 góc khác + bản phác họa + ảnh gốc cùng khung; prompt biết khung đã cắt và cờ tiền xử lý
+    call = llm.calls[0]
+    assert call["images"] == 4
+    text = call["messages"][0]["content"]
+    assert "cutout_sketch" in text and f"{box[2] - box[0]}x{box[3] - box[1]}" in text and "Images: 2 views" in text
+    # tọa độ trả về theo khung cắt → cộng lại độ lệch về ảnh gốc
+    assert job.analysis["trunk"]["base_point_px"] == [analysis()["trunk"]["base_point_px"][0] + box[0],
+                                                      analysis()["trunk"]["base_point_px"][1] + box[1]]
+    assert bucket[job.progress["cutout"]["sketch_key"]][:4] == b"\x89PNG"
+    step = db.execute(select(PipelineStep).where(PipelineStep.job_id == job.id, PipelineStep.step_code == "A0c")).scalar_one()
+    assert step.ok and step.model == "fake-cutout"
+
+
+def test_cutout_off_by_admin(db, login, bucket, llm, monkeypatch):
+    from bonsai_api.services.settings import set_setting
+
+    called = []
+    monkeypatch.setattr("bonsai_worker.tasks.phase_a.get_remover", lambda: called.append(1))
+    set_setting(db, "cutout_mode", "off", by="t")
+    user, tree, job = _job(db, login, bucket)
+    llm.responses.extend([json.dumps(analysis()), json.dumps(design())])
+    run_phase_a(db, job.id)
+    assert not called and llm.calls[0]["images"] == 2 and "Pre-processing: none" in llm.calls[0]["messages"][0]["content"].replace("On-device pre-processing", "Pre-processing")

@@ -39,6 +39,7 @@ export interface Job {
   progress: JobProgress;
   created_at: string;
   front_photo: { id: string; url: string; width: number | null; height: number | null } | null;
+  cutout_url?: string | null;
   photos?: { id: string; url: string; is_front: boolean }[];
   can_retry?: boolean;
   analysis: {
@@ -123,6 +124,7 @@ export interface ResultView {
   low_confidence: boolean;
   years: number | null;
   front_photo: { id: string; url: string; width: number | null; height: number | null } | null;
+  cutout_url?: string | null;
   sketch_svg_url: string | null;
   stages: StageView[];
   report: {

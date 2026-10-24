@@ -16,6 +16,7 @@ from bonsai_api.db.session import get_sessionmaker
 from bonsai_api.services.settings import get_all
 from bonsai_pipeline.adapters import AIError, ImageInput, get_llm_client
 from bonsai_pipeline.cost_mode import get_profile
+from bonsai_pipeline.cutout import PREPROCESS_FLAG, get_remover, make_cutout, shift_analysis
 from bonsai_pipeline.phase_a import run_p1, run_p2
 from bonsai_pipeline.rule_engine import compute_targets
 from bonsai_pipeline.local_analysis import LocalAnalysis, analyze_parts
@@ -116,14 +117,34 @@ def run_phase_a(db: Session, job_id: uuid.UUID) -> None:
                 local_seg = SegmentationResult(measure_mask(parts.trunk), parts.trunk)
                 prompt_tags.append("A1.local")
         if analysis is None:
+            # A0c — tách nền + phác họa nét trên máy: P1 chỉ thấy phôi (bỏ tay, cây khác…) và có nét để đặt tọa độ.
+            p1_images, p1_size, preprocess, offset = images, size, "none", (0, 0)
+            remover = get_remover() if modes["cutout_mode"] == "on" else None
+            if remover is not None:
+                started = time.monotonic()
+                cut = make_cutout(images[0].data, remover)
+                record_step(db, job.id, _code_step("A0c", remover.name, started, ok=cut.ok,
+                                                   output={"reason": cut.reason, **cut.metrics}))
+                if cut.ok:
+                    base = f"trees/{tree.id}/jobs/{job.id}"
+                    storage.put_bytes(f"{base}/cutout.jpg", cut.image_jpeg, "image/jpeg")
+                    storage.put_bytes(f"{base}/cutout_sketch.png", cut.sketch_png, "image/png")
+                    storage.put_bytes(f"{base}/cutout_mask.png", cut.mask_png, "image/png")
+                    job.progress = {**(job.progress or {}), "cutout": {
+                        "image_key": f"{base}/cutout.jpg", "sketch_key": f"{base}/cutout_sketch.png", "box": list(cut.box)}}
+                    db.commit()
+                    p1_images = [ImageInput(cut.image_jpeg, "image/jpeg"), *images[1:], ImageInput(cut.sketch_png, "image/png"),
+                                 ImageInput(cut.crop_jpeg, "image/jpeg")]
+                    p1_size, preprocess, offset = cut.size, PREPROCESS_FLAG, cut.box[:2]
             p1 = load_active_prompt(db, "P1")
             try:
-                analysis, rec = run_p1(llm, p1, images, image_size=size, species_key=tree.species_key,
-                                       real_height_cm=tree.real_height_cm)
+                analysis, rec = run_p1(llm, p1, p1_images, image_size=p1_size, species_key=tree.species_key,
+                                       real_height_cm=tree.real_height_cm, preprocess=preprocess, n_views=len(images))
             except AIError as e:
                 _record_ai_failure(db, job.id, "P1", p1.version_tag, e)
                 raise JobFailure("ai_unavailable", str(e)) from e
-            record_step(db, job.id, rec, input_ref={"photo_ids": [str(p.id) for p in photos]})
+            analysis = shift_analysis(analysis, *offset)
+            record_step(db, job.id, rec, input_ref={"photo_ids": [str(p.id) for p in photos], "preprocess": preprocess})
             prompt_tags.append(p1.version_tag)
         job.analysis = analysis.model_dump(mode="json")
         if not analysis.image_quality.usable:

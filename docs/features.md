@@ -8,7 +8,7 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | Chức năng | Ở đâu | Ghi chú |
 |---|---|---|
 | Chụp / chọn ảnh phôi, nhập loài và chiều cao | Trang chủ → Phân tích phôi mới | Ảnh mờ / tối bị báo chụp lại ngay, không tốn API |
-| Phân tích phôi + 2–3 thế kèm bản vẽ cắt / giữ / nuôi cành | Màn Chọn thế | Miễn phí |
+| Phân tích phôi + 2–3 thế kèm bản vẽ cắt / giữ / nuôi cành | Màn Chọn thế | Miễn phí. Trước khi gửi AI: **tách nền trên máy** (chỉ giữ phôi, bỏ tay / cây khác / logo) + **phác họa nét** thân, cành, rễ; màn Đang phân tích hiện ảnh đã tách |
 | **Tự thiết kế**: chạm cành để Giữ / Cắt; màn chỉnh ảnh không cuộn, 5 chế độ (Cành / Tầng lá / Chậu / Rêu, đá / Hoàn tất), núm đổi cỡ + xoay, hai ngón phóng to; ghép từ **thư viện chi tiết cây thật** (tầng lá, ngọn theo 4 kiểu lá, 5 chậu, rêu, đá) — kéo, to / nhỏ, nghiêng, lật, đổi kiểu; cành mới, điểm ngọn; "Xem như thật"; bắt đầu từ mẫu AI; hoàn tác; gợi ý theo luật (không bắt buộc) | Chọn thế → Tự thiết kế | Lưu miễn phí; "Tạo ảnh tương lai" dùng 1 lượt, model ảnh đặt tầng lá đúng các vị trí người dùng ghép |
 | **Xem thử nhanh bằng AI** | Tự thiết kế | Miễn phí 2 lần / phiên, ảnh nháp |
 | **Nhờ góp ý** (link ảnh thiết kế gửi Zalo / Facebook) | Tự thiết kế | Trang công khai `/tk/…` |
@@ -40,7 +40,7 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | | Thanh toán | Đối soát, xác nhận tay theo mã sao kê, hủy đơn, **xuất Excel** |
 | | **Mã quà tặng** | Tạo mã (tự sinh hoặc đặt tên), số lượt, giới hạn người dùng, hạn dùng, bật/tắt, xem ai đã dùng |
 | | **Gửi thông báo** | Web Push theo nhóm: tất cả, nhà vườn, đã mua, chưa mua, không dùng 30 ngày, hết lượt; xem trước, lịch sử gửi |
-| AI | Chế độ AI | Chi phí (Tiêu chuẩn / Tiết kiệm), phân tích (model riêng / API), thiết kế (API / bộ luật) |
+| AI | Chế độ AI | Chi phí (Tiêu chuẩn / Tiết kiệm), phân tích (model riêng / API), **tách nền trước khi phân tích (bật / tắt)**, thiết kế (API / bộ luật); chi tiết phiên có ảnh đã tách + phác họa |
 | | Chi phí AI | Theo ngày, theo bước, tỉ trọng |
 | | Prompt | Phiên bản, kích hoạt, hiệu quả từng phiên bản |
 | | Gán nhãn | Bộ dữ liệu YOLO-seg 3 lớp, cọ / tẩy / khoanh vùng |

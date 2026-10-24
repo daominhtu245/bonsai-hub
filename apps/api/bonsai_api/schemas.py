@@ -170,6 +170,7 @@ class JobOut(BaseModel):
     progress: dict
     created_at: datetime
     front_photo: PhotoRef | None
+    cutout_url: str | None = None  # ảnh mặt tiền đã tách nền (phiên A, bonsai_pipeline/cutout.py)
     photos: list[TreePhotoRef] = []
     analysis: AnalysisSummary | None
     options: list[OptionOut]

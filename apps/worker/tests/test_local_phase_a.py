@@ -64,7 +64,7 @@ def test_rule_designer_replaces_p2(db, login, bucket, llm):  # noqa: F811
     db.expire_all()
     job = db.get(DesignJob, job.id)
     assert job.status == JobStatus.awaiting_choice, job.error
-    assert job.prompt_version == "P1.v1+P2.rules" and len(llm.calls) == 1
+    assert job.prompt_version == "P1.v2+P2.rules" and len(llm.calls) == 1
     steps = _steps(db, job.id)
     assert steps["P2"].provider == "code" and steps["P2"].cost_usd == 0
     opts = db.execute(select(DesignOption).where(DesignOption.job_id == job.id)).scalars().all()
@@ -97,6 +97,6 @@ def test_unsure_local_model_falls_back_to_p1(db, login, bucket, llm, monkeypatch
     db.expire_all()
     job = db.get(DesignJob, job.id)
     assert job.status == JobStatus.awaiting_choice, job.error
-    assert job.prompt_version == "P1.v1+P2.v1"
+    assert job.prompt_version == "P1.v2+P2.v1"
     a1 = _steps(db, job.id)["A1"]
     assert a1.ok is False and "model_has_no_branch_class" in a1.output["reasons"]

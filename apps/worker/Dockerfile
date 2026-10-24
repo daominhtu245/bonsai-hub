@@ -19,6 +19,17 @@ RUN if [ "$WITH_CV" = "true" ]; then \
       && pip install "ultralytics>=8.3" "opencv-python-headless>=4.10"; \
     fi
 
+# Tách nền trên máy trước khi phân tích (bonsai_pipeline/cutout.py): onnxruntime + ISNet (~176 MB file, ~0,8 GB RAM khi chạy).
+# Tắt: WORKER_WITH_CUTOUT=false (phân tích gửi ảnh gốc như trước).
+ARG WITH_CUTOUT=true
+ARG CUTOUT_URL=https://github.com/danielgatis/rembg/releases/download/v0.0.0/isnet-general-use.onnx
+ARG CUTOUT_SHA256=60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a
+RUN if [ "$WITH_CUTOUT" = "true" ]; then \
+      pip install "onnxruntime>=1.18" "opencv-python-headless>=4.10" \
+      && mkdir -p /opt/models \
+      && python -c "import hashlib,sys,urllib.request; p='/opt/models/isnet-general-use.onnx'; urllib.request.urlretrieve(sys.argv[1], p); h=hashlib.sha256(open(p,'rb').read()).hexdigest(); assert h==sys.argv[2], h" "$CUTOUT_URL" "$CUTOUT_SHA256"; \
+    fi
+
 # 2) Mã nguồn của dự án (cài lại riêng 3 gói, không đụng thư viện).
 COPY packages/pipeline /app/packages/pipeline
 COPY apps/api /app/apps/api

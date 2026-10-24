@@ -108,6 +108,10 @@ const ANALYSIS: Choice<AiSettings['analysis_mode']>[] = [
   { key: 'hybrid', title: 'Model riêng, API dự phòng', detail: 'YOLO-seg đọc thân, cành, rễ; chưa chắc thì gọi API' },
   { key: 'api', title: 'Chỉ API', detail: 'Luôn gọi API đọc ảnh' },
 ];
+const CUTOUT: Choice<AiSettings['cutout_mode']>[] = [
+  { key: 'on', title: 'Bật', detail: 'Tách nền, chỉ giữ phôi + phác họa nét trên máy, rồi mới gửi AI phân tích · không tốn API' },
+  { key: 'off', title: 'Tắt', detail: 'Gửi ảnh gốc cho AI' },
+];
 const DESIGN: Choice<AiSettings['design_mode']>[] = [
   { key: 'api', title: 'API', detail: 'AI thiết kế trong khuôn khổ bộ luật tỉ lệ' },
   { key: 'rules', title: 'Bộ luật', detail: 'Không tốn API · cần nghệ nhân duyệt trước khi dùng thật' },
@@ -158,6 +162,10 @@ export function AiModeTab() {
           <div className="flex flex-col gap-2">
             <ChoiceGroup legend="Phân tích phôi" name="analysis" choices={ANALYSIS} value={s.analysis_mode} disabled={saving} onChange={(k) => save({ analysis_mode: k })} />
             {s.analysis_mode === 'hybrid' && !s.seg_model_ready ? <Notice tone="info">Chưa có model YOLO-seg trên worker — đang dùng API.</Notice> : null}
+          </div>
+          <div className="flex flex-col gap-2">
+            <ChoiceGroup legend="Tách nền trước khi phân tích" name="cutout" choices={CUTOUT} value={s.cutout_mode} disabled={saving} onChange={(k) => save({ cutout_mode: k })} />
+            {s.cutout_mode === 'on' && !s.cutout_model ? <Notice tone="info">Worker chưa có model tách nền — đang gửi ảnh gốc.</Notice> : null}
           </div>
           <ChoiceGroup legend="Thiết kế dáng" name="design" choices={DESIGN} value={s.design_mode} disabled={saving} onChange={(k) => save({ design_mode: k })} />
           {error ? <Notice tone="danger">{error}</Notice> : null}

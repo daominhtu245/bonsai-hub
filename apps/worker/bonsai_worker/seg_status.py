@@ -9,8 +9,9 @@ from datetime import UTC, datetime
 
 import redis
 
-from bonsai_api.services.settings import SEG_MODEL_KEY
+from bonsai_api.services.settings import CUTOUT_MODEL_KEY, SEG_MODEL_KEY
 from bonsai_pipeline.config import get_ai_settings
+from bonsai_pipeline.cutout import get_remover
 from bonsai_pipeline.segmentation import get_segmenter
 
 log = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ def worker_info(seg_ready: bool) -> dict:
         "reported_at": datetime.now(UTC).isoformat(),
         "seg_model": seg_ready,
         "sam": bool(os.environ.get("SAM_WEIGHTS")),
+        "cutout": (r.name if (r := get_remover()) else None),
         "llm": {"provider": s.llm_provider, "model": s.llm_model, "economy_model": s.llm_economy_model,
                 "fallback": s.llm_fallback_provider or None, "effort": s.llm_effort},
         "image": {"provider": s.image_provider, "model": s.image_model, "fallback": s.image_fallback_provider or None},
@@ -39,5 +41,6 @@ def report(ready: bool | None = None) -> None:
         r = redis.Redis.from_url(os.environ.get("REDIS_URL", "redis://localhost:6379/0"), socket_timeout=0.5)
         r.set(SEG_MODEL_KEY, "1" if ready else "0", ex=TTL)
         r.set(WORKER_INFO_KEY, json.dumps(worker_info(ready)), ex=TTL)
+        r.set(CUTOUT_MODEL_KEY, (m.name if (m := get_remover()) else ""), ex=TTL)
     except redis.RedisError:
         log.warning("could not report worker status")

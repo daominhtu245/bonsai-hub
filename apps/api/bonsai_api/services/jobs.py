@@ -88,6 +88,7 @@ def job_out(db: Session, job: DesignJob, user: User) -> JobOut:
         status=job.status.value, error_code=job.error_code, progress=job.progress or {}, created_at=job.created_at,
         front_photo=PhotoRef(id=front.id, url=storage.presign_get(front.storage_key), width=front.width, height=front.height)
         if front else None,
+        cutout_url=storage.presign_get(c["image_key"]) if (c := (job.progress or {}).get("cutout")) else None,
         photos=photos, analysis=_analysis_summary(job), options=options, chosen_option_id=job.chosen_option_id,
         result=result, can_retry=can_retry(job),
         credits_left=user.credits,

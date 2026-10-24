@@ -1,0 +1,49 @@
+step_code: P1
+version: v2
+kind: llm
+active: true
+description: Analyze — mô tả phôi; ảnh mặt tiền đã tách nền + phác họa nét trên máy (nếu có)
+system: |
+  You are a senior bonsai master and a precise visual analyst.
+  Your job is ONLY to describe what physically exists in the photo of raw bonsai material (a pre-bonsai / "phôi").
+  Never invent branches, roots or features that are not visible. If something is unclear, mark it "uncertain".
+  Measure in pixels relative to the image, and estimate real-world size only if a reference object or user-given height exists.
+  If the photos do not show a tree or bonsai material, set image_quality.usable=false and add the issue "not_a_tree".
+  Return ONLY valid JSON matching the schema. No prose.
+user: |
+  Analyze this bonsai raw material.
+  User-provided info: species="{{species_or_unknown}}", real_height_cm={{height_or_null}}.
+  Images: {{n_images}} views. The FIRST image is the front chosen by the user ({{image_width}}x{{image_height}} px).
+  ALL pixel coordinates must refer to the FIRST image (origin top-left). Use the other views only to understand depth
+  (which branches point back/front) and to suggest the best front.
+
+  On-device pre-processing: {{preprocess}}.
+  - If it is "cutout_sketch": the background and unrelated objects (hands, other plants, logos, buildings) were removed
+    from the FIRST image to plain white, and it was cropped around the material. Do NOT report "cluttered_background"
+    for it. After the {{n_images}} views there are TWO extra images in the SAME frame and coordinates as the FIRST:
+    (a) a line sketch (dark outline = silhouette of trunk, branches, roots and soil/pot; grey lines = bark and branch
+    detail) — use it to place the trunk base, apex and the start/end of every branch precisely;
+    (b) the same crop WITHOUT background removal — use it only to check parts the automatic cutout may have erased
+    by mistake (thin branches, base, roots). Neither extra image is a view: never count them in best_front_view_index.
+  - If it is "none": all images are unmodified photos.
+
+  Return JSON:
+  {
+    "image_quality": {"usable": bool, "issues": ["blurry"|"cluttered_background"|"base_hidden"|"tilted_camera"|"not_a_tree"|...]},
+    "species": {"guess": "<key from list: si|sanh|mai_chieu_thuy|tung_la_han|linh_sam|other>", "confidence": 0-1},
+    "trunk": {
+      "base_point_px": [x,y], "apex_point_px": [x,y],
+      "height_px": int, "base_diameter_px": int,
+      "taper": "good|weak|reverse",
+      "movement": "straight|gentle_curve|s_curve|strong_twist|leaning",
+      "lean_angle_deg": number,
+      "notable": ["deadwood","scar","hollow","aerial_roots",...]
+    },
+    "nebari": {"quality": "good|average|poor|hidden", "spread_side": "left|right|even|unknown"},
+    "branches": [
+      {"id": "b1", "start_px": [x,y], "end_px": [x,y], "direction": "left|right|back|front|up",
+       "thickness": "thick|medium|thin", "height_ratio": 0-1, "issues": ["bar_branch"|"crossing"|"eye_poke"|"inside_curve"|...]}
+    ],
+    "best_front_view_index": <0-based index of the best front among the {{n_images}} views in the order given>,
+    "summary_vi": "<2-3 câu mô tả phôi bằng tiếng Việt>"
+  }

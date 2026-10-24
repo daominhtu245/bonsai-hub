@@ -25,6 +25,12 @@ function Overview({ d }: { d: Detail }) {
               {ph.is_front ? <span className="absolute left-1.5 top-1.5"><Badge tone="info">Mặt tiền</Badge></span> : null}
             </a>
           ))}
+          {d.cutout ? [[d.cutout.image_url, 'Đã tách nền'], [d.cutout.sketch_url, 'Phác họa nét']].map(([url, label]) => (
+            <a key={label} href={url} target="_blank" rel="noreferrer" className="relative block">
+              <img src={url} alt={label} className="aspect-square w-full rounded-img border border-line bg-surface object-contain" />
+              <span className="absolute left-1.5 top-1.5"><Badge tone="neutral">{label}</Badge></span>
+            </a>
+          )) : null}
         </div>
       </Panel>
       <Panel title="Thông tin">

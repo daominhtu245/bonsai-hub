@@ -73,6 +73,7 @@ export interface JobDetail {
   charge_ref: string | null;
   share_code: string | null;
   photos: { id: string; url: string; is_front: boolean; width: number | null; height: number | null }[];
+  cutout: { image_url: string; sketch_url: string; box: number[] | null } | null;
   options: { id: string; rank: number; style_key: string; suitability: number; chosen: boolean; sketch_svg_url: string | null; design: Record<string, unknown>; counts: Record<string, unknown> | null }[];
   renders: RenderRow[];
   stages: { code: string; time_from_start: string | null; plan: Record<string, unknown> | null; guide_vi: Record<string, unknown> | null; image_id: string | null }[];

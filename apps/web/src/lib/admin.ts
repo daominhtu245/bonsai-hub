@@ -48,13 +48,15 @@ export type AiSettings = {
   cost_mode: CostMode;
   analysis_mode: 'api' | 'hybrid';
   design_mode: 'api' | 'rules';
+  cutout_mode: 'on' | 'off';
+  cutout_model: string | null;
   seg_model_ready: boolean;
   app_env: string;
 };
 
 export const adminApi = {
   settings: () => api<AiSettings>('/admin/settings'),
-  saveSettings: (patch: Partial<Omit<AiSettings, 'seg_model_ready' | 'app_env'>>) => api<AiSettings>('/admin/settings', { method: 'PUT', json: patch }),
+  saveSettings: (patch: Partial<Omit<AiSettings, 'seg_model_ready' | 'app_env' | 'cutout_model'>>) => api<AiSettings>('/admin/settings', { method: 'PUT', json: patch }),
   prompts: () => api<PromptRow[]>('/admin/prompts'),
   createPrompt: (body: { step_code: string; system: string | null; user: string; description?: string }) =>
     api<PromptRow>('/admin/prompts', { method: 'POST', json: body }),

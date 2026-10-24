@@ -9,8 +9,8 @@ def test_seed_is_idempotent_and_one_active_per_step(db):
     rows = db.execute(select(PromptVersion.step_code, func.count()).where(PromptVersion.active)
                       .group_by(PromptVersion.step_code)).all()
     assert rows and all(n == 1 for _, n in rows)
-    p1 = db.execute(select(PromptVersion).where(PromptVersion.step_code == "P1")).scalar_one()
-    assert "{{species_or_unknown}}" in p1.template["user"] and p1.template["system"]
+    p1 = db.execute(select(PromptVersion).where(PromptVersion.step_code == "P1", PromptVersion.active)).scalar_one()
+    assert "{{species_or_unknown}}" in p1.template["user"] and "{{preprocess}}" in p1.template["user"] and p1.template["system"]
 
 
 def test_seed_updates_unused_and_protects_used(db, tmp_path, monkeypatch):

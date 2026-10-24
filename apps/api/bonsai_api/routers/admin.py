@@ -15,7 +15,7 @@ from ..db.models import (
 from ..security import DB, require_admin
 from ..services.audit import audit
 from ..services.credits import apply_credit
-from ..services.settings import get_all, seg_model_ready, set_setting
+from ..services.settings import cutout_model, get_all, seg_model_ready, set_setting
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -235,6 +235,8 @@ class SettingsOut(BaseModel):
     cost_mode: Literal["standard", "economy"]
     analysis_mode: Literal["api", "hybrid"]
     design_mode: Literal["api", "rules"]
+    cutout_mode: Literal["on", "off"] = "on"
+    cutout_model: str | None = None  # model tách nền trên worker (báo qua Redis)
     seg_model_ready: bool = False  # worker có trọng số YOLO-seg (báo cáo qua Redis heartbeat; xem worker monitoring)
     app_env: str = "dev"  # nhãn môi trường ở thanh trên trang quản trị
 
@@ -243,12 +245,13 @@ class SettingsIn(BaseModel):
     cost_mode: Literal["standard", "economy"] | None = None
     analysis_mode: Literal["api", "hybrid"] | None = None
     design_mode: Literal["api", "rules"] | None = None
+    cutout_mode: Literal["on", "off"] | None = None
 
 
 def _settings_out(db) -> SettingsOut:
     from ..settings import get_settings
 
-    return SettingsOut(**get_all(db), seg_model_ready=seg_model_ready(), app_env=get_settings().app_env)
+    return SettingsOut(**get_all(db), cutout_model=cutout_model(), seg_model_ready=seg_model_ready(), app_env=get_settings().app_env)
 
 
 @router.get("/settings", response_model=SettingsOut)

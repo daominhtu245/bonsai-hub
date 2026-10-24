@@ -4,6 +4,7 @@ import { BackHeader } from '@/components/BackHeader';
 import { NotifyPrompt } from '@/components/NotifyPrompt';
 import { Button, ButtonLink, Notice, Skeleton, StepList, type StepState } from '@/components/ui';
 import { ApiError } from '@/lib/api';
+import { cx } from '@/lib/cx';
 import { phaseAError, SPECIES_NAME } from '@/lib/copy';
 import { jobsApi, watchJob, type Job, type JobProgress } from '@/lib/jobs';
 
@@ -68,6 +69,13 @@ export default function Analyzing() {
     return () => stop();
   }, [jobId, navigate]);
 
+  // Worker tách nền xong (progress.cutout) → tải lại phiên để lấy URL ký sẵn của ảnh đã tách.
+  const hasCutout = Boolean((job?.progress as Record<string, unknown> | undefined)?.cutout);
+  const needCutout = hasCutout && !job?.cutout_url;
+  useEffect(() => {
+    if (needCutout) jobsApi.get(jobId).then((j) => setJob((p) => (p ? { ...p, cutout_url: j.cutout_url } : j))).catch(() => null);
+  }, [needCutout, jobId]);
+
   useEffect(() => {
     const e = window.setInterval(() => setElapsed((s) => s + 1), 1000);
     return () => window.clearInterval(e);
@@ -112,7 +120,9 @@ export default function Analyzing() {
       <div className="relative mx-gutter mt-4 aspect-[4/3] overflow-hidden rounded-card border border-line bg-photo shadow-card">
         {job?.front_photo ? (
           <>
-            <img src={job.front_photo.url} alt="Ảnh phôi đang được đo thân và cành" className="h-full w-full object-contain" />
+            <img src={job.cutout_url ?? job.front_photo.url} alt="Ảnh phôi đang được đo thân và cành"
+              className={cx('h-full w-full object-contain', job.cutout_url && 'bg-surface')} />
+            {job.cutout_url ? <span className="absolute left-2 top-2 rounded-chip bg-surface px-2 py-0.5 text-label font-medium text-ink-muted shadow-card">Đã tách nền</span> : null}
             {!failed ? <div aria-hidden="true" className="scan-line pointer-events-none absolute inset-x-0 h-1/4" /> : null}
           </>
         ) : (

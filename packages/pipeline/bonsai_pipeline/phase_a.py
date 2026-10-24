@@ -37,12 +37,19 @@ def run_p1(
     image_size: tuple[int, int],
     species_key: str | None,
     real_height_cm: float | None,
+    preprocess: str = "none",
+    n_views: int | None = None,
 ) -> tuple[Analysis, StepRecord]:
-    """`images[0]` là mặt tiền người dùng chọn; mọi tọa độ px tính trên ảnh này."""
+    """`images[0]` là mặt tiền người dùng chọn; mọi tọa độ px tính trên ảnh này.
+
+    `preprocess="cutout_sketch"`: ảnh đầu đã tách nền + cắt sát, ảnh cuối là bản phác họa (không tính là một góc chụp,
+    `n_views` = số góc chụp thật). Prompt cũ không có biến `preprocess` thì bỏ qua.
+    """
     user = render(prompt.user, {
         "species_or_unknown": species_key or "unknown",
         "height_or_null": real_height_cm if real_height_cm else "null",
-        "n_images": len(images),
+        "n_images": n_views or len(images),
+        "preprocess": preprocess,
         "image_width": image_size[0],
         "image_height": image_size[1],
     })

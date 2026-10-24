@@ -3,6 +3,7 @@
 - cost_mode: standard | economy — số ảnh, chất lượng ảnh, model chữ (bonsai_pipeline/cost_mode.py)
 - analysis_mode: api | hybrid — hybrid: model riêng (YOLO-seg) trước, chưa tin được thì gọi P1
 - design_mode: api | rules — rules: bộ thiết kế bằng luật (bonsai_pipeline/rule_designer.py) thay P2
+- cutout_mode: on | off — tách nền + phác họa nét trên máy trước P1 (bonsai_pipeline/cutout.py)
 """
 
 from sqlalchemy.orm import Session
@@ -15,6 +16,7 @@ SETTINGS: dict[str, tuple[tuple[str, ...], str]] = {
     "cost_mode": (ADMIN_MODES, DEFAULT_MODE),
     "analysis_mode": (("api", "hybrid"), "hybrid"),  # chưa có trọng số YOLO → hybrid tự gọi P1
     "design_mode": (("api", "rules"), "api"),  # bộ luật cần nghệ nhân duyệt (Cổng 1) trước khi làm mặc định
+    "cutout_mode": (("on", "off"), "on"),  # worker chưa có model tách nền → tự bỏ qua
 }
 COST_MODE = "cost_mode"
 
@@ -51,6 +53,7 @@ def set_cost_mode(db: Session, mode: str, *, by: str | None) -> str:
     return set_setting(db, COST_MODE, mode, by=by)
 
 
+CUTOUT_MODEL_KEY = "bonsai:worker:cutout_model"  # worker ghi tên model tách nền ("" nếu không có)
 SEG_MODEL_KEY = "bonsai:worker:seg_model"  # worker ghi khi khởi động / mỗi phiên A (bonsai_worker.celery_app)
 
 
@@ -65,3 +68,17 @@ def seg_model_ready() -> bool:
         return r.get(SEG_MODEL_KEY) == b"1"
     except redis.RedisError:
         return False
+
+
+def cutout_model() -> str | None:
+    """Tên model tách nền worker đang có (None nếu không có / chưa báo)."""
+    import redis
+
+    from ..settings import get_settings
+
+    try:
+        r = redis.Redis.from_url(get_settings().redis_url, socket_timeout=0.5, socket_connect_timeout=0.5)
+        v = r.get(CUTOUT_MODEL_KEY)
+        return v.decode() if v else None
+    except redis.RedisError:
+        return None

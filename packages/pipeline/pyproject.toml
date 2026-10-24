@@ -17,8 +17,9 @@ anthropic = ["anthropic>=0.70"]
 gemini = ["google-genai>=1.30"]
 openai = ["openai>=1.100"]
 all = ["anthropic>=0.70", "google-genai>=1.30", "openai>=1.100"]
-cv = ["ultralytics>=8.3", "opencv-python-headless>=4.10"]  # YOLO-seg thân + SAM gán nhãn; nặng (torch), chỉ cài khi có trọng số
-dev = ["pytest>=8", "opencv-python-headless>=4.10"]
+cv = ["ultralytics>=8.3", "opencv-python-headless>=4.10"]
+cutout = ["onnxruntime>=1.18", "opencv-python-headless>=4.10"]  # tách nền trên máy (bonsai_pipeline/cutout.py)  # YOLO-seg thân + SAM gán nhãn; nặng (torch), chỉ cài khi có trọng số
+dev = ["pytest>=8", "opencv-python-headless>=4.10", "onnxruntime>=1.18"]
 
 [build-system]
 requires = ["setuptools>=69"]
