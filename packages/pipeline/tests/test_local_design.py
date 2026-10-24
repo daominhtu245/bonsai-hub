@@ -150,3 +150,18 @@ def test_photo_quality():
     small = io.BytesIO()
     Image.open(io.BytesIO(_photo())).resize((200, 250)).save(small, format="JPEG")
     assert "too_small" in check_photo(small.getvalue()).issues
+
+
+def test_geometry_drafts_one_object_per_branch():
+    from bonsai_pipeline.labeling import geometry_drafts, mask_png, read_mask
+
+    objs = geometry_drafts(Analysis.model_validate(analysis()), (1000, 1500))
+    ids = [o.id for o in objs]
+    assert ids == ["trunk", "branch_b1", "branch_b2", "branch_b3", "branch_b4", "branch_b5", "root"]
+    trunk = objs[0].mask
+    assert trunk[1290, 500] and not trunk[100, 100]  # gốc thuộc thân, góc ảnh thì không
+    assert all(not (o.mask & trunk).any() for o in objs[1:])  # cành, rễ không chồng lên thân
+    back = read_mask(mask_png(trunk), (1000, 1500))
+    assert (back == trunk).all()
+    with pytest.raises(ValueError):
+        read_mask(mask_png(trunk), (100, 100))

@@ -1,4 +1,4 @@
-"""Gán nhãn mask thân / cành / rễ bằng SAM, dùng tọa độ P1 làm điểm gợi ý.
+"""Gán nhãn nháp thân / cành / rễ bằng SAM từ dòng lệnh (cách khác: /admin → Gán nhãn, chạy trong worker).
 
     python tools/seg/label_with_sam.py manifest.json out/masks --model sam2.1_b.pt
 
@@ -8,9 +8,9 @@ manifest.json (tạo bằng tools/seg/export_from_db.py, hoặc gõ tay):
     "branches": [{"id": "b1", "start_px": [x, y], "end_px": [x, y]}], "nebari": "good"}]
 
 Đầu ra theo từng ảnh (mỗi đối tượng một file — YOLO-seg cần từng cành là một thể riêng):
-  out/masks/<name>/trunk.png, branch_b1.png, branch_b2.png, …, root.png
+  out/masks/<name>/trunk.png, branch_b1.png, …, root.png
   out/masks/<name>/review.jpg   ảnh chồng màu để duyệt nhanh (thân xanh lá, cành vàng, rễ đỏ)
-LUÔN duyệt bằng mắt trước khi huấn luyện; xóa file mask sai hoặc sửa tay (vd. si/sanh có rễ khí → không tính là thân).
+LUÔN duyệt bằng mắt trước khi huấn luyện; xóa file mask sai hoặc sửa tay.
 Cần: pip install -e "packages/pipeline[cv]".
 """
 
@@ -23,28 +23,12 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from bonsai_pipeline.labeling import (  # noqa: F401 (tái xuất cho test / script cũ)
+    branch_prompt_points, mask_png, root_prompt_points, sam_drafts, trunk_prompt_points,
+)
+from bonsai_pipeline.schemas import Analysis
+
 COLORS = {"trunk": (46, 160, 67), "branch": (230, 180, 30), "root": (200, 50, 40)}
-
-
-def line_points(a, b, n: int = 5, lo: float = 0.05, hi: float = 0.9) -> list[list[float]]:
-    """Các điểm dương trải đều trên đoạn a → b (thân uốn / cành cong vẫn thường đi qua gần các điểm này)."""
-    (ax, ay), (bx, by) = a, b
-    return [[ax + (bx - ax) * t, ay + (by - ay) * t] for t in np.linspace(lo, hi, n)]
-
-
-def trunk_prompt_points(base, apex, n: int = 5) -> list[list[float]]:
-    return line_points(base, apex, n)
-
-
-def branch_prompt_points(start, end) -> list[list[float]]:
-    """Bỏ đoạn sát thân (dễ dính vào mask thân); không có điểm cuối thì chỉ dùng điểm gốc cành."""
-    return line_points(start, end, n=3, lo=0.25, hi=0.85) if end else [list(start)]
-
-
-def root_prompt_points(base, base_d: float) -> list[list[float]]:
-    """Hai bên gốc, sát mặt đất — nơi rễ nổi xòe ra."""
-    bx, by = base
-    return [[bx - 0.7 * base_d, by - 0.05 * base_d], [bx + 0.7 * base_d, by - 0.05 * base_d]]
 
 
 def overlay(image: Image.Image, masks: list[tuple[str, np.ndarray]]) -> Image.Image:
@@ -54,37 +38,29 @@ def overlay(image: Image.Image, masks: list[tuple[str, np.ndarray]]) -> Image.Im
     return Image.fromarray(arr.astype(np.uint8))
 
 
-def label_item(model, item: dict, out_dir: Path) -> list[str]:
-    def sam(points):
-        res = model(item["image"], points=[points], labels=[[1] * len(points)], verbose=False)[0]
-        return None if res.masks is None else res.masks.data[0].cpu().numpy() > 0.5
+def manifest_analysis(item: dict) -> Analysis:
+    """Dựng Analysis tối thiểu từ một dòng manifest (chỉ các trường SAM cần)."""
+    return Analysis.model_validate({
+        "image_quality": {"usable": True},
+        "species": {"guess": "other", "confidence": 0},
+        "trunk": {"base_point_px": item["base_point_px"], "apex_point_px": item["apex_point_px"],
+                  "height_px": max(1, round(abs(item["base_point_px"][1] - item["apex_point_px"][1]))),
+                  "base_diameter_px": item["base_diameter_px"], "taper": "uncertain", "movement": "uncertain"},
+        "nebari": {"quality": item.get("nebari") or "hidden", "spread_side": "unknown"},
+        "branches": [{"id": b["id"], "start_px": b["start_px"], "end_px": b.get("end_px"), "direction": "left",
+                      "thickness": "medium", "height_ratio": 0.5} for b in item.get("branches", [])],
+    })
 
+
+def label_item(model, item: dict, out_dir: Path) -> list[str]:
+    image = Image.open(item["image"]).convert("RGB")
+    objs = sam_drafts(model, image, manifest_analysis(item))
     target = out_dir / item["name"]
     target.mkdir(parents=True, exist_ok=True)
-    saved: list[tuple[str, np.ndarray]] = []
-    names: list[str] = []
-
-    def save(fname: str, cls: str, mask):
-        if mask is None or not mask.any():
-            return
-        Image.fromarray(mask.astype(np.uint8) * 255).save(target / f"{fname}.png")
-        saved.append((cls, mask))
-        names.append(fname)
-
-    trunk = sam(trunk_prompt_points(item["base_point_px"], item["apex_point_px"]))
-    save("trunk", "trunk", trunk)
-    for b in item.get("branches", []):
-        m = sam(branch_prompt_points(b["start_px"], b.get("end_px")))
-        if m is not None and trunk is not None:
-            m = m & ~trunk  # phần chồng lên thân thuộc về thân
-        save(f"branch_{b['id']}", "branch", m)
-    if item.get("nebari") not in (None, "hidden"):
-        m = sam(root_prompt_points(item["base_point_px"], item["base_diameter_px"]))
-        if m is not None and trunk is not None:
-            m = m & ~trunk
-        save("root", "root", m)
-    overlay(Image.open(item["image"]), saved).save(target / "review.jpg", quality=85)
-    return names
+    for o in objs:
+        (target / f"{o.id}.png").write_bytes(mask_png(o.mask))
+    overlay(image, [(o.cls, o.mask) for o in objs]).save(target / "review.jpg", quality=85)
+    return [o.id for o in objs]
 
 
 def main() -> None:

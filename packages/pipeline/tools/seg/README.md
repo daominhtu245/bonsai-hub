@@ -8,30 +8,25 @@ Không có trọng số → luôn dùng API (pipeline vẫn chạy).
 
 Lớp: `0 trunk` (thân chính đến ngọn), `1 branch` (mỗi cành một đối tượng), `2 root` (rễ nổi / nebari).
 
-## 1. Gom ảnh
-Cần ~300–500 ảnh phôi thật, đa dạng loài, góc chụp, nền. Hai nguồn:
-- Ảnh từ các phiên A đã chạy (chỉ người dùng đồng ý cho dùng ảnh huấn luyện):
-  ```bash
-  DATABASE_URL=... R2_...=... python packages/pipeline/tools/seg/export_from_db.py data/seg --limit 500
-  ```
-  manifest có sẵn điểm gốc/ngọn thân, điểm đầu/cuối từng cành do P1 đọc → làm điểm gợi ý cho SAM.
-- Ảnh tự chụp: chạy phiên A (chế độ API) cho từng ảnh để có tọa độ, hoặc tự viết manifest.json.
+## 1–2. Gom ảnh và gán nhãn ngay trong app — `/admin` → Gán nhãn
+- **Tải ảnh lên** (tối đa 200 ảnh/lần) hoặc **Lấy ảnh từ phiên đã chạy** (chỉ người dùng đồng ý cho dùng ảnh huấn luyện,
+  và cây của admin). Worker xóa EXIF, đọc ảnh bằng model chữ rẻ (~$0,002/ảnh, bước `L1` trong Chi phí) để lấy tọa độ
+  thân / cành / rễ, rồi tạo mask nháp: **SAM** nếu worker có (`WORKER_WITH_CV=true`, `SAM_WEIGHTS=/models/sam2.1_b.pt`),
+  không thì **hình học** (thô — dải thân, nét cành, vệt rễ).
+- Mở từng ảnh: chọn đối tượng → **Cọ / Tẩy / Khoanh tô / Khoanh xóa** (phím B, E, L, K; [ ] đổi cỡ; giữ H xem ảnh gốc),
+  bỏ chọn "Đúng" cho mask sai, **+ Cành** cho cành bị sót. **Duyệt xong** → sang ảnh tiếp. Ảnh không dùng được → **Bỏ ảnh**.
+- Lưu ý si/sanh có rễ khí — không tính vào thân; mỗi cành là một đối tượng riêng.
 
-## 2. Gán nhãn nháp bằng SAM, rồi duyệt
-```bash
-pip install -e "packages/pipeline[cv]"        # ultralytics + opencv (cần torch)
-python packages/pipeline/tools/seg/label_with_sam.py data/seg/manifest.json data/seg/masks
-```
-Mỗi ảnh ra thư mục `data/seg/masks/<tên>/`: `trunk.png`, `branch_b1.png`, …, `root.png` và `review.jpg`
-(thân xanh lá, cành vàng, rễ đỏ). **Mở review.jpg từng ảnh**: mask sai → xóa file đó hoặc sửa tay
-(CVAT / GIMP). Lưu ý si/sanh có rễ khí — không tính vào thân. Cành bị dính vào thân: SAM đã cắt phần chồng.
+Cách khác (không qua app): `tools/seg/export_from_db.py` → `tools/seg/label_with_sam.py` (dòng lệnh, cần SAM).
 
-## 3. Đổi sang nhãn YOLO, chia train/val
+## 3. Xuất và đổi sang nhãn YOLO, chia train/val
 ```bash
+# trong container api (có DATABASE_URL, R2_*), hoặc máy có cùng biến môi trường
+python packages/pipeline/tools/seg/export_labels.py data/seg     # chỉ ảnh "Đã duyệt", đối tượng "Đúng"
 python -c "from pathlib import Path; from bonsai_pipeline.seg_dataset import build_dataset; \
 print(build_dataset(Path('data/seg/images'), Path('data/seg/masks'), Path('data/seg/yolo')))"
 ```
-(Vẫn đọc được dạng cũ `masks/<tên>.png` = chỉ thân.)
+Ảnh từ phiên người dùng chỉ được xuất khi người đó **vẫn** đồng ý và chưa xóa tài khoản / cây.
 
 ## 4. Huấn luyện
 ```bash

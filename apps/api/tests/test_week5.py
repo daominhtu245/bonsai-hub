@@ -2,6 +2,7 @@ import io
 import uuid
 from decimal import Decimal
 
+import numpy as np
 import pytest
 from PIL import Image
 from sqlalchemy import select
@@ -22,6 +23,7 @@ def bucket(monkeypatch):
     monkeypatch.setattr("bonsai_api.storage.get_bytes", lambda k: store[k])
     monkeypatch.setattr("bonsai_api.storage.put_bytes", lambda k, d, ct: store.__setitem__(k, d))
     monkeypatch.setattr("bonsai_api.storage.head", lambda k: {"k": k} if k in store else None)
+    monkeypatch.setattr("bonsai_api.storage.delete", lambda k: store.pop(k, None))
     return store
 
 
@@ -252,3 +254,85 @@ def test_admin_ai_settings(db, client, login, monkeypatch):
     assert r.json() == defaults | {"cost_mode": "economy", "design_mode": "rules", "analysis_mode": "api"}
     assert client.put("/api/v1/admin/settings", headers=admin, json={"cost_mode": "full"}).status_code == 422
     assert client.put("/api/v1/admin/settings", headers=admin, json={"design_mode": "magic"}).status_code == 422
+
+
+def _png(w, h, box=None):
+    m = np.zeros((h, w), np.uint8)
+    if box:
+        x0, y0, x1, y1 = box
+        m[y0:y1, x0:x1] = 255
+    buf = io.BytesIO()
+    Image.fromarray(m).save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def test_admin_labeling_flow(db, client, login, monkeypatch, bucket):
+    from bonsai_api.db.models import SegLabel, SegLabelStatus
+
+    sent = []
+    monkeypatch.setattr("bonsai_api.routers.labels.enqueue", lambda task, *a: sent.append((task, a)) or True)
+    admin = _admin(client, login, monkeypatch)
+    me = client.get("/api/v1/me", headers=admin).json()
+    # chỉ nhận ảnh trong thư mục tải lên của chính admin
+    assert client.post("/api/v1/admin/labels", headers=admin, json={"keys": ["uploads/other/x.jpg"]}).status_code == 400
+    r = client.post("/api/v1/admin/labels", headers=admin, json={"keys": [f"uploads/{me['id']}/a.jpg"]})
+    assert r.status_code == 201 and r.json() == {"created": 1} and sent[0][0] == "bonsai_worker.tasks.labeling.draft"
+
+    label = db.query(SegLabel).one()
+    assert client.get(f"/api/v1/admin/labels/{label.id}", headers=admin).status_code == 409  # chưa chuẩn hóa
+    # giả lập worker đã tạo nháp
+    label.width, label.height, label.status = 40, 30, SegLabelStatus.draft
+    label.image_key = f"labels/{label.id}/image.webp"
+    bucket[label.image_key] = b"img"
+    label.objects = [{"id": "trunk", "cls": "trunk", "key": f"labels/{label.id}/trunk.png", "source": "geometry", "accepted": True},
+                     {"id": "branch_b1", "cls": "branch", "key": f"labels/{label.id}/branch_b1.png", "source": "geometry", "accepted": True}]
+    bucket[f"labels/{label.id}/trunk.png"] = _png(40, 30, (15, 5, 25, 30))
+    bucket[f"labels/{label.id}/branch_b1.png"] = _png(40, 30, (25, 10, 38, 13))
+    db.commit()
+
+    lst = client.get("/api/v1/admin/labels", headers=admin).json()
+    assert lst["counts"]["draft"] == 1 and lst["items"][0]["objects"] == 2
+    d = client.get(f"/api/v1/admin/labels/{label.id}", headers=admin).json()
+    assert [o["id"] for o in d["objects"]] == ["trunk", "branch_b1"] and d["width"] == 40
+    m = client.get(f"/api/v1/admin/labels/{label.id}/objects/trunk/mask", headers=admin)
+    assert m.status_code == 200 and m.headers["content-type"] == "image/png"
+
+    # sửa mask, thêm cành bị sót, sai kích thước bị từ chối
+    url = f"/api/v1/admin/labels/{label.id}/objects"
+    assert client.put(f"{url}/branch_m1/mask", headers={**admin, "Content-Type": "image/png"}, content=_png(40, 30, (2, 8, 14, 11))).status_code == 400  # thiếu cls
+    r = client.put(f"{url}/branch_m1/mask?cls=branch", headers={**admin, "Content-Type": "image/png"}, content=_png(40, 30, (2, 8, 14, 11)))
+    assert r.status_code == 200 and r.json()["source"] == "manual"
+    assert client.put(f"{url}/trunk/mask", headers={**admin, "Content-Type": "image/png"}, content=_png(10, 10)).status_code == 400
+    assert client.put(f"{url}/../mask", headers={**admin, "Content-Type": "image/png"}, content=_png(40, 30)).status_code in (400, 404)
+
+    # đánh dấu sai cành b1, xóa không còn; duyệt
+    r = client.put(f"/api/v1/admin/labels/{label.id}", headers=admin, json={
+        "status": "reviewed",
+        "objects": [{"id": "trunk", "cls": "trunk", "accepted": True}, {"id": "branch_m1", "cls": "branch", "accepted": True}],
+    })
+    assert r.status_code == 200 and r.json()["status"] == "reviewed"
+    db.refresh(label)
+    assert [o["id"] for o in label.objects] == ["trunk", "branch_m1"] and f"labels/{label.id}/branch_b1.png" not in bucket
+    assert label.reviewed_by == "boss@example.com"
+    # không có thân đúng → không cho duyệt
+    r = client.put(f"/api/v1/admin/labels/{label.id}", headers=admin, json={
+        "status": "reviewed", "objects": [{"id": "trunk", "cls": "trunk", "accepted": False}, {"id": "branch_m1", "cls": "branch", "accepted": True}]})
+    assert r.status_code == 400
+
+
+def test_labels_from_jobs_respects_consent(db, client, login, monkeypatch, bucket):
+    from bonsai_api.db.models import SegLabel
+
+    monkeypatch.setattr("bonsai_api.routers.labels.enqueue", lambda *a: True)
+    user_headers, job = _done_job(db, client, login, bucket)
+    admin = _admin(client, login, monkeypatch)
+    assert client.get("/api/v1/admin/labels", headers=admin).json()["eligible_jobs"] == 0  # chưa đồng ý
+    owner = db.get(User, job.user_id)
+    owner.consent_training = True
+    db.commit()
+    assert client.get("/api/v1/admin/labels", headers=admin).json()["eligible_jobs"] == 1
+    r = client.post("/api/v1/admin/labels/from-jobs", headers=admin, json={"limit": 10})
+    assert r.json() == {"created": 1}
+    lb = db.query(SegLabel).one()
+    assert lb.source == "job" and lb.analysis == job.analysis
+    assert client.get("/api/v1/admin/labels", headers=admin).json()["eligible_jobs"] == 0  # không lấy trùng

@@ -18,6 +18,7 @@ const Garden = lazy(() => import('@/pages/Garden'));
 const Buy = lazy(() => import('@/pages/Buy'));
 const Account = lazy(() => import('@/pages/Account'));
 const Admin = lazy(() => import('@/pages/Admin'));
+const LabelEditor = lazy(() => import('@/pages/LabelEditor'));
 const Terms = lazy(() => import('@/pages/Terms'));
 
 const guard = (el: JSX.Element) => <RequireAuth>{el}</RequireAuth>;
@@ -43,6 +44,7 @@ export default function App() {
               <Route path="/chia-se/:jobId" element={guard(<Share />)} />
               <Route path="/tai-khoan" element={guard(<Account />)} />
               <Route path="/admin" element={guard(<Admin />)} />
+              <Route path="/admin/gan-nhan/:labelId" element={guard(<LabelEditor />)} />
               <Route path="/dieu-khoan" element={<Terms />} />
               <Route path="*" element={<ComingSoon title="Không tìm thấy trang" />} />
             </Routes>

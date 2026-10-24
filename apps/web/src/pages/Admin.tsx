@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { Button, FilterChip, Notice, Skeleton, StateView, type ViewState } from '@/components/ui';
 import { adminApi, type AiSettings, type CostMode, type Costs, type FailedJob, type FeedbackRow, type PromptRow, type SpeciesRefs } from '@/lib/admin';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { labelsApi, type LabelList, type LabelStatus } from '@/lib/labels';
 
 const usd = (n: number) => `$${n.toFixed(n < 1 ? 4 : 2)}`;
 
@@ -271,6 +272,108 @@ function AiModeTab() {
   );
 }
 
+const LABEL_STATUS: Array<[LabelStatus, string]> = [
+  ['draft', 'Chờ duyệt'], ['reviewed', 'Đã duyệt'], ['pending', 'Đang tạo nháp'], ['rejected', 'Đã bỏ'], ['failed', 'Lỗi'],
+];
+const LABEL_TARGET = 300;
+
+/** Bộ dữ liệu YOLO-seg 3 lớp: tải ảnh lên / lấy ảnh từ phiên đã chạy → worker tạo mask nháp → duyệt ở trang sửa. */
+function LabelsTab() {
+  const [filter, setFilter] = useState<LabelStatus | undefined>('draft');
+  const [state, reload] = useLoad<LabelList>(() => labelsApi.list(filter), [filter]);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
+  const pending = state.status === 'ready' ? state.data.counts.pending : 0;
+
+  useEffect(() => {
+    if (!pending) return;
+    const t = window.setInterval(reload, 4000);
+    return () => window.clearInterval(t);
+  }, [pending]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const run = async (label: string, fn: () => Promise<{ created: number }>) => {
+    setBusy(label);
+    setMsg(null);
+    try {
+      const r = await fn();
+      setMsg({ tone: 'success', text: `Đã thêm ${r.created} ảnh, đang tạo mask nháp.` });
+      setFilter(undefined);
+      reload();
+    } catch (e) {
+      setMsg({ tone: 'danger', text: (e as ApiError).message });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4 text-caption">
+      <StateView state={state} skeleton={<Skeleton className="h-64 rounded-card" />} empty={null}>
+        {(d) => (
+          <>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-baseline justify-between">
+                <span className="font-semibold">Đã duyệt</span>
+                <span className="tabular text-ink-muted">{d.counts.reviewed} / {LABEL_TARGET} ảnh</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuemin={0} aria-valuemax={LABEL_TARGET} aria-valuenow={d.counts.reviewed}>
+                <div className="h-full bg-primary" style={{ width: `${Math.min(100, (d.counts.reviewed / LABEL_TARGET) * 100)}%` }} />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <label className="inline-flex min-h-touch cursor-pointer items-center gap-2 rounded-btn bg-primary px-4 font-semibold text-primary-on">
+                {busy === 'upload' ? 'Đang tải…' : 'Tải ảnh lên'}
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/heic" multiple hidden disabled={busy !== null}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []).slice(0, 200);
+                    e.target.value = '';
+                    if (files.length) run('upload', () => labelsApi.upload(files));
+                  }} />
+              </label>
+              {d.eligible_jobs > 0 ? (
+                <Button variant="secondary" size="touch" block={false} loading={busy === 'jobs'} disabled={busy !== null}
+                  onClick={() => run('jobs', () => labelsApi.fromJobs(Math.min(d.eligible_jobs, 200)))}>
+                  Lấy {Math.min(d.eligible_jobs, 200)} ảnh từ phiên đã chạy
+                </Button>
+              ) : null}
+            </div>
+            {msg ? <Notice tone={msg.tone}>{msg.text}</Notice> : null}
+
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Lọc">
+              <FilterChip selected={filter === undefined} onClick={() => setFilter(undefined)}>Tất cả</FilterChip>
+              {LABEL_STATUS.map(([k, label]) => (
+                <FilterChip key={k} selected={filter === k} onClick={() => setFilter(k)}>{label} · {d.counts[k]}</FilterChip>
+              ))}
+            </div>
+
+            {d.items.length === 0 ? (
+              <p className="m-0 text-ink-muted">Chưa có ảnh.</p>
+            ) : (
+              <ul className="m-0 grid list-none grid-cols-3 gap-2 p-0 sm:grid-cols-4 lg:grid-cols-6">
+                {d.items.map((it) => {
+                  const label = LABEL_STATUS.find(([k]) => k === it.status)?.[1];
+                  const body = (
+                    <>
+                      {it.thumb_url ? <img src={it.thumb_url} alt="" className="aspect-square w-full rounded-img object-cover" /> : <Skeleton className="aspect-square w-full rounded-img" />}
+                      <span className="mt-1 block truncate text-label text-ink-muted">{label}{it.objects ? ` · ${it.accepted}/${it.objects}` : ''}</span>
+                    </>
+                  );
+                  return (
+                    <li key={it.id} title={it.error ?? undefined}>
+                      {it.status === 'pending' ? <div>{body}</div> : <Link to={`/admin/gan-nhan/${it.id}`} className="block no-underline">{body}</Link>}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </>
+        )}
+      </StateView>
+    </div>
+  );
+}
+
 function SpeciesTab() {
   const [state, reload] = useLoad<SpeciesRefs[]>(adminApi.species);
   const [busy, setBusy] = useState<string | null>(null);
@@ -328,22 +431,26 @@ function SpeciesTab() {
   );
 }
 
+type Tab = 'costs' | 'ai' | 'labels' | 'prompts' | 'failed' | 'feedback' | 'gift' | 'species';
+
 /** Trang quản trị: chi phí (pipeline_steps), prompt (phiên bản trong DB), job lỗi, phản hồi, tặng lượt, ảnh tham chiếu loài. */
 export default function Admin() {
   const { user } = useAuth();
-  const [tab, setTab] = useState<'costs' | 'ai' | 'prompts' | 'failed' | 'feedback' | 'gift' | 'species'>('costs');
+  const [params, setParams] = useSearchParams();
+  const tab = (params.get('tab') as Tab | null) ?? 'costs';
+  const setTab = (t: Tab) => setParams({ tab: t }, { replace: true });
   if (user.status === 'ready' && user.data.role !== 'admin') return <Navigate to="/" replace />;
   return (
     <div className="mx-auto flex min-h-dvh max-w-wide flex-col">
       <BackHeader to="/tai-khoan" title="Quản trị" />
       <div className="h-3" />
       <div className="flex flex-wrap gap-2 px-gutter pb-3" role="group" aria-label="Mục">
-        {([['costs', 'Chi phí'], ['ai', 'Chế độ AI'], ['prompts', 'Prompt'], ['failed', 'Job lỗi'], ['feedback', 'Phản hồi'], ['gift', 'Tặng lượt'], ['species', 'Ảnh loài']] as const).map(([k, label]) => (
+        {([['costs', 'Chi phí'], ['ai', 'Chế độ AI'], ['labels', 'Gán nhãn'], ['prompts', 'Prompt'], ['failed', 'Job lỗi'], ['feedback', 'Phản hồi'], ['gift', 'Tặng lượt'], ['species', 'Ảnh loài']] as const).map(([k, label]) => (
           <FilterChip key={k} selected={tab === k} onClick={() => setTab(k)}>{label}</FilterChip>
         ))}
       </div>
       <main className="px-gutter pb-8">
-        {{ costs: <CostsTab />, ai: <AiModeTab />, prompts: <PromptsTab />, failed: <FailedTab />, feedback: <FeedbackTab />, gift: <GiftTab />, species: <SpeciesTab /> }[tab]}
+        {{ costs: <CostsTab />, ai: <AiModeTab />, labels: <LabelsTab />, prompts: <PromptsTab />, failed: <FailedTab />, feedback: <FeedbackTab />, gift: <GiftTab />, species: <SpeciesTab /> }[tab]}
       </main>
     </div>
   );
