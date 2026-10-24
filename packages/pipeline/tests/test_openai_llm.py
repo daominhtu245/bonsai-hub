@@ -43,3 +43,22 @@ def test_non_reasoning_model_omits_effort():
     p, comp = _provider("gpt-4.1")
     p.complete(system="s", messages=[{"role": "user", "content": "x"}], images=[], max_tokens=10)
     assert "reasoning_effort" not in comp.kwargs
+
+
+def test_image_edit_sends_explicit_mimetype():
+    import base64
+
+    from bonsai_pipeline.adapters.providers.openai_image import OpenAIImage
+
+    sent = {}
+
+    def edit(**kwargs):
+        sent.update(kwargs)
+        return SimpleNamespace(data=[SimpleNamespace(b64_json=base64.b64encode(b"png").decode())],
+                               usage=SimpleNamespace(input_tokens=10, output_tokens=200))
+
+    p = OpenAIImage(model="gpt-image-2", api_key="test")
+    p._client = SimpleNamespace(images=SimpleNamespace(edit=edit))
+    resp = p.edit(prompt="x", images=[ImageInput(b"abc", "image/webp")])
+    assert sent["image"] == [("input_0.webp", b"abc", "image/webp")] and sent["quality"] == "medium"
+    assert resp.usage.tokens_out == 200 and resp.usage.images_out == 1

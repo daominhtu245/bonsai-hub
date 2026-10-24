@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import base64
-import io
 
 import openai
 
@@ -19,11 +18,10 @@ class OpenAIImage:
         self._client = openai.OpenAI(api_key=api_key) if api_key else openai.OpenAI()
 
     def edit(self, *, prompt: str, images: list[ImageInput], n: int = 1) -> ImageResponse:
-        files = []
-        for i, img in enumerate(images):
-            f = io.BytesIO(img.data)
-            f.name = f"input_{i}.{_EXT.get(img.media_type, 'png')}"
-            files.append(f)
+        # (tên, dữ liệu, mimetype): SDK không tự đoán mimetype từ BytesIO → API báo application/octet-stream.
+        files = [
+            (f"input_{i}.{_EXT.get(img.media_type, 'png')}", img.data, img.media_type) for i, img in enumerate(images)
+        ]
         try:
             resp = self._client.images.edit(model=self.model, image=files, prompt=prompt, n=n, quality=self.quality)
         except openai.RateLimitError as e:
