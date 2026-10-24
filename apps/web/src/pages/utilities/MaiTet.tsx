@@ -18,10 +18,15 @@ export default function MaiTetPage() {
   const [error, setError] = useState<string | null>(null);
   useEffect(() => { toolsApi.provinces().then(setProvinces).catch(() => null); }, []);
   useEffect(() => { if (me?.province && !province) setProvince(me.province); }, [me?.province]); // eslint-disable-line react-hooks/exhaustive-deps
+  const authSettled = user.status !== 'loading';
+  const waitProfile = Boolean(me?.province) && !province; // tỉnh trong hồ sơ sắp được chọn → khỏi tải 2 lần
   useEffect(() => {
+    if (!authSettled || waitProfile) return;
+    let live = true;
     setPlan(null);
-    toolsApi.maiTet(province || null).then(setPlan).catch((e: ApiError) => setError(e.message));
-  }, [province]);
+    toolsApi.maiTet(province || null).then((p) => live && setPlan(p)).catch((e: ApiError) => live && setError(e.message));
+    return () => { live = false; };
+  }, [province, authSettled, waitProfile]);
   const download = () => {
     if (!plan) return;
     const ics = icsFor('Mai kịp Tết', plan.steps.map((s) => ({ date: s.when, title: `Mai: ${s.title_vi}`, detail: s.detail_vi })));

@@ -16,6 +16,9 @@ const Choose = lazy(() => import('@/pages/Choose'));
 const Studio = lazy(() => import('@/pages/Studio'));
 const Result = lazy(() => import('@/pages/Result'));
 const ResultPrint = lazy(() => import('@/pages/ResultPrint'));
+const RoomPlace = lazy(() => import('@/pages/RoomPlace'));
+const TechDrawing = lazy(() => import('@/pages/TechDrawing'));
+const Worksheet = lazy(() => import('@/pages/Worksheet'));
 const CreditHistory = lazy(() => import('@/pages/CreditHistory'));
 const Share = lazy(() => import('@/pages/Share'));
 const Garden = lazy(() => import('@/pages/Garden'));
@@ -72,6 +75,9 @@ export default function App() {
               <Route path="/tu-thiet-ke/:jobId" element={guard(<Studio />)} />
               <Route path="/ket-qua/:jobId" element={guard(<Result />)} />
               <Route path="/ket-qua/:jobId/in" element={guard(<ResultPrint />)} />
+              <Route path="/ket-qua/:jobId/dat-vao-phong" element={guard(<RoomPlace />)} />
+              <Route path="/ket-qua/:jobId/ban-ve-ky-thuat" element={guard(<TechDrawing />)} />
+              <Route path="/ket-qua/:jobId/phieu-tap-ve" element={guard(<Worksheet />)} />
               <Route path="/vuon" element={guard(<Garden />)} />
               <Route path="/tien-ich" element={<UtilitiesHub />} />
               <Route path="/tien-ich/mai-tet" element={<MaiTet />} />

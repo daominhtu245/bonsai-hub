@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, Share2, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Ruler, Share2, Sofa, SquarePen, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { NotifyPrompt } from '@/components/NotifyPrompt';
@@ -7,7 +7,7 @@ import { SaveAndRemind } from '@/components/SaveAndRemind';
 import { TreeDiary } from '@/components/TreeDiary';
 import { TreeTools } from '@/components/TreeTools';
 import {
-  Button, ButtonLink, GuideCard, Notice, Skeleton, StageTimeline, StepList, StyleName, type StageGuide, type StepState,
+  Button, ButtonLink, GuideCard, Notice, Segmented, Skeleton, StageTimeline, StepList, StyleName, type StageGuide, type StepState,
 } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { FEEDBACK_REASONS } from '@/lib/ruleLabels';
@@ -15,6 +15,9 @@ import { useAuth } from '@/lib/auth';
 import { cx } from '@/lib/cx';
 import { accountApi } from '@/lib/account';
 import { jobsApi, resultApi, watchJob, type Job, type ResultView, type StageView } from '@/lib/jobs';
+import { mediaApi, type ArtStyle } from '@/lib/media';
+
+type View = 'photo' | ArtStyle;
 
 const PHASE_B_STEPS: Array<[string, string]> = [
   ['render', 'Vẽ 3 phương án ảnh cây sau khi hoàn thiện'],
@@ -60,16 +63,16 @@ function toGuide(s: StageView): StageGuide | null {
   };
 }
 
-function StageImage({ result, stage }: { result: ResultView; stage: StageView }) {
+function StageImage({ result, stage, art }: { result: ResultView; stage: StageView; art?: string }) {
   const photo = result.front_photo;
   const ratio = photo?.width && photo?.height ? `${photo.width} / ${photo.height}` : '3 / 4';
-  const sketch = stage.fallback_sketch || !stage.image_url;
-  const src = sketch ? photo?.url : stage.image_url;
+  const sketch = !art && (stage.fallback_sketch || !stage.image_url);
+  const src = art ?? (sketch ? photo?.url : stage.image_url);
   return (
     <div className="relative mx-gutter mt-4 overflow-hidden rounded-card border border-line bg-photo shadow-card" style={{ aspectRatio: ratio }}>
       {src ? (
         <img
-          key={stage.code}
+          key={`${stage.code}-${src}`}
           src={src}
           alt={stage.code === 'S0' ? 'Phôi hiện tại' : `Minh họa giai đoạn ${stage.code}: ${stage.name_vi}`}
           className="stage-fade absolute inset-0 h-full w-full"
@@ -175,10 +178,27 @@ function Done({ result, onToggle }: { result: ResultView; onToggle: (code: strin
   const guide = toGuide(stage);
   const tabs = result.stages.map((s) => ({ code: s.code, short: s.short_vi }));
   const r = result.report;
+  const [view, setView] = useState<View>('photo');
+  const [arts, setArts] = useState<Partial<Record<ArtStyle, Record<string, string>>>>({});
+  const [artError, setArtError] = useState<string | null>(null);
+  const pickView = (v: View) => {
+    setView(v);
+    setArtError(null);
+    if (v !== 'photo' && !arts[v]) mediaApi.art(result.job_id, v).then((m) => setArts((a) => ({ ...a, [v]: m }))).catch((e: ApiError) => setArtError(e.message));
+  };
+  const artMap = view === 'photo' ? undefined : arts[view];
 
   return (
     <>
-      <StageImage result={result} stage={stage} />
+      <div className="mx-gutter mt-3">
+        <Segmented<View> label="Kiểu xem" value={view} onChange={pickView} options={[['photo', 'Ảnh'], ['pencil', 'Bút chì'], ['ink', 'Thủy mặc']]} />
+      </div>
+      {view !== 'photo' && !artMap && !artError ? (
+        <Skeleton className="mx-gutter mt-4 aspect-[3/4] rounded-card" />
+      ) : (
+        <StageImage result={result} stage={stage} art={artMap?.[stage.code]} />
+      )}
+      {artError ? <p className="mx-gutter mt-2 text-label text-danger">{artError}</p> : null}
       {stage.fallback_sketch ? <p className="mx-gutter mt-2 text-label text-ink-subtle">Giai đoạn này hiển thị bản vẽ thay ảnh.</p> : null}
       <div className="mx-gutter mt-4">
         <StageTimeline stages={tabs} current={index} onSelect={setIndex} />
@@ -219,6 +239,18 @@ function Done({ result, onToggle }: { result: ResultView; onToggle: (code: strin
           Chia sẻ ảnh
         </ButtonLink>
         <ButtonLink to={`/chon/${result.job_id}`} variant="secondary">Bản vẽ cắt tỉa</ButtonLink>
+        <ButtonLink to={`/ket-qua/${result.job_id}/ban-ve-ky-thuat`} variant="secondary">
+          <Ruler size={18} strokeWidth={1.75} aria-hidden="true" />
+          Bản vẽ kỹ thuật
+        </ButtonLink>
+        <ButtonLink to={`/ket-qua/${result.job_id}/dat-vao-phong`} variant="secondary">
+          <Sofa size={18} strokeWidth={1.75} aria-hidden="true" />
+          Đặt vào phòng
+        </ButtonLink>
+        <ButtonLink to={`/ket-qua/${result.job_id}/phieu-tap-ve`} variant="secondary" className="col-span-2">
+          <SquarePen size={18} strokeWidth={1.75} aria-hidden="true" />
+          Phiếu tập vẽ
+        </ButtonLink>
       </section>
 
       <Feedback jobId={result.job_id} initial={result.my_rating} />

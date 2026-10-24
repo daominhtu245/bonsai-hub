@@ -17,13 +17,15 @@ from samples import analysis, option  # noqa: E402
 
 def _done_job(db, client, login, bucket):  # noqa: F811
     """Phiên đã xong với phân tích + phương án mẫu thật (phôi si 1000×1500, cao 60 cm)."""
-    from bonsai_api.db.models import DesignJob, DesignOption, Tree
+    from bonsai_api.db.models import DesignJob, DesignOption, Tree, TreePhoto
 
     headers, job = _done_stub(db, client, login, bucket)
     job = db.get(DesignJob, job.id)
     job.analysis = analysis()
     db.get(DesignOption, job.chosen_option_id).design = option()
     db.get(Tree, job.tree_id).real_height_cm = 60
+    photo = db.get(TreePhoto, job.front_photo_id)
+    photo.width, photo.height = 1000, 1500
     db.commit()
     return headers, job
 
@@ -42,6 +44,9 @@ def test_tools_for_my_design(db, client, login, bucket):  # noqa: F811
         db.add(Listing(user_id=owner.id, code=f"T{i}", title="Phôi si", species_key="si", price_vnd=2_000_000 + i * 100_000, trunk_cm=8))
     db.commit()
     assert client.get(f"/api/v1/tools/price/{job.id}", headers=headers).json()["basis"] == "listings"
+    d = client.get(f"/api/v1/tools/drawing/{job.id}", headers=headers).json()
+    assert d["svg"].startswith("<svg") and 'data-layer="tech"' in d["svg"] and d["photo_url"]
+    assert [r["no"] for r in d["rows"]] == list(range(1, len(d["rows"]) + 1)) and {r["action"] for r in d["rows"]} >= {"cut", "wire"}
     other, _ = login("other@example.com")
     assert client.get(f"/api/v1/tools/wire/{job.id}", headers=other).status_code == 404  # không xem phiên người khác
 

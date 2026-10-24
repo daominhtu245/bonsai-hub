@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ChevronRight, Download, Facebook, Link2, Share2 } from 'lucide-react';
+import { ChevronRight, Clapperboard, Download, Facebook, Link2, Share2 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { Notice, Segmented, Skeleton } from '@/components/ui';
@@ -7,6 +7,7 @@ import { accountApi, downloadImage, type Share as ShareData } from '@/lib/accoun
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { cx } from '@/lib/cx';
+import { mediaApi, pollMedia, type MediaState } from '@/lib/media';
 
 type Fmt = '9x16' | '1x1';
 
@@ -25,6 +26,8 @@ export default function Share() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [video, setVideo] = useState<MediaState | null>(null);
+  const [videoPoll, setVideoPoll] = useState(false);
 
   const me = user.status === 'ready' ? user.data : null;
   const isNursery = me?.role === 'nursery' || me?.role === 'admin';
@@ -41,6 +44,35 @@ export default function Share() {
     const t = window.setTimeout(() => setToast(null), 3500);
     return () => window.clearTimeout(t);
   }, [toast]);
+
+  useEffect(() => {
+    mediaApi.video(jobId).then((v) => { setVideo(v); if (v.state === 'running') setVideoPoll(true); }).catch(() => setVideo(null));
+  }, [jobId]);
+
+  useEffect(() => {
+    if (!videoPoll) return;
+    return pollMedia(() => mediaApi.makeVideo(jobId), () => mediaApi.video(jobId), (v) => {
+      setVideo(v);
+      if (v.state !== 'running') setVideoPoll(false);
+    }, (e) => { setToast(e.message); setVideoPoll(false); });
+  }, [jobId, videoPoll]);
+
+  const videoName = video?.content_type === 'video/mp4' ? 'bonsai-tua-nhanh.mp4' : 'bonsai-tua-nhanh.webp';
+  const videoAction = () => {
+    if (video?.state !== 'done' || !video.url) return setVideoPoll(true);
+    const url = video.url;
+    return run(async () => {
+      const blob = await (await fetch(url)).blob();
+      const file = new File([blob], videoName, { type: video.content_type ?? blob.type });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file] });
+        return;
+      }
+      await downloadImage(url, videoName);
+      setToast('Đã lưu video.');
+    });
+  };
+  const videoHint = videoPoll || video?.state === 'running' ? 'Đang dựng video…' : video?.state === 'done' ? 'Sẵn sàng · TikTok, Reels, Zalo' : video?.state === 'failed' ? 'Chưa dựng được, bấm để thử lại' : 'Phôi → dáng hoàn chỉnh, 10 giây';
 
   const filename = `bonsai-${fmt}.jpg`;
   const run = async (fn: () => Promise<void>) => {
@@ -118,6 +150,16 @@ export default function Share() {
             </li>
           ))}
         </ul>
+
+        <button type="button" disabled={busy || videoPoll} onClick={videoAction}
+          className="flex min-h-[56px] w-full items-center gap-3 rounded-card border border-line bg-surface px-4 text-left shadow-card hover:bg-surface-2 disabled:opacity-60">
+          <Clapperboard size={18} strokeWidth={1.75} className="flex-none text-ink-muted" aria-hidden="true" />
+          <span className="flex-1">
+            <span className="block text-caption font-medium">{video?.state === 'done' ? 'Chia sẻ video tua nhanh' : 'Tạo video tua nhanh'}</span>
+            <span className="block text-label text-ink-subtle" aria-live="polite">{videoHint}</span>
+          </span>
+          <ChevronRight size={16} className="text-ink-subtle" aria-hidden="true" />
+        </button>
       </div>
 
       {toast ? <div className="fixed inset-x-gutter bottom-6 mx-auto max-w-content shadow-raised"><Notice tone="success">{toast}</Notice></div> : null}

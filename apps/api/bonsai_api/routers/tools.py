@@ -15,8 +15,10 @@ from bonsai_pipeline.care_tools import (
     RESCUE_QUESTIONS, graft_suggestions, mai_plan, menh, price_estimate, rescue_plan, wire_plan,
 )
 from bonsai_pipeline.schemas import Analysis, DesignOption
+from bonsai_pipeline.tech_drawing import technical_sheet
 
-from ..db.models import DesignJob, DesignOption as OptionRow, Listing, Tree
+from .. import storage
+from ..db.models import DesignJob, DesignOption as OptionRow, Listing, Tree, TreePhoto
 from ..security import DB, CurrentUser
 from ..services.provinces import PROVINCES, region_of
 
@@ -40,6 +42,18 @@ def _design(db, job_id: uuid.UUID, user, option_id: uuid.UUID | None) -> tuple[D
 def wire(job_id: uuid.UUID, db: DB, user: CurrentUser, option_id: uuid.UUID | None = None):
     _, a, o, tree = _design(db, job_id, user, option_id)
     return asdict(wire_plan(a, o, tree.real_height_cm))
+
+
+@router.get("/drawing/{job_id}")
+def drawing(job_id: uuid.UUID, db: DB, user: CurrentUser, option_id: uuid.UUID | None = None):
+    """Bản vẽ kỹ thuật in ra vườn (A4): SVG đè lên ảnh phôi + bảng việc theo số."""
+    job, a, o, tree = _design(db, job_id, user, option_id)
+    photo = db.get(TreePhoto, job.front_photo_id) if job.front_photo_id else None
+    if photo is None or not photo.width or not photo.height:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Chưa có ảnh phôi.")
+    svg, rows = technical_sheet(a, o, (photo.width, photo.height), tree.real_height_cm)
+    return {"svg": svg, "rows": [asdict(r) for r in rows], "width": photo.width, "height": photo.height,
+            "photo_url": storage.presign_get(photo.storage_key)}
 
 
 @router.get("/graft/{job_id}")

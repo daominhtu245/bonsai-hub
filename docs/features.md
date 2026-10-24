@@ -22,6 +22,11 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | **Nhật ký cây** (ảnh tiến độ theo ngày) | Kết quả → Nhật ký cây | Ảnh được xóa vị trí GPS, không dùng để phân tích lại |
 | **Tự nhắc khi đến giai đoạn mới** | Thông báo điện thoại (8 giờ sáng) | Cần bật thông báo ở Tài khoản; mỗi mốc nhắc 1 lần |
 | Chia sẻ ảnh 9:16 / 1:1, link công khai | Kết quả → Chia sẻ ảnh | Nhà vườn có logo + SĐT |
+| **Xem kiểu tranh**: Ảnh / Bút chì / Thủy mặc cho cả 5 giai đoạn | Kết quả (nút trên ảnh) | Dựng trên máy chủ, không tốn lượt, lưu lại cho lần sau |
+| **Video tua nhanh** phôi → dáng hoàn chỉnh (720×1280, ~10 giây, MP4) | Chia sẻ → Tạo video tua nhanh | Worker dựng bằng ffmpeg, không tốn API; không có ffmpeg thì ra ảnh động WebP |
+| **Bản vẽ kỹ thuật** (đánh số cành, chỗ quấn dây, mũi tên uốn, bảng cỡ dây + ô đánh dấu) | Kết quả → Bản vẽ kỹ thuật | In / Lưu PDF, mang ra vườn |
+| **Phiếu tập vẽ** (phác họa phôi mờ trên lưới ô) | Kết quả → Phiếu tập vẽ | In ra vẽ tay. Đọc nét vẽ tay bằng AI: chờ API |
+| **Đặt vào phòng / xem qua camera**: cây tương lai đã tách nền đặt lên ảnh phòng, sân hoặc camera trực tiếp; kéo, chụm hai ngón đổi cỡ; đế đôn gỗ / kệ đá; lưu ảnh | Kết quả → Đặt vào phòng | Tách nền trên worker (ISNet), ghép trên điện thoại |
 | Vườn của tôi | Thanh dưới → Vườn | |
 | Mua lượt (VietQR) | Tài khoản → Mua lượt | Gói, giá do quản trị chỉnh |
 | **Nhập mã quà tặng** | Tài khoản, Mua lượt | |

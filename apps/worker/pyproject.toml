@@ -8,6 +8,7 @@ dependencies = [
   "bonsai-pipeline[all]",
   "celery[redis]>=5.4",
   "pywebpush>=2.0",
+  "imageio-ffmpeg>=0.5",  # video tua nhanh (ffmpeg đóng gói sẵn)
 ]
 
 [project.optional-dependencies]

@@ -225,3 +225,21 @@ PREPROCESS_FLAG = "cutout_sketch"  # giá trị biến {{preprocess}} của P1.v
 if __name__ == "__main__":  # tiến trình con: python -m bonsai_pipeline.cutout <model.onnx> <in.png> <out.npy>
     model, src, dst = sys.argv[1:4]
     np.save(dst, _infer(model, Image.open(src)))
+
+
+def object_png(photo: bytes, remover: BackgroundRemover) -> tuple[bytes, tuple[int, int, int, int]] | None:
+    """Cây + chậu tách khỏi nền (PNG trong suốt, cắt sát) — đặt cây vào ảnh phòng, xem trên camera (ideas F3, F6)."""
+    img = Image.open(io.BytesIO(photo)).convert("RGB")
+    try:
+        alpha = remover.alpha(img)
+    except Exception:  # noqa: BLE001
+        log.exception("object cutout failed")
+        return None
+    keep = main_object(alpha)
+    if not keep.any():
+        return None
+    ys, xs = np.where(keep)
+    box = (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1)
+    a = (np.where(keep, alpha, 0) * 255).astype(np.uint8)
+    rgba = np.dstack([np.asarray(img), a])[box[1]:box[3], box[0]:box[2]]
+    return _encode(rgba, "PNG", optimize=True), box
