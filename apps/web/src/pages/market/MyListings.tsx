@@ -80,9 +80,9 @@ function NewListing({ onCreated }: { onCreated: (x: Listing) => void }) {
       </label>
       {jobId ? <span className="-mt-2 inline-flex items-center gap-1 text-label font-medium text-primary"><Sparkles size={14} aria-hidden="true" />Tin kèm dáng tương lai của cây này</span> : null}
       <label className="flex flex-col gap-1 text-caption font-medium">Tiêu đề<input required minLength={3} maxLength={160} value={v.title} onChange={set('title')} placeholder="Vd. Phôi si chân to, rễ đẹp" className={input} /></label>
-      <ChoiceChips<ListingKind> label="Loại" value={v.kind} onChange={(k) => setV({ ...v, kind: k })} options={Object.entries(KIND_VI) as Array<[ListingKind, string]>} />
+      <ChoiceChips<ListingKind> scroll={false} label="Loại" value={v.kind} onChange={(k) => setV({ ...v, kind: k })} options={Object.entries(KIND_VI) as Array<[ListingKind, string]>} />
       {species.length ? (
-        <ChoiceChips<string> label="Loài" value={v.species_key} onChange={(k) => setV({ ...v, species_key: k })} options={species.map((s) => [s.key, s.name_vi] as [string, string])} />
+        <ChoiceChips<string> scroll={false} label="Loài" value={v.species_key} onChange={(k) => setV({ ...v, species_key: k })} options={species.map((s) => [s.key, s.name_vi] as [string, string])} />
       ) : null}
       <div className="grid grid-cols-2 gap-2">
         <label className="col-span-2 flex flex-col gap-1 text-caption font-medium">Giá

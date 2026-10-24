@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { ButtonLink, ChoiceChips, Notice, PhotoHero, Skeleton } from '@/components/ui';
 import { ApiError } from '@/lib/api';
@@ -17,7 +17,8 @@ export default function MarketPage() {
   const [error, setError] = useState<string | null>(null);
   const [species, setSpecies] = useState<Species[]>([]);
   const [provinces, setProvinces] = useState<Province[]>([]);
-  const [f, setF] = useState<{ species?: string; province?: string; kind?: ListingKind; q?: string }>({});
+  const [params] = useSearchParams();
+  const [f, setF] = useState<{ species?: string; province?: string; kind?: ListingKind; q?: string }>(() => ({ species: params.get('species') ?? undefined }));
   const [q, setQ] = useState('');
   useEffect(() => {
     jobsApi.species().then(setSpecies).catch(() => null);

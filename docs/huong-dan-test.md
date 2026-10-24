@@ -32,12 +32,21 @@ Ký hiệu: ☐ = việc cần làm · ✅ = kết quả đúng phải thấy ·
 
 ✅ Người dùng được đổi vai trò thấy nhãn mới ở **Tài khoản** sau khi tải lại trang.
 
-### 0.3. Chế độ AI khi chưa nạp tiền API
+### 0.3. Bật tính năng cần test
+☐ QT vào **Hệ thống → Tính năng**. Mỗi tính năng có 3 trạng thái:
+- **Mở**: mọi người dùng thấy.
+- **Nội bộ**: chỉ quản trị, nghệ nhân và các email trong ô **Người thử** (bên phải) thấy — dùng để test trước khi mở thật.
+- **Tắt**: ẩn với tất cả (kể cả quản trị).
+
+✅ Tính năng đang Tắt: mục biến mất khỏi Tiện ích / màn Kết quả; mở thẳng link thì hiện "Tính năng sắp mở".
+⚠️ Người dùng thấy thay đổi khi mở lại app. Test xong nhớ chuyển những tính năng chưa muốn công khai về **Nội bộ** hoặc **Tắt**.
+
+### 0.4. Chế độ AI khi chưa nạp tiền API
 
 ☐ QT vào **Chế độ AI** → **Trợ lý chăm cây: Tra bảng**.
 ⚠️ Chưa nạp tiền OpenAI mà để "AI" thì vẫn chạy (tự quay về tra bảng) nhưng log worker báo lỗi 429. Phân tích phôi / tạo ảnh **cần API thật** — nếu chưa nạp, dùng các phiên đã có sẵn trong Vườn.
 
-### 0.4. Hồ sơ cá nhân (để các tiện ích tự điền)
+### 0.5. Hồ sơ cá nhân (để các tiện ích tự điền)
 
 ☐ A, B, V: **Tài khoản → Hồ sơ**: tên, số điện thoại (định dạng `0909 123 456`), **Tỉnh, thành**, **Năm sinh**.
 ✅ Mai kịp Tết, Thời tiết, Cây hợp mệnh tự chọn đúng tỉnh / năm sinh; Chợ phôi tự điền SĐT khi đăng tin.
@@ -151,7 +160,7 @@ Ghi lại **mã phiên** (phần cuối URL `/ket-qua/<mã>`) — các bước s
 | # | Ai | Làm | Kết quả đúng |
 |---|---|---|---|
 | 1 | V | Tài khoản → **Trang công khai** (vd. `vuon-ba-la`) → Lưu | Trang `…/nguoi/vuon-ba-la` có nút **Gửi chăm hộ**, tin đang bán, Zalo |
-| 2 | A | Mở trang V → **Gửi chăm hộ** → chọn Chăm hộ / Nuôi hộ, chọn cây, ngày → Gửi | **Tiện ích → Chăm hộ, nuôi hộ**: "Chờ nhà vườn nhận" |
+| 2 | A | Tiện ích → **Chăm hộ, nuôi hộ** → **Gửi cây cho nhà vườn** → chọn V trong danh bạ (hoặc mở trang V → Gửi chăm hộ) → chọn Chăm hộ / Nuôi hộ, cây, ngày → Gửi | **Tiện ích → Chăm hộ, nuôi hộ**: "Chờ nhà vườn nhận" |
 | 3 | V | Tiện ích → Chăm hộ, nuôi hộ → mở yêu cầu → **Nhận chăm** | Hai bên thấy số điện thoại / Zalo của nhau |
 | 4 | V | **Gửi ảnh** + ghi chú | A thấy ảnh trong yêu cầu **và** trong Nhật ký cây |
 | 5 | A hoặc V | **Đã xong** | Trạng thái "Đã xong" |
@@ -207,7 +216,8 @@ Ghi lại **mã phiên** (phần cuối URL `/ket-qua/<mã>`) — các bước s
 |---|---|---|
 | Chợ phôi, Giá thị trường | Chưa có tin / chưa đủ 5 tin | Bước 5.1 |
 | Hỏi nghệ nhân (danh sách) | Chưa nghệ nhân nào lưu trang công khai | Bước 0.2 + 6.1 |
-| Chăm hộ, nuôi hộ | Chưa có yêu cầu | Bước 7 |
+| Chăm hộ, nuôi hộ | Chưa có yêu cầu; danh bạ trống vì chưa nhà vườn nào lưu trang công khai | Bước 7.1 |
+| Mục / trang biến mất, hoặc "Tính năng sắp mở" | Tính năng đang Tắt hoặc Nội bộ | Bước 0.3 |
 | Thử thách phôi | Quản trị chưa tạo | Bước 8.2 |
 | Chọn dáng đẹp | Chưa ai (khác mình) chia sẻ công khai | Bước 8.1 |
 | Chậu hợp dáng | Chưa có chậu đối tác | Bước 5.3 |
@@ -219,6 +229,11 @@ Ghi lại **mã phiên** (phần cuối URL `/ket-qua/<mã>`) — các bước s
 | Không nhận thông báo | Chưa bật thông báo / chưa có VAPID | Tài khoản → Thông báo; `VAPID_*` trong `.env` |
 
 ## 12. Kiểm tra phía quản trị sau khi test
+
+- **Cộng đồng & chợ → Kiểm duyệt & dịch vụ**: ẩn thử một tin (tin biến mất khỏi chợ), gỡ thử một trang công khai; tab Hỏi nghệ nhân xem câu sắp quá hạn, thử **Hoàn lượt ngay**.
+- **Cộng đồng & chợ → Trợ lý chăm cây**: bật "Chỉ những lượt chưa trả lời được" → bổ sung bảng ở Bộ luật.
+- **Hệ thống → Tính năng**: cột "lượt dùng / 30 ngày" tăng sau khi test.
+- **Hệ thống → Cấu hình vận hành → Thông số tính năng**: đổi số lượt hỏi nghệ nhân 2 → 3, kiểm tra nút "Gửi câu hỏi · 3 lượt".
 
 - **Chi phí AI**: các bước mới H1 (đoán bệnh), Q1 (hỏi đáp) có dòng chi phí riêng; chế độ Tra bảng thì không có.
 - **Nhật ký quản trị**: có đổi vai trò, tạo thử thách, thêm chậu.

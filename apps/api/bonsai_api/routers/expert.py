@@ -192,7 +192,7 @@ def _people_out(db, u: User, *, full: bool) -> dict:
     answered = db.execute(select(func.count(), func.avg(Consult.rating)).where(
         Consult.artisan_id == u.id, Consult.status == "answered")).one()
     d = {"slug": u.public_slug, "name": _display(u), "role": u.role.value, "bio": u.bio, "specialties": u.specialties or [],
-         "province_vi": PROVINCES[u.province][0] if u.province in PROVINCES else None,
+         "province": u.province, "province_vi": PROVINCES[u.province][0] if u.province in PROVINCES else None,
          "answered": int(answered[0] or 0), "rating": round(float(answered[1]), 1) if answered[1] else None}
     if full:
         listings = db.execute(select(Listing).where(Listing.user_id == u.id, Listing.status == "active")
@@ -211,6 +211,19 @@ def artisans(db: DB):
                                          User.deleted_at.is_(None))).scalars().all()
     out = [_people_out(db, u, full=False) for u in rows]
     return sorted(out, key=lambda x: (-(x["rating"] or 0), -x["answered"]))
+
+
+@router.get("/public/nurseries", dependencies=[require_feature("public_profiles", "care")])
+def nurseries(db: DB, province: str | None = None):
+    """Danh bạ nhà vườn có trang công khai (chọn vườn để gửi chăm hộ, xem tin đang bán)."""
+    q = select(User).where(User.role == UserRole.nursery, User.public_slug.is_not(None), User.deleted_at.is_(None))
+    if province:
+        q = q.where(User.province == province)
+    rows = db.execute(q).scalars().all()
+    counts = dict(db.execute(select(Listing.user_id, func.count()).where(Listing.status == "active", Listing.user_id.in_([u.id for u in rows]))
+                             .group_by(Listing.user_id)).all()) if rows else {}
+    out = [{**_people_out(db, u, full=False), "listings": int(counts.get(u.id, 0))} for u in rows]
+    return sorted(out, key=lambda x: (-x["listings"], x["name"]))
 
 
 @router.get("/public/people/{slug}", dependencies=[require_feature("public_profiles")])

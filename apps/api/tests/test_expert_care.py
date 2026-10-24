@@ -122,3 +122,15 @@ def test_care_request_flow(db, client, login, bucket, monkeypatch):  # noqa: F81
     assert not db.execute(select(CreditLedger).where(CreditLedger.reason == "reward")).first()  # ảnh nhà vườn không tính thưởng mốc
     assert [x["role"] for x in client.get("/api/v1/care-requests", headers=nh).json()] == ["nursery"]
     assert client.post(f"/api/v1/care-requests/{rid}/action", headers=owner_h, json={"action": "done"}).json()["status"] == "done"
+
+
+def test_nursery_directory(db, client, login):
+    h, b = login("vuon1@example.com")
+    _role(db, b, UserRole.nursery)
+    client.patch("/api/v1/me", headers=h, json={"public_slug": "vuon-mot", "province": "hue", "garden_name": "Vườn Một"})
+    client.post("/api/v1/listings", headers=h, json={"title": "Phôi mai"})
+    h2, b2 = login("vuon2@example.com")
+    _role(db, b2, UserRole.nursery)  # chưa có trang công khai → không hiện
+    rows = client.get("/api/v1/public/nurseries").json()
+    assert [(r["slug"], r["listings"]) for r in rows] == [("vuon-mot", 1)]
+    assert client.get("/api/v1/public/nurseries?province=can_tho").json() == []

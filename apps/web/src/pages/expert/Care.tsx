@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Camera, ChevronRight, Plane, Sprout } from 'lucide-react';
+import { Camera, ChevronRight, HandHeart, Plane, Sprout } from 'lucide-react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { TreePicker } from '@/components/TreePicker';
 import { Avatar } from '@/components/Avatar';
-import { Button, IconBadge, Notice, Skeleton } from '@/components/ui';
+import { NurseryPicker } from '@/components/NurseryPicker';
+import { Button, ButtonLink, IconBadge, Notice, PhotoHero, Skeleton } from '@/components/ui';
 import { ApiError, uploadPhoto } from '@/lib/api';
 import { cx } from '@/lib/cx';
 import { expertApi, type CareKind, type CareRequest, type Person } from '@/lib/expert';
@@ -22,8 +23,9 @@ export function CareListPage() {
     <div className="mx-auto flex min-h-dvh max-w-content flex-col">
       <BackHeader to="/tien-ich" title="Chăm hộ, nuôi hộ" />
       <div className="flex flex-col gap-3 px-gutter py-3">
+        <ButtonLink to="/cham-ho/moi" variant={rows?.length ? 'secondary' : 'primary'}><HandHeart size={18} aria-hidden="true" />Gửi cây cho nhà vườn</ButtonLink>
         {error ? <Notice tone="danger">{error}</Notice> : rows === null ? <Skeleton className="h-40 rounded-card" /> : rows.length === 0 ? (
-          <Notice tone="info">Chưa có yêu cầu. Mở trang một nhà vườn để gửi cây.</Notice>
+          <PhotoHero src="/images/pedestal.webp" title="Đi xa vẫn yên tâm" sub="Gửi cây cho nhà vườn chăm, nhận ảnh cập nhật mỗi lần chăm." ratio="4 / 3" />
         ) : (
           <ul className="m-0 list-none divide-y divide-line overflow-hidden rounded-card border border-line bg-surface p-0 shadow-card">
             {rows.map((r) => (
@@ -56,7 +58,11 @@ export function CareNewPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [nursery, setNursery] = useState<Person | null>(null);
-  useEffect(() => { if (slug) expertApi.person(slug).then(setNursery).catch(() => null); }, [slug]);
+  const [nurseryMissing, setNurseryMissing] = useState(false);
+  useEffect(() => {
+    setNurseryMissing(false);
+    if (slug) expertApi.person(slug).then(setNursery).catch(() => setNurseryMissing(true));
+  }, [slug]);
   const submit = async () => {
     if (!tree) return;
     setBusy(true);
@@ -70,6 +76,17 @@ export function CareNewPage() {
       setBusy(false);
     }
   };
+  if (!slug || nurseryMissing) {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-content flex-col">
+        <BackHeader to="/cham-ho" title="Chọn nhà vườn" />
+        <div className="flex flex-col gap-3 px-gutter py-3">
+          {nurseryMissing ? <Notice tone="warn">Không tìm thấy nhà vườn này. Chọn vườn khác nhé.</Notice> : null}
+          <NurseryPicker to={(s) => `/cham-ho/moi?vuon=${s}`} />
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="mx-auto flex min-h-dvh max-w-content flex-col">
       <BackHeader to={slug ? `/nguoi/${slug}` : '/cham-ho'} title="Gửi cây" />

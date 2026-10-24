@@ -10,10 +10,11 @@ export interface Consult {
   created_at: string; answered_at: string | null; photo_url?: string | null; sketch_url?: string | null; style_vi?: string | null; design_notes?: string | null;
 }
 export interface Person {
-  slug: string; name: string; role: 'nursery' | 'artisan' | 'admin' | 'player'; bio: string | null; specialties: string[]; province_vi: string | null;
+  slug: string; name: string; role: 'nursery' | 'artisan' | 'admin' | 'player'; bio: string | null; specialties: string[]; province?: string | null; province_vi: string | null;
   answered: number; rating: number | null; contact_phone?: string | null; challenge_votes?: number;
   listings?: { code: string; title: string; price_vnd: number | null; photo_url: string | null }[];
 }
+export type NurseryRow = Omit<Person, 'listings'> & { listings: number };
 export type CareKind = 'care' | 'grow';
 export type CareStatus = 'requested' | 'active' | 'done' | 'declined';
 export interface CareRequest {
@@ -33,6 +34,7 @@ export const expertApi = {
   claim: (id: string) => api<Consult>(`/artisan/consults/${id}/claim`, { method: 'POST' }),
   answer: (id: string, body: { answer: string; verdict: Verdict }) => api<Consult>(`/artisan/consults/${id}/answer`, { method: 'POST', json: body }),
   artisans: () => api<Person[]>('/public/artisans'),
+  nurseries: (province?: string) => api<NurseryRow[]>(`/public/nurseries${province ? `?province=${province}` : ''}`),
   person: (slug: string) => api<Person>(`/public/people/${slug}`),
   careList: () => api<CareRequest[]>('/care-requests'),
   care: (id: string) => api<CareRequest>(`/care-requests/${id}`),

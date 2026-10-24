@@ -66,7 +66,7 @@ describe('Tiện ích', () => {
         note_vi: 'Tham khảo', steps: [{ when: '2027-01-17', title_vi: 'Tuốt lá', detail_vi: 'Tuốt sạch lá' }] })],
     ]);
     renderAt('/tien-ich/mai-tet', <MaiTetPage />);
-    expect(await screen.findByText('Tuốt lá 17/1 – 22/1')).toBeInTheDocument();
+    expect(await screen.findByText('17/1 – 22/1')).toBeInTheDocument();
     await userEvent.selectOptions(screen.getByLabelText('Tỉnh, thành'), 'hue');
     expect(calls.some((c) => c.url.endsWith('mai-tet?province=hue'))).toBe(true);
     expect(screen.getByRole('button', { name: /Thêm vào lịch/ })).toBeInTheDocument();

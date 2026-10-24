@@ -40,7 +40,7 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | **Giá thị trường**: giá mỗi cm gốc theo loài, cả nước và từng miền | Tiện ích → Giá thị trường | Chỉ công bố khi ≥ 5 tin (tránh lộ giá một người bán) |
 | **Hỏi nghệ nhân**: chọn cây, hỏi đích danh hoặc ai rảnh, trả 2 lượt; nhận đánh giá (ổn / sửa / làm lại) + lời khuyên; chấm 1–5 sao | Kết quả → Hỏi nghệ nhân; Tiện ích | Quá 72 giờ chưa trả lời: tự hoàn lượt (worker, mỗi giờ) |
 | **Trang công khai** nhà vườn / nghệ nhân `/nguoi/{tên}`: giới thiệu, chuyên môn, tin đang bán, Zalo, số lần góp ý + điểm | Tài khoản → Trang công khai | Chỉ nhà vườn, nghệ nhân |
-| **Chăm hộ / nuôi hộ**: gửi cây cho một nhà vườn; nhà vườn nhận, gửi ảnh + ghi chú; ảnh vào nhật ký cây | Trang nhà vườn → Gửi chăm hộ; Tiện ích → Chăm hộ, nuôi hộ | Số điện thoại hai bên chỉ hiện sau khi nhà vườn nhận. Tiền công tự thỏa thuận |
+| **Chăm hộ / nuôi hộ**: chọn nhà vườn trong danh bạ (cùng tỉnh lên trước) hoặc từ trang nhà vườn, gửi cây; nhà vườn nhận, gửi ảnh + ghi chú; ảnh vào nhật ký cây | Trang nhà vườn → Gửi chăm hộ; Tiện ích → Chăm hộ, nuôi hộ | Số điện thoại hai bên chỉ hiện sau khi nhà vườn nhận. Tiền công tự thỏa thuận |
 | **Lá có bệnh?** chụp gần lá + chọn dấu hiệu → sâu bệnh có thể gặp, xử lý ngay, phòng lần sau | Tiện ích → Lá có bệnh? | Kết quả tra bảng có ngay; AI xem ảnh rồi cập nhật nhưng chỉ được chọn trong bảng sâu bệnh (cách xử lý lấy từ bảng). 5 lần / ngày |
 | **Hỏi cách chăm** bằng giọng nói hoặc gõ; nghe đọc to câu trả lời | Tiện ích → Hỏi cách chăm | Trả lời ngay từ bảng loài; AI (model rẻ) trả lời theo cây, 20 câu / ngày. Nhận giọng nói + đọc to dùng sẵn của trình duyệt (miễn phí) |
 | **Đọc to hướng dẫn** giai đoạn | Kết quả, dưới thẻ hướng dẫn | Ẩn nếu máy không hỗ trợ |
@@ -69,6 +69,10 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | **Thử thách phôi** (tạo, xóa) · **Chậu đối tác** (thêm, bật / tắt, xóa) | Quản trị → Khách hàng | Thao tác ghi nhật ký quản trị |
 | **Hỏi đáp** (nghệ nhân): nhận câu hỏi, xem ảnh phôi + bản vẽ, trả lời | Quản trị → nhóm Nghệ nhân | Nghệ nhân chỉ thấy câu chưa ai nhận hoặc đã nhận |
 | **Bộ luật Sâu bệnh, thời tiết** (sửa trên giao diện) · **Trợ lý chăm cây: AI / Tra bảng** | Bộ luật & thông số; Chế độ AI | Tra bảng: không tốn API |
+| **Tính năng**: từng tính năng người dùng **Mở / Nội bộ / Tắt**; danh sách email **người thử**; số lượt dùng 30 ngày | Hệ thống → Tính năng | Api chặn thật (không chỉ ẩn nút). Nội bộ = quản trị, nghệ nhân, người thử |
+| **Kiểm duyệt & dịch vụ**: ẩn / hiện tin đăng, gỡ trang công khai, cây báo mất; hỏi nghệ nhân (sắp quá hạn, hoàn lượt ngay, gỡ nghệ nhân đã nhận); chăm hộ | Cộng đồng & chợ → Kiểm duyệt & dịch vụ | Ghi nhật ký quản trị kèm lý do |
+| **Trợ lý chăm cây**: câu hỏi, lượt đoán bệnh 30 ngày; lọc "chưa trả lời được" để bổ sung bảng loài / sâu bệnh | Cộng đồng & chợ → Trợ lý chăm cây | |
+| **Thông số tính năng** (lượt thưởng, lượt hỏi nghệ nhân, tin miễn phí, tin nổi bật, xem thử AI gói tháng, giới hạn đoán bệnh / hỏi đáp mỗi ngày) | Hệ thống → Cấu hình vận hành | |
 | Tổng quan | Bảng điều khiển | 12 chỉ số so kỳ trước, biểu đồ phiên / doanh thu–chi phí, phễu, phiên lỗi |
 | Vận hành | Phiên thiết kế | Lọc, tìm (mã phiên, email, mã lỗi), chi tiết pipeline / ảnh (kể cả ảnh xem thử) / phương án, chạy lại miễn phí, hoàn lượt, dừng phiên treo, **xuất Excel** |
 | | Phản hồi | Đánh giá của người dùng, link tới phiên |
