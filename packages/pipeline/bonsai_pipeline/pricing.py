@@ -25,9 +25,12 @@ PRICES: dict[str, Price] = {
     "gemini-3-pro-image": Price(2.0, 0.0, 0.134),
     # OpenAI: giá niêm yết 2025 — kiểm tra lại trên openai.com/api/pricing trước khi chạy thật.
     "gpt-5": Price(1.25, 10.0),
+    "gpt-5.5": Price(5.0, 30.0),
     "gpt-5-mini": Price(0.25, 2.0),
     "gpt-4.1": Price(2.0, 8.0),
-    "gpt-image-1": Price(5.0, 0.0, 0.042),
+    # gpt-image-*: tính theo token (token ảnh ra ~$40/1M). gpt-image-2 chưa có giá chính thức — tạm lấy như gpt-image-1.
+    "gpt-image-1": Price(10.0, 40.0),
+    "gpt-image-2": Price(10.0, 40.0),
     "fake": Price(0.0, 0.0, 0.0),
     "demo": Price(0.0, 0.0, 0.0),
 }
