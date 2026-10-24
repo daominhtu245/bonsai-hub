@@ -231,6 +231,14 @@ def run_phase_a(db: Session, job_id: uuid.UUID) -> None:
         record_step(db, job.id, _code_step("A5", "sketch", started, output={"options": len(design.options)}))
         set_progress(db, job, "design", "done", options=len(design.options))
         set_status(db, job, JobStatus.awaiting_choice)
+        try:  # giới thiệu bạn: phiên phân tích đầu tiên của người được mời → tặng lượt cả hai (không làm hỏng phiên)
+            from bonsai_api.services.referrals import reward_if_due
+
+            if reward_if_due(db, job.user_id):
+                db.commit()
+        except Exception:  # noqa: BLE001
+            db.rollback()
+            log.exception("referral reward failed for %s", job.user_id)
 
 
 @app.task(name="bonsai_worker.tasks.phase_a.run", acks_late=True)

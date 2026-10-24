@@ -75,7 +75,8 @@ export const accountApi = {
   createPayment: (package_code: string) => api<Payment>('/payments', { method: 'POST', json: { package_code } }),
   payment: (id: string) => api<Payment>(`/payments/${id}`),
   payments: () => api<Payment[]>('/payments'),
-  updateProfile: (body: { name?: string | null; garden_name?: string | null; phone?: string | null; consent_training?: boolean; notify_zalo?: boolean }) =>
+  updateProfile: (body: { name?: string | null; garden_name?: string | null; phone?: string | null; consent_training?: boolean; notify_zalo?: boolean;
+    birth_year?: number | null; province?: string | null; bio?: string | null }) =>
     api<User>('/me', { method: 'PATCH', json: body }),
   deleteAccount: () => api<void>('/me', { method: 'DELETE', json: { confirm: true } }),
   redeemCode: (code: string) => api<{ credits_added: number; credits: number }>('/me/gift-code', { method: 'POST', json: { code } }),

@@ -1,17 +1,18 @@
-import { Home, Sprout, UserRound } from 'lucide-react';
+import { Home, LayoutGrid, Sprout, UserRound } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cx } from '@/lib/cx';
 
 const items = [
   { to: '/', label: 'Trang chủ', Icon: Home },
   { to: '/vuon', label: 'Vườn', Icon: Sprout },
+  { to: '/tien-ich', label: 'Tiện ích', Icon: LayoutGrid },
   { to: '/tai-khoan', label: 'Tài khoản', Icon: UserRound },
 ];
 
 /** Thanh điều hướng dưới cho các màn chính. */
 export function BottomNav() {
   return (
-    <nav aria-label="Điều hướng chính" className="sticky bottom-0 z-10 mt-auto grid grid-cols-3 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
+    <nav aria-label="Điều hướng chính" className="sticky bottom-0 z-10 mt-auto grid grid-cols-4 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
       {items.map(({ to, label, Icon }) => (
         <NavLink
           key={to}

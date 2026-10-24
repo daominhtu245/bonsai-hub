@@ -1,8 +1,12 @@
 # Đặc điểm loài dùng cho thiết kế, vẽ ảnh và lộ trình — seed từ nguồn công khai, xem rules/SOURCES.md.
 # Khí hậu Việt Nam nhiệt đới: các mốc mùa vụ lấy từ người trồng vùng nhiệt đới; nghệ nhân duyệt lại.
 version: 1
+# price_vnd_per_trunk_cm: giá phôi tham khảo theo mỗi cm đường kính gốc — GIẢ ĐỊNH ban đầu, nghệ nhân / nhà vườn chỉnh;
+# công cụ Định giá ưu tiên giá tin đăng thật khi đủ dữ liệu.
 
 si:
+  price_vnd_per_trunk_cm: [150000, 400000]
+  graft_season: Đầu mùa mưa (tháng 4–6), cây đang sung
   name_vi: Si
   scientific: Ficus microcarpa (cần xác minh — tên si/sanh dùng lẫn lộn giữa các vùng) [nparks_ficus, mytour_sanh]
   foliage: lá bóng, hình elip hơi nhọn; gân bên gần vuông góc gân giữa; vỏ xám nhẵn [nparks_ficus, bonsaibark_ficus]
@@ -17,6 +21,8 @@ si:
   render_hints: lá nhỏ bóng xanh đậm, vỏ xám nhẵn, có thể có rễ khí sinh rủ
 
 sanh:
+  price_vnd_per_trunk_cm: [150000, 450000]
+  graft_season: Đầu mùa mưa (tháng 4–6)
   name_vi: Sanh
   scientific: Ficus benjamina (một số nguồn Việt; cần xác minh) [mytour_sanh]
   foliage: lá thon dài hơn, đầu lá kéo dài, cành có xu hướng rủ, ít rễ khí sinh hơn si [nparks_ficus, bonsaibark_ficus]
@@ -27,6 +33,8 @@ sanh:
   render_hints: lá nhỏ dày, vỏ xám sáng nhẵn, rễ nổi khỏe
 
 mai_chieu_thuy:
+  price_vnd_per_trunk_cm: [100000, 300000]
+  graft_season: Mùa xuân – đầu hè, sau đợt tuốt lá
   name_vi: Mai chiếu thủy
   scientific: Wrightia religiosa [wiki_wrightia]
   foliage: lá nhỏ hình mác, mọc đối, xanh nhạt; hoa trắng nhỏ rủ, thơm như nhài, nở quanh năm [wiki_wrightia, nparks_wrightia, empire_wrightia]
@@ -41,6 +49,8 @@ mai_chieu_thuy:
   render_hints: lá li ti xanh nhạt, chùm hoa trắng nhỏ rủ, cành mảnh nhiều nhánh
 
 tung_la_han:
+  price_vnd_per_trunk_cm: [200000, 600000]
+  graft_season: Cuối xuân, chồi non đã cứng
   name_vi: Tùng la hán
   scientific: Podocarpus macrophyllus [empire_podo, bonsai4me_podo]
   foliage: lá dải hẹp xanh đậm mọc thành chùm; vỏ nâu sợi [empire_podo]
@@ -55,6 +65,8 @@ tung_la_han:
   render_hints: lá dải xanh đậm chùm dày, tầng tán gọn, vỏ nâu sợi
 
 linh_sam:
+  price_vnd_per_trunk_cm: [100000, 350000]
+  graft_season: Mùa xuân, tránh nắng gắt
   name_vi: Linh sam
   scientific: Trifidacanthus unifoliolatus (đồng danh Desmodium unifoliatum) [efloraindia_linhsam]
   foliage: cây bụi có gai; hoa tím xanh thơm, nở nhiều quanh năm; vỏ già sần sùi được ưa chuộng [efloraindia_linhsam, empire_desmodium]

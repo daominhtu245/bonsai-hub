@@ -6,6 +6,8 @@ from pydantic import BaseModel, Field
 from ..db.models import PushSubscription
 from ..schemas import UserOut
 from ..security import DB, CurrentUser
+from ..services import referrals
+from ..services.provinces import PROVINCES
 
 router = APIRouter(tags=["me"])
 
@@ -16,6 +18,13 @@ class ProfileIn(BaseModel):
     phone: str | None = Field(default=None, max_length=32, pattern=r"^[0-9 +().-]{8,32}$")
     consent_training: bool | None = None
     notify_zalo: bool | None = None
+    birth_year: int | None = Field(default=None, ge=1920, le=2030)
+    province: str | None = Field(default=None, max_length=32)
+    bio: str | None = Field(default=None, max_length=1000)
+
+
+class ReferralClaimIn(BaseModel):
+    code: str = Field(min_length=4, max_length=12)
 
 
 class DeleteMeIn(BaseModel):
@@ -34,6 +43,14 @@ def update_me(body: ProfileIn, user: CurrentUser, db: DB):
         if field in data:
             value = data[field]
             setattr(user, field, value.strip() if isinstance(value, str) and value.strip() else None)
+    if "birth_year" in data:
+        user.birth_year = data["birth_year"]
+    if "province" in data:
+        if data["province"] and data["province"] not in PROVINCES:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Tỉnh không hợp lệ.")
+        user.province = data["province"] or None
+    if "bio" in data:
+        user.bio = (data["bio"] or "").strip() or None
     if data.get("consent_training") is not None:
         user.consent_training = data["consent_training"]
         user.consent_at = datetime.now(UTC) if data["consent_training"] else None
@@ -55,3 +72,20 @@ def delete_me(body: DeleteMeIn, user: CurrentUser, db: DB):
     user.notify_zalo = False
     db.query(PushSubscription).filter(PushSubscription.user_id == user.id).delete()
     db.commit()
+
+
+@router.get("/me/referral")
+def my_referral(user: CurrentUser, db: DB):
+    code = referrals.ensure_code(db, user)
+    from ..settings import get_settings
+
+    return {"code": code, "link": f"{get_settings().public_base_url.rstrip('/')}/?ref={code}",
+            "claimed": user.referred_by is not None, **referrals.stats(db, user)}
+
+
+@router.post("/me/referral/claim", status_code=status.HTTP_204_NO_CONTENT)
+def claim_referral(body: ReferralClaimIn, user: CurrentUser, db: DB):
+    try:
+        referrals.claim(db, user, body.code)
+    except referrals.ReferralError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e)) from e

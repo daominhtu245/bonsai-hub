@@ -5,6 +5,7 @@ import { BackHeader } from '@/components/BackHeader';
 import { NotifyPrompt } from '@/components/NotifyPrompt';
 import { SaveAndRemind } from '@/components/SaveAndRemind';
 import { TreeDiary } from '@/components/TreeDiary';
+import { TreeTools } from '@/components/TreeTools';
 import {
   Button, ButtonLink, GuideCard, Notice, Skeleton, StageTimeline, StepList, StyleName, type StageGuide, type StepState,
 } from '@/components/ui';
@@ -210,6 +211,7 @@ function Done({ result, onToggle }: { result: ResultView; onToggle: (code: strin
 
       <SaveAndRemind jobId={result.job_id} />
       <TreeDiary treeId={result.tree_id} />
+      <TreeTools jobId={result.job_id} />
 
       <section className="mx-gutter mt-4 grid grid-cols-2 gap-2">
         <ButtonLink to={`/chia-se/${result.job_id}`}>

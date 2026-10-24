@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { RequireAuth } from '@/components/RequireAuth';
+import { ReferralCapture } from '@/components/ReferralCapture';
 import { AuthProvider } from '@/lib/auth';
 import { CaptureProvider } from '@/lib/capture';
 import ComingSoon from '@/pages/ComingSoon';
@@ -43,6 +44,10 @@ const AdminGiftCodes = lazy(() => opsPages().then((m) => ({ default: m.GiftCodes
 const AdminBroadcast = lazy(() => opsPages().then((m) => ({ default: m.BroadcastPage })));
 const Terms = lazy(() => import('@/pages/Terms'));
 const ArtisanReview = lazy(() => import('@/pages/artisan/Review'));
+const UtilitiesHub = lazy(() => import('@/pages/utilities/Hub'));
+const MaiTet = lazy(() => import('@/pages/utilities/MaiTet'));
+const MenhPage = lazy(() => import('@/pages/utilities/Menh'));
+const RescuePage = lazy(() => import('@/pages/utilities/Rescue'));
 const ArtisanRules = lazy(() => import('@/pages/artisan/Rules'));
 const ArtisanStats = lazy(() => import('@/pages/artisan/Stats'));
 
@@ -53,6 +58,7 @@ export default function App() {
     <AuthProvider>
       <CaptureProvider>
         <BrowserRouter>
+          <ReferralCapture />
           <Suspense fallback={null}>
             <Routes>
               <Route path="/" element={<Home />} />
@@ -67,6 +73,10 @@ export default function App() {
               <Route path="/ket-qua/:jobId" element={guard(<Result />)} />
               <Route path="/ket-qua/:jobId/in" element={guard(<ResultPrint />)} />
               <Route path="/vuon" element={guard(<Garden />)} />
+              <Route path="/tien-ich" element={<UtilitiesHub />} />
+              <Route path="/tien-ich/mai-tet" element={<MaiTet />} />
+              <Route path="/tien-ich/hop-menh" element={<MenhPage />} />
+              <Route path="/tien-ich/cap-cuu" element={<RescuePage />} />
               <Route path="/mua-luot" element={guard(<Buy />)} />
               <Route path="/chia-se/:jobId" element={guard(<Share />)} />
               <Route path="/tai-khoan" element={guard(<Account />)} />

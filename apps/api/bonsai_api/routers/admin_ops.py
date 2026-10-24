@@ -40,6 +40,10 @@ class OpsIn(BaseModel):
     pause_render: bool | None = None
     pause_message: str | None = Field(default=None, min_length=5, max_length=200)
     announcement: AnnouncementIn | None = None
+    referral_credits: int | None = Field(default=None, ge=0, le=10)
+    diary_reward_credits: int | None = Field(default=None, ge=0, le=10)
+    consult_credits: int | None = Field(default=None, ge=1, le=20)
+    nursery_listing_free: int | None = Field(default=None, ge=0, le=100)
 
 
 @router.get("/ops")

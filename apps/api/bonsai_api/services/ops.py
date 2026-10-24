@@ -27,6 +27,10 @@ def ops_defaults() -> dict:
         "pause_render": False,
         "pause_message": "Hệ thống đang bảo trì, bạn quay lại sau ít phút nhé.",
         "announcement": {"active": False, "text": "", "tone": "info"},
+        "referral_credits": 1,  # giới thiệu bạn: mỗi bên được tặng
+        "diary_reward_credits": 1,  # nhật ký đúng mốc 1 / 3 / 6 tháng
+        "consult_credits": 2,  # hỏi nghệ nhân
+        "nursery_listing_free": 3,  # nhà vườn chưa có gói: số tin đăng miễn phí
     }
 
 

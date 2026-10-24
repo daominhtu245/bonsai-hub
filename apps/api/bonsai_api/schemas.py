@@ -36,6 +36,12 @@ class UserOut(ORM):
     phone: str | None = None
     consent_training: bool = False
     notify_zalo: bool = False
+    birth_year: int | None = None
+    province: str | None = None
+    referral_code: str | None = None
+    public_slug: str | None = None
+    bio: str | None = None
+    nursery_until: datetime | None = None
 
 
 class TokenOut(BaseModel):

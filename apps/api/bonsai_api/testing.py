@@ -59,7 +59,7 @@ def _clean():
     from bonsai_api.db.session import get_engine
 
     with get_engine().begin() as c:
-        c.execute(text("TRUNCATE artisan_reviews, push_subscriptions, users, trees, tree_photos, design_jobs, credit_ledger, payments, pipeline_steps, feedback, app_settings, seg_labels, admin_audit, gift_codes, gift_redemptions CASCADE"))
+        c.execute(text("TRUNCATE partner_pots, artisan_reviews, push_subscriptions, users, trees, tree_photos, design_jobs, credit_ledger, payments, pipeline_steps, feedback, app_settings, seg_labels, admin_audit, gift_codes, gift_redemptions CASCADE"))
         # về đúng trạng thái seed: bỏ phiên bản do test tạo, bật lại phiên bản active của seed
         c.execute(text("DELETE FROM prompt_versions WHERE NOT (step_code || '.' || version = ANY(:seeded))"), {"seeded": list(_SEEDED)})
         c.execute(text("UPDATE prompt_versions SET active = (step_code || '.' || version = ANY(:active))"), {"active": list(_SEEDED_ACTIVE)})

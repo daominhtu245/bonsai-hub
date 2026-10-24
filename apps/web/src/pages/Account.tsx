@@ -3,6 +3,8 @@ import { ChevronRight, LogOut, Shield } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BottomNav } from '@/components/BottomNav';
 import { GiftCodeBox } from '@/components/GiftCodeBox';
+import { ProfileExtras } from '@/components/ProfileExtras';
+import { ReferralCard } from '@/components/ReferralCard';
 import { Button, ButtonLink, Notice, Segmented, Skeleton } from '@/components/ui';
 import { accountApi, vnd, type Payment } from '@/lib/account';
 import { ApiError } from '@/lib/api';
@@ -134,11 +136,14 @@ export default function Account() {
           </Link>
         </div>
 
+        <ReferralCard />
+
         <form onSubmit={save} className="flex flex-col gap-2">
           <Group title="Hồ sơ">
             {field('name', 'Tên', 'Chưa đặt')}
             {field('garden_name', 'Tên vườn', 'Chưa đặt')}
             {field('phone', 'Điện thoại', 'Chưa đặt')}
+            <ProfileExtras />
           </Group>
           {error ? <Notice tone="danger">{error}</Notice> : saved ? <Notice tone="success">{saved}</Notice> : null}
           <Button type="submit" variant="secondary" size="touch">Lưu hồ sơ</Button>

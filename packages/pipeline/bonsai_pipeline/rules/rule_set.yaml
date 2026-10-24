@@ -16,6 +16,13 @@ growth:                                   # thông số thời gian (giả đị
   max_thicken_pct_per_year: {slow: 5, medium: 10, fast: 15}   # thân dày thêm tối đa %/năm theo tốc độ lớn của loài
   years_to_final: {fast: 4, medium: 5, slow: 6}              # số năm tới dáng hoàn chỉnh (ảnh S4)
 
+wiring:                                   # tính dây uốn (công cụ "Tính dây") — nghệ nhân chỉnh
+  aluminium_to_branch: 0.33               # dây nhôm ≈ 1/3 đường kính cành [empire_wiring, vt]
+  copper_to_branch: 0.25                  # dây đồng cứng hơn ≈ 1/4
+  length_factor: 1.5                      # quấn 45° → dài ≈ 1,5 × cành [vt]
+  gauges_mm: [1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6]   # cỡ dây bán phổ biến
+  branch_to_trunk: {thick: 0.33, medium: 0.2, thin: 0.1}   # ước đường kính cành theo đường kính gốc
+
 trunk:
   taper: required_never_reverse           # thon dần từ gốc lên ngọn, "đầu voi đuôi chuột" [wiki, walston, viwiki]
   lean_toward_viewer: slight              # thân và ngọn hơi nghiêng về người xem [wiki, walston]

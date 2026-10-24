@@ -12,6 +12,12 @@ export interface User {
   phone?: string | null;
   consent_training?: boolean;
   notify_zalo?: boolean;
+  birth_year?: number | null;
+  province?: string | null;
+  referral_code?: string | null;
+  public_slug?: string | null;
+  bio?: string | null;
+  nursery_until?: string | null;
 }
 
 export interface TokenResponse {

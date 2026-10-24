@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -12,6 +12,7 @@ from sqlalchemy import (
     BigInteger,
     Boolean,
     CheckConstraint,
+    Date,
     DateTime,
     Enum,
     Float,
@@ -92,6 +93,9 @@ class CreditReason(str, enum.Enum):
     refund = "refund"
     gift = "gift"
     adjust = "adjust"  # admin cộng/trừ tay, có ghi lý do trong admin_audit
+    referral = "referral"  # giới thiệu bạn: cả hai bên được tặng
+    reward = "reward"  # thưởng (nhật ký đúng mốc, thử thách…)
+    consult = "consult"  # trả lượt để hỏi nghệ nhân
 
 
 class PaymentStatus(str, enum.Enum):
@@ -125,6 +129,15 @@ class User(Base):
     # Xóa mềm: dữ liệu giữ nguyên, tài khoản không đăng nhập/hiển thị được nữa (admin khôi phục được).
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     role: Mapped[UserRole] = mapped_column(_enum(UserRole, "user_role"), default=UserRole.player)
+    referral_code: Mapped[str | None] = mapped_column(String(12), unique=True)  # mã giới thiệu của chính người này
+    referred_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    birth_year: Mapped[int | None] = mapped_column(SmallInteger)  # gợi ý cây hợp mệnh (không bắt buộc)
+    province: Mapped[str | None] = mapped_column(String(32))  # mã tỉnh: lịch Mai kịp Tết, nhắc theo thời tiết
+    # hồ sơ công khai (nghệ nhân, nhà vườn)
+    public_slug: Mapped[str | None] = mapped_column(String(40), unique=True)
+    bio: Mapped[str | None] = mapped_column(Text)
+    specialties: Mapped[list[Any]] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"))
+    nursery_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # gói nhà vườn còn hạn tới
     # Cache; nguồn gốc là credit_ledger (xem services/credits.py).
     credits: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     created_at: Mapped[datetime] = _created()
@@ -154,6 +167,9 @@ class Tree(Base):
     nickname: Mapped[str | None] = mapped_column(String(120))
     species_key: Mapped[str | None] = mapped_column(ForeignKey("species.key"))
     real_height_cm: Mapped[float | None] = mapped_column(Float)
+    passport_code: Mapped[str | None] = mapped_column(String(12), unique=True)  # sổ hồ sơ cây (QR)
+    passport_public: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    stolen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # chủ báo mất
     created_at: Mapped[datetime] = _created()
 
     photos: Mapped[list[TreePhoto]] = relationship(
@@ -510,7 +526,10 @@ class RuleDoc(Base):
     activated_by: Mapped[str | None] = mapped_column(String(320))
     activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    __table_args__ = (UniqueConstraint("doc", "version", name="uq_rule_docs_doc_version"),)
+    __table_args__ = (
+        UniqueConstraint("doc", "version", name="uq_rule_docs_doc_version"),
+        Index("uq_rule_docs_one_active", "doc", unique=True, postgresql_where=text("active")),  # mỗi bộ một bản áp dụng
+    )
 
 
 class ArtisanReview(Base):
@@ -539,3 +558,201 @@ class ArtisanReview(Base):
         UniqueConstraint("reviewer_id", "render_id", name="uq_artisan_reviews_reviewer_render"),
         UniqueConstraint("reviewer_id", "option_id", name="uq_artisan_reviews_reviewer_option"),
     )
+
+
+# ---------- tăng trưởng, cộng đồng (docs/ideas.md B, F) ----------
+
+
+class Referral(Base):
+    """Giới thiệu bạn: người được mời phân tích phôi đầu tiên thì cả hai được tặng lượt (một lần)."""
+
+    __tablename__ = "referrals"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    referrer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    referee_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True)
+    rewarded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = _created()
+
+
+class DesignVote(Base):
+    """Quẹt chọn dáng: giữa hai phương án của cùng một phôi, người dùng thấy cái nào đẹp hơn (dữ liệu thẩm mỹ)."""
+
+    __tablename__ = "design_votes"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    job_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("design_jobs.id", ondelete="CASCADE"), index=True)
+    winner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("design_options.id", ondelete="CASCADE"))
+    loser_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("design_options.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = _created()
+
+    __table_args__ = (UniqueConstraint("user_id", "winner_id", "loser_id", name="uq_design_votes_pair"),)
+
+
+class TreeTransfer(Base):
+    """Chuyển chủ cây (sổ hồ sơ cây): chủ cũ tạo mã, chủ mới nhập mã để nhận cây kèm toàn bộ lịch sử."""
+
+    __tablename__ = "tree_transfers"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    tree_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("trees.id", ondelete="CASCADE"), index=True)
+    from_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    to_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    code: Mapped[str] = mapped_column(String(12), unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = _created()
+
+
+class Challenge(Base):
+    """Thử thách phôi hằng tháng: cùng một phôi, mọi người tự thiết kế, cộng đồng bình chọn."""
+
+    __tablename__ = "challenges"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    title: Mapped[str] = mapped_column(String(160))
+    description: Mapped[str | None] = mapped_column(Text)
+    job_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("design_jobs.id", ondelete="RESTRICT"))  # phôi đã phân tích
+    prize: Mapped[str | None] = mapped_column(String(200))
+    starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    ends_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = _created()
+
+
+class ChallengeEntry(Base):
+    __tablename__ = "challenge_entries"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    challenge_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("challenges.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    design: Mapped[dict[str, Any]] = mapped_column(JSONB)  # UserDesignIn (bonsai_pipeline/user_design.py)
+    image_key: Mapped[str] = mapped_column(Text)  # ảnh ghép từ thư viện chi tiết (studio_compose)
+    votes: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    created_at: Mapped[datetime] = _created()
+
+    __table_args__ = (UniqueConstraint("challenge_id", "user_id", name="uq_challenge_entries_user"),)
+
+
+class ChallengeVote(Base):
+    __tablename__ = "challenge_votes"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    challenge_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("challenges.id", ondelete="CASCADE"))
+    entry_id: Mapped[int] = mapped_column(ForeignKey("challenge_entries.id", ondelete="CASCADE"))
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = _created()
+
+    __table_args__ = (UniqueConstraint("challenge_id", "user_id", name="uq_challenge_votes_user"),)  # mỗi người 1 phiếu
+
+
+# ---------- nhà vườn, dịch vụ (docs/ideas.md C, D) ----------
+
+
+class Listing(Base):
+    """Tin đăng phôi / cây của nhà vườn, kèm dáng tương lai AI; liên hệ trực tiếp (không giữ tiền)."""
+
+    __tablename__ = "listings"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    code: Mapped[str] = mapped_column(String(12), unique=True)  # link /tin/{code}, mã QR treo chậu
+    tree_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("trees.id", ondelete="SET NULL"))
+    job_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("design_jobs.id", ondelete="SET NULL"))  # phương án AI
+    title: Mapped[str] = mapped_column(String(160))
+    description: Mapped[str | None] = mapped_column(Text)
+    species_key: Mapped[str | None] = mapped_column(ForeignKey("species.key"))
+    kind: Mapped[str] = mapped_column(String(16), default="phoi")  # phoi | cay | nuoi_ho (bán kèm nuôi hộ)
+    price_vnd: Mapped[int | None] = mapped_column(BigInteger)
+    height_cm: Mapped[float | None] = mapped_column(Float)
+    trunk_cm: Mapped[float | None] = mapped_column(Float)
+    province: Mapped[str | None] = mapped_column(String(32))
+    contact_phone: Mapped[str | None] = mapped_column(String(32))
+    photo_key: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), default="active", index=True)  # active | sold | hidden
+    featured_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    views: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    created_at: Mapped[datetime] = _created()
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), onupdate=func.now())
+
+
+class PartnerPot(Base):
+    """Chậu của xưởng đối tác (Bát Tràng…): gợi ý theo thiết kế, link mua có mã giới thiệu."""
+
+    __tablename__ = "partner_pots"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    name: Mapped[str] = mapped_column(String(160))
+    maker: Mapped[str | None] = mapped_column(String(120))
+    shape: Mapped[str] = mapped_column(String(16))  # rectangle | oval | round | cascade_deep
+    color: Mapped[str | None] = mapped_column(String(32))  # unglazed_brown | glazed_blue | glazed_cream
+    length_cm: Mapped[float | None] = mapped_column(Float)
+    price_vnd: Mapped[int | None] = mapped_column(BigInteger)
+    url: Mapped[str | None] = mapped_column(Text)
+    image_url: Mapped[str | None] = mapped_column(Text)
+    active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+    created_at: Mapped[datetime] = _created()
+
+
+class Consult(Base):
+    """Hỏi nghệ nhân: người dùng trả lượt, gửi thiết kế + câu hỏi; nghệ nhân trả lời (không trả lời → hoàn lượt)."""
+
+    __tablename__ = "consults"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    job_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("design_jobs.id", ondelete="CASCADE"))
+    option_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("design_options.id", ondelete="SET NULL"))
+    artisan_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
+    question: Mapped[str] = mapped_column(Text)
+    answer: Mapped[str | None] = mapped_column(Text)
+    verdict: Mapped[str | None] = mapped_column(String(16))  # ok | fix | rethink
+    credits: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(16), default="open", index=True)  # open | answered | refunded
+    rating: Mapped[int | None] = mapped_column(SmallInteger)  # người hỏi chấm câu trả lời 1–5
+    created_at: Mapped[datetime] = _created()
+    answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class CareRequest(Base):
+    """Chăm hộ (đi xa) / nuôi hộ (mua phôi, để nhà vườn chăm theo lộ trình): nhà vườn đăng ảnh cập nhật."""
+
+    __tablename__ = "care_requests"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    kind: Mapped[str] = mapped_column(String(16))  # care | grow
+    owner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    nursery_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    tree_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("trees.id", ondelete="CASCADE"))
+    job_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("design_jobs.id", ondelete="SET NULL"))  # lộ trình theo dõi
+    start_date: Mapped[date | None] = mapped_column(Date)
+    end_date: Mapped[date | None] = mapped_column(Date)
+    note: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), default="requested", index=True)  # requested|active|done|declined
+    created_at: Mapped[datetime] = _created()
+
+
+class CareUpdate(Base):
+    __tablename__ = "care_updates"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    request_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("care_requests.id", ondelete="CASCADE"), index=True)
+    author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    photo_key: Mapped[str | None] = mapped_column(Text)
+    note: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = _created()
+
+
+class HealthCheck(Base):
+    """Chụp lá / cành → AI đoán sâu bệnh + cách xử lý (docs/ideas.md E3)."""
+
+    __tablename__ = "health_checks"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    tree_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("trees.id", ondelete="SET NULL"))
+    photo_key: Mapped[str] = mapped_column(Text)
+    symptoms: Mapped[list[Any]] = mapped_column(JSONB, default=list)
+    status: Mapped[str] = mapped_column(String(16), default="queued")  # queued | done | failed
+    result: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = _created()
