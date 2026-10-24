@@ -59,7 +59,7 @@ function QuickSearch({ onDone }: { onDone?: () => void }) {
     onDone?.();
   };
   return (
-    <form onSubmit={submit} role="search" className="relative w-full max-w-[420px]">
+    <form onSubmit={submit} role="search" className="relative w-full max-w-[420px] 3xl:max-w-[560px]">
       <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-subtle" aria-hidden="true" />
       <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Mã phiên, email, SĐT…" aria-label="Tìm nhanh"
         className="min-h-[40px] w-full rounded-btn border border-line bg-surface-2 pl-9 pr-3 text-caption text-ink focus:bg-surface" />
@@ -105,7 +105,7 @@ export default function AdminLayout() {
   if (user.status === 'ready' && user.data.role !== 'admin') return <Navigate to="/" replace />;
 
   return (
-    <div className="min-h-dvh bg-bg lg:grid lg:grid-cols-[248px_1fr]">
+    <div className="min-h-dvh bg-bg lg:grid lg:grid-cols-[248px_1fr] 3xl:grid-cols-[272px_1fr]">
       <aside className="sticky top-0 hidden h-dvh overflow-y-auto border-r border-line bg-surface lg:block">
         <Link to="/admin" className="flex h-[60px] items-center gap-2 border-b border-line px-5 no-underline">
           <BrandMark size={28} />
@@ -139,7 +139,7 @@ export default function AdminLayout() {
             {user.status === 'ready' ? <span className="hidden max-w-[200px] truncate text-ink-muted md:inline">{user.data.email}</span> : null}
           </div>
         </header>
-        <main className="mx-auto w-full max-w-[1400px] px-4 py-6 lg:px-8">
+        <main className="w-full max-w-[2200px] px-4 py-6 lg:px-8 3xl:px-10 3xl:py-8">
           <Outlet />
         </main>
       </div>

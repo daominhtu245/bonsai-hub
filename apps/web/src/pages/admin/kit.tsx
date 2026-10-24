@@ -57,6 +57,20 @@ export function useUrlState<T extends Record<string, string>>(defaults: T): [T, 
   return [state, update];
 }
 
+/** Màn hình ≥ 1920 px (mốc `3xl`): biểu đồ cao hơn, thêm cột. */
+export function useWide(query = '(min-width: 1920px)'): boolean {
+  const get = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(query).matches;
+  const [wide, setWide] = useState(get);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const mq = window.matchMedia(query);
+    const on = () => setWide(mq.matches);
+    mq.addEventListener?.('change', on);
+    return () => mq.removeEventListener?.('change', on);
+  }, [query]);
+  return wide;
+}
+
 // ---------- bố cục ----------
 export function PageHeader({ title, sub, actions }: { title: ReactNode; sub?: ReactNode; actions?: ReactNode }) {
   return (

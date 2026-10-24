@@ -16,7 +16,7 @@ function Overview({ d }: { d: Detail }) {
   const t = d.targets as Record<string, unknown> | null;
   const p = d.progress as { cost_mode_a?: string; analysis_mode?: string; design_mode?: string; result?: Record<string, unknown> };
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+    <div className="grid gap-4 xl:grid-cols-2 3xl:grid-cols-3 4xl:grid-cols-4">
       <Panel title="Ảnh phôi">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {d.photos.map((ph) => (
@@ -85,7 +85,7 @@ function Overview({ d }: { d: Detail }) {
 function Options({ d }: { d: Detail }) {
   const front = d.photos.find((p) => p.is_front) ?? d.photos[0];
   return (
-    <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+    <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3 4xl:grid-cols-4">
       {d.options.map((o) => {
         const design = o.design as { why_vi?: string; remove_branches?: Array<{ id: string; reason_vi: string }>; keep_branches?: Array<{ id: string; role: string }>; new_branches_needed?: unknown[] };
         return (
@@ -115,11 +115,11 @@ function Images({ renders }: { renders: RenderRow[] }) {
   const groups = ['S4', 'S1', 'S2', 'S3'].map((code) => [code, renders.filter((r) => r.stage_code === code)] as const).filter(([, rs]) => rs.length);
   if (!renders.length) return <p className="text-caption text-ink-muted">Chưa có ảnh sinh ra.</p>;
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px] 3xl:grid-cols-[minmax(0,1fr)_520px]">
       <div className="flex flex-col gap-4">
         {groups.map(([code, rs]) => (
           <Panel key={code} title={code === 'S4' ? 'Ảnh kết quả (S4) — mọi ứng viên' : `Giai đoạn ${code}`}>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-6">
               {rs.map((r) => {
                 const fails = ((r.cv_checks?.fails as string[] | undefined) ?? []);
                 return (
@@ -188,7 +188,7 @@ function Pipeline({ steps }: { steps: StepRow[] }) {
 
 function Result({ d }: { d: Detail }) {
   return (
-    <div className="grid gap-4 xl:grid-cols-2">
+    <div className="grid gap-4 xl:grid-cols-2 3xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       <Panel title="Lộ trình & hướng dẫn">
         {d.stages.length ? d.stages.map((s) => (
           <details key={s.code} className="border-b border-line py-2 last:border-0">

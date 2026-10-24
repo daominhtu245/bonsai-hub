@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui';
 import { consoleApi, type Dashboard as DashboardData } from '@/lib/adminConsole';
 import { Funnel, Lines, StackedBars, type Series } from './charts';
-import { DataTable, PageHeader, Panel, Select, StatCard, StatusBadge, TableView, dt, dur, num, pct, shortId, usd, useLoad, useUrlState, vnd, vndShort } from './kit';
+import { DataTable, PageHeader, Panel, Select, StatCard, StatusBadge, TableView, dt, dur, num, pct, shortId, usd, useLoad, useUrlState, useWide, vnd, vndShort } from './kit';
 
 const JOB_SERIES: Series[] = [
   { key: 'jobs_paid', label: 'Có trả lượt', color: 'var(--chart-1)' },
@@ -15,10 +15,12 @@ const MONEY_SERIES: Series[] = [
 
 function Body({ d }: { d: DashboardData }) {
   const k = d.kpis;
+  const wide = useWide();
+  const chartH = wide ? 280 : 220;
   const rows = d.series.map((r) => ({ ...r, label: r.day.slice(5).split('-').reverse().join('/'), free: r.jobs_a - r.jobs_paid }));
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6 4xl:grid-cols-12">
         <StatCard label="Doanh thu" value={k.revenue_vnd.value} previous={k.revenue_vnd.previous} format={vnd} />
         <StatCard label="Chi phí AI" value={k.ai_cost_vnd.value} previous={k.ai_cost_vnd.previous} format={vnd} goodWhen="down" />
         <StatCard label="Lãi gộp" value={k.gross_margin_vnd.value} previous={k.gross_margin_vnd.previous} format={vnd} />
@@ -33,16 +35,13 @@ function Body({ d }: { d: DashboardData }) {
         <StatCard label="Thời gian tạo ảnh" value={d.median_phase_b_s ?? 0} format={dur} hint="trung vị" />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        <StackedBars title="Phiên theo ngày" rows={rows} series={JOB_SERIES} format={num}
+      <div className="grid gap-4 xl:grid-cols-2 3xl:grid-cols-3">
+        <StackedBars title="Phiên theo ngày" rows={rows} series={JOB_SERIES} format={num} height={chartH}
           valueOf={(r, key) => Number(r[key as keyof typeof r]) || 0}
           summary={`${num(k.jobs_a.value)} phiên · ${num(k.jobs_paid.value)} có trả lượt`} />
-        <Lines title="Doanh thu và chi phí AI (VND)" rows={rows} series={MONEY_SERIES} format={vndShort}
+        <Lines title="Doanh thu và chi phí AI (VND)" rows={rows} series={MONEY_SERIES} format={vndShort} height={chartH}
           valueOf={(r, key) => Number(r[key as keyof typeof r]) || 0}
           summary={`Tỉ giá quy đổi ${num(d.usd_vnd_rate)} đ/USD`} />
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
         <Funnel title="Phễu người dùng (trong kỳ)" summary="Số người dùng khác nhau đi tới từng bước"
           steps={[
             { label: 'Bắt đầu phân tích', value: d.funnel.users },
@@ -51,7 +50,7 @@ function Body({ d }: { d: DashboardData }) {
             { label: 'Nhận kết quả', value: d.funnel.done },
             { label: 'Chia sẻ', value: d.funnel.shared },
           ]} />
-        <RecentFailures />
+        <div className="xl:col-span-1 3xl:col-span-3"><RecentFailures /></div>
       </div>
     </div>
   );
@@ -89,7 +88,7 @@ export default function Dashboard() {
       {state.status === 'ready' ? <Body d={state.data} /> : state.status === 'error' ? (
         <Panel><span className="text-danger">{state.message}</span></Panel>
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6" aria-busy="true">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6 4xl:grid-cols-12" aria-busy="true">
           {Array.from({ length: 12 }, (_, i) => <Skeleton key={i} className="h-[96px] rounded-card" />)}
         </div>
       )}

@@ -274,7 +274,9 @@ export default function LabelEditor() {
       ) : (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
           <div className="min-w-0 flex-1">
-            <div className="relative overflow-hidden rounded-card border border-line bg-photo" style={{ aspectRatio: `${detail.width} / ${detail.height}` }}>
+            {/* Vừa khung nhìn: không rộng quá cột, không cao quá màn hình (ảnh dọc trên màn rộng không phải cuộn). */}
+            <div className="relative mx-auto overflow-hidden rounded-card border border-line bg-photo"
+              style={{ aspectRatio: `${detail.width} / ${detail.height}`, width: `min(100%, calc((100dvh - 180px) * ${detail.width / detail.height}))` }}>
               <img src={detail.image_url} alt="Ảnh phôi cần gán nhãn" className="absolute inset-0 h-full w-full select-none" draggable={false} />
               <canvas
                 ref={overlay}
@@ -294,7 +296,7 @@ export default function LabelEditor() {
             </p>
           </div>
 
-          <aside className="flex w-full flex-col gap-4 text-caption lg:w-[320px]">
+          <aside className="flex w-full flex-col gap-4 text-caption lg:sticky lg:top-[76px] lg:w-[320px] 3xl:w-[380px]">
             <div className="flex flex-col gap-2">
               <Segmented<Tool> label="Công cụ" value={tool} onChange={setTool}
                 options={[['brush', 'Cọ'], ['eraser', 'Tẩy'], ['lasso', 'Khoanh tô'], ['lasso-erase', 'Khoanh xóa']]} />

@@ -245,7 +245,7 @@ export function LabelsTab() {
             {d.items.length === 0 ? (
               <p className="m-0 text-ink-muted">Chưa có ảnh.</p>
             ) : (
-              <ul className="m-0 grid list-none grid-cols-3 gap-2 p-0 sm:grid-cols-4 lg:grid-cols-6">
+              <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 p-0 3xl:grid-cols-[repeat(auto-fill,minmax(190px,1fr))] 3xl:gap-3">
                 {d.items.map((it) => {
                   const label = LABEL_STATUS.find(([k]) => k === it.status)?.[1];
                   const body = (

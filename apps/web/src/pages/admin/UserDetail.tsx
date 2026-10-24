@@ -74,7 +74,7 @@ export default function UserDetail() {
                 <StatCard label="Phiên" value={u.jobs} format={num} />
                 <StatCard label="Lượt trả phí" value={u.paid_jobs} format={num} />
               </div>
-              <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
+              <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)] 3xl:grid-cols-[420px_minmax(0,1fr)]">
                 <Panel title="Hồ sơ" className="xl:self-start">
                   <KeyValue items={[
                     ['Đăng nhập bằng', u.auth_provider],

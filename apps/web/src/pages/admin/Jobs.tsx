@@ -38,6 +38,7 @@ export default function Jobs() {
                   { key: 'st', header: 'Trạng thái', render: (r) => <span className="flex flex-wrap items-center gap-1"><StatusBadge status={r.status} stuck={r.stuck} />{r.error_code ? <span className="font-mono text-label text-ink-subtle">{r.error_code}</span> : null}</span> },
                   { key: 'paid', header: 'Trả lượt', render: (r) => r.paid ? <Badge tone="success">Có</Badge> : <span className="text-ink-subtle">—</span> },
                   { key: 'mode', header: 'Chế độ', render: (r) => r.cost_mode ?? '—' },
+                  { key: 'pv', header: 'Prompt', className: 'hidden 3xl:table-cell', render: (r) => <span className="font-mono text-label text-ink-muted">{r.prompt_version ?? '—'}</span> },
                   { key: 'dur', header: 'Thời gian', align: 'right', render: (r) => dur(r.duration_s) },
                   { key: 'cost', header: 'Chi phí AI', align: 'right', render: (r) => usd(r.cost_usd) },
                 ]} />

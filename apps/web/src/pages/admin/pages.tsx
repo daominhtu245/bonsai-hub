@@ -28,6 +28,7 @@ export function CostsPage() {
                 <StatCard label="Phiên" value={jobs} format={num} />
                 <StatCard label="Lượt trả phí" value={paid} format={num} />
               </div>
+              <div className="grid gap-4 3xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <Lines title="Chi phí theo ngày (USD)" rows={rows} series={[{ key: 'cost_usd', label: 'Chi phí', color: 'var(--chart-2)' }]}
                 format={(n) => `$${n < 10 ? n.toFixed(2) : Math.round(n)}`} valueOf={(r) => r.cost_usd} />
               <Panel title="Theo bước" pad={false}>
@@ -45,6 +46,7 @@ export function CostsPage() {
                     { key: 'fail', header: 'Lỗi', align: 'right', render: (s) => <span className={s.fail_rate > 0.1 ? 'font-semibold text-danger' : undefined}>{pct(s.fail_rate)}</span> },
                   ]} />
               </Panel>
+              </div>
             </div>
           );
         }}
@@ -147,7 +149,7 @@ export function CatalogPage() {
       {f.tab === 'refs' ? <Panel><SpeciesTab /></Panel> : (
         <TableView state={state}>
           {(c) => f.tab === 'species' ? (
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_400px] 3xl:grid-cols-[minmax(0,1fr)_520px]">
               <Panel pad={false}>
                 <DataTable rows={c.species} rowKey={(s) => s.key} onRowClick={(s) => setSelSp(s.key)}
                   columns={[
@@ -162,7 +164,7 @@ export function CatalogPage() {
               {selSp ? <SpeciesEditor sp={c.species.find((s) => s.key === selSp)!} onSaved={reload} /> : <Panel className="xl:self-start"><span className="text-caption text-ink-muted">Chọn một loài để sửa.</span></Panel>}
             </div>
           ) : (
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_400px] 3xl:grid-cols-[minmax(0,1fr)_520px]">
               <Panel pad={false}>
                 <DataTable rows={c.styles} rowKey={(s) => s.key} onRowClick={(s) => setSelSt(s.key)}
                   columns={[

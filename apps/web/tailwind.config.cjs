@@ -10,6 +10,8 @@ module.exports = {
     extend: {
       minHeight: { touch: '44px', cta: '52px' },
       minWidth: { touch: '44px' },
+      // Màn hình rộng (trang quản trị): 1920 px (Full HD), 2560 px (QHD).
+      screens: { '3xl': '1920px', '4xl': '2560px' },
     },
   },
   plugins: [],

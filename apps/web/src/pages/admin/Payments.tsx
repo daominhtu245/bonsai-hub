@@ -68,7 +68,7 @@ export default function Payments() {
     <>
       <PageHeader title="Thanh toán" sub="Đối soát chuyển khoản VietQR (SePay / Casso) và xác nhận tay" />
       {state.status === 'ready' ? (
-        <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4 3xl:grid-cols-6">
           <StatCard label={`Doanh thu ${f.days} ngày`} value={state.data.revenue_vnd} format={vnd} />
           <StatCard label="Đơn chờ thanh toán" value={state.data.pending} format={num} />
           {state.data.by_package.map((p) => <StatCard key={p.package_code} label={`Gói ${p.package_name}`} value={p.revenue_vnd} format={vnd} hint={`${num(p.orders)} đơn`} />)}
@@ -80,7 +80,7 @@ export default function Payments() {
         <Select label="Nguồn" value={f.provider} onChange={(provider) => setF({ provider })} options={[['', 'Tất cả'], ['sepay', 'SePay'], ['casso', 'Casso'], ['manual', 'Xác nhận tay']]} />
         <Select label="Thời gian" value={f.days} onChange={(days) => setF({ days })} options={[['7', '7 ngày'], ['30', '30 ngày'], ['90', '90 ngày'], ['365', '1 năm']]} />
       </Toolbar>
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px] 3xl:grid-cols-[minmax(0,1fr)_480px]">
         <Panel pad={false}>
           <TableView state={state}>
             {(page) => (
@@ -93,6 +93,8 @@ export default function Payments() {
                     { key: 'pkg', header: 'Gói', render: (r) => r.package_name },
                     { key: 'st', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
                     { key: 'src', header: 'Nguồn', render: (r) => r.provider ?? '—' },
+                    { key: 'paid', header: 'Thanh toán lúc', className: 'hidden 3xl:table-cell', render: (r) => dt(r.paid_at) },
+                    { key: 'txn', header: 'Mã giao dịch', className: 'hidden 3xl:table-cell', render: (r) => <span className="font-mono text-label text-ink-muted">{r.provider_txn_id ?? '—'}</span> },
                     { key: 'amt', header: 'Số tiền', align: 'right', render: (r) => vnd(r.amount_vnd) },
                   ]} />
                 <Pagination total={page.total} limit={page.limit} offset={page.offset} onChange={(o) => setF({ offset: String(o) })} />
