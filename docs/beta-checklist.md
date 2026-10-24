@@ -1,5 +1,7 @@
 # Checklist lên beta (tuần 6)
 
+Cài đặt máy chủ, domain, HTTPS: xem `docs/deploy.md`.
+
 Các bước cần người vận hành làm tay. Code đã sẵn; mục nào chưa có key thì tính năng đó tự tắt hoặc báo "chưa cấu hình".
 
 ## 1. Hạ tầng (VPS + Cloudflare)

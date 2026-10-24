@@ -34,7 +34,8 @@ jobs:
             git checkout --force "$REF"
             git pull --ff-only origin "$REF" || true
             docker compose -f infra/docker-compose.yml --env-file .env up -d --build --remove-orphans
-            docker image prune -f
+            docker image prune -f --filter label=bonsai.project=bonsai  # máy chủ dùng chung: chỉ dọn image của bonsai
+            WEB_PORT=$(grep -E '^WEB_PORT=' .env | tail -1 | cut -d= -f2); WEB_PORT=${WEB_PORT:-8080}
             for i in $(seq 1 30); do
               curl -fsS "http://localhost:${WEB_PORT:-8080}/healthz" && exit 0
               sleep 5

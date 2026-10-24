@@ -21,8 +21,9 @@ services:
         VITE_ZALO_APP_ID: ${VITE_ZALO_APP_ID:-}
         VITE_DEV_LOGIN: ${VITE_DEV_LOGIN:-false}  # chỉ bật khi APP_ENV=dev
         VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+    # Mặc định chỉ nghe 127.0.0.1: Nginx của máy chủ proxy vào, không lộ cổng ra Internet (xem docs/deploy.md).
     ports:
-      - "${WEB_PORT:-8080}:80"
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8080}:80"
     depends_on:
       api:
         condition: service_healthy
@@ -165,7 +166,7 @@ services:
     environment:
       KEY: ${R2_ACCESS_KEY_ID:-local}
       SECRET: ${R2_SECRET_ACCESS_KEY:-local-secret}
-    ports: ["9000:8333"]
+    ports: ["${S3_BIND:-127.0.0.1}:${S3_PORT:-9000}:8333"]
     volumes: [s3-data:/data]
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8333/status || exit 1"]
@@ -191,7 +192,7 @@ services:
   uptime-kuma:
     profiles: [monitoring]
     image: louislam/uptime-kuma:1.23.15
-    ports: ["${UPTIME_KUMA_PORT:-3001}:3001"]
+    ports: ["127.0.0.1:${UPTIME_KUMA_PORT:-3001}:3001"]
     volumes: [uptime-kuma-data:/app/data]
     restart: unless-stopped
 
