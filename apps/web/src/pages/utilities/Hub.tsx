@@ -1,5 +1,5 @@
 import { ChevronRight, type LucideIcon } from 'lucide-react';
-import { CalendarHeart, HeartPulse, Sparkles } from 'lucide-react';
+import { CalendarHeart, HeartPulse, Sparkles, Swords, ThumbsUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { BottomNav } from '@/components/BottomNav';
@@ -18,6 +18,13 @@ export const HUB: Array<{ group: string; items: HubItem[] }> = [
   {
     group: 'Chọn cây',
     items: [{ to: '/tien-ich/hop-menh', title: 'Cây hợp mệnh', sub: 'Theo năm sinh', Icon: Sparkles }],
+  },
+  {
+    group: 'Cộng đồng',
+    items: [
+      { to: '/thu-thach', title: 'Thử thách phôi', sub: 'Cùng một phôi, ai thiết kế đẹp nhất', Icon: Swords },
+      { to: '/chon-dang', title: 'Chọn dáng đẹp', sub: 'Chạm vào dáng bạn thích hơn', Icon: ThumbsUp },
+    ],
   },
 ];
 

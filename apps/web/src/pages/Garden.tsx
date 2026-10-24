@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ChevronRight, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BottomNav } from '@/components/BottomNav';
+import { ReceiveTree } from '@/components/ReceiveTree';
 import { ButtonLink, EmptyState, Segmented, Skeleton, StateView, type ViewState } from '@/components/ui';
 import { accountApi, type GardenTree } from '@/lib/account';
 import { ApiError } from '@/lib/api';
@@ -105,6 +106,8 @@ export default function Garden() {
           }}
         </StateView>
       </main>
+      <ReceiveTree onReceived={load} />
+      <div className="h-6" />
       <BottomNav />
     </div>
   );

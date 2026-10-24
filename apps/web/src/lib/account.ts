@@ -60,6 +60,7 @@ export interface ProgressPhoto {
   url: string | null;
   taken_at: string;
   ready: boolean;
+  reward?: number;
 }
 
 export interface Announcement {

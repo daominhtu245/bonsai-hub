@@ -53,3 +53,26 @@ def test_technical_sheet_numbers_match_rows():
     assert sorted(int(n) for n in re.findall(r">(\d+)</text>", tech)) == [r.no for r in rows]
     assert [r.action for r in rows] == sorted((r.action for r in rows), key=["cut", "wire", "grow"].index)  # cắt trước
     assert all(r.gauge_mm for r in rows if r.action == "wire") and 'marker-end="url(#bend)"' in tech
+
+
+def test_trunk_print_tolerates_small_changes():
+    import numpy as np
+    from PIL import ImageEnhance
+
+    from bonsai_pipeline.trunk_print import distance, fingerprint, is_match
+
+    def tree(seed):
+        rng = np.random.default_rng(seed)
+        img = Image.fromarray(rng.integers(80, 230, (50, 34, 3), dtype=np.uint8)).resize((400, 600), Image.Resampling.BICUBIC)
+        return img
+
+    def jpg(img):
+        buf = io.BytesIO()
+        img.save(buf, "JPEG", quality=80)
+        return buf.getvalue()
+
+    a = tree(1)
+    variant = ImageEnhance.Brightness(a.crop((10, 8, 395, 600)).resize((200, 300))).enhance(1.15).transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    fa = fingerprint(jpg(a))
+    assert is_match(fa, fingerprint(jpg(variant)))
+    assert not is_match(fa, fingerprint(jpg(tree(2)))) and distance(fa, fa) == 0

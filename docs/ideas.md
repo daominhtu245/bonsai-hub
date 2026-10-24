@@ -56,6 +56,7 @@ Ký hiệu đối tượng: **NC** người chơi · **NV** nhà vườn · **NN
 ## Đã làm
 - Đợt 1: B1 giới thiệu bạn · E1 Mai kịp Tết · E5 định giá · E6 tính dây · E7 gợi ý ghép · E8 cấp cứu cây · F5 cây hợp mệnh.
 - Đợt 2: A1 phác họa bút chì · A2 thủy mặc · A3 phiếu tập vẽ (phần in; AI đọc nét vẽ tay chờ API) · A4 bản vẽ kỹ thuật · B5 video tua nhanh · F3 xem qua camera · F6 đặt vào phòng.
+- Đợt 3: B2 nhật ký đúng mốc · B3 dự đoán và thực tế · B4 thử thách phôi · B6 chọn dáng đẹp · B7 bậc tay nghề · F1 sổ cây (QR, chuyển chủ) · F7 báo mất + dấu vân thân (so với tin đăng: nối ở đợt 4).
 
 ## Thứ tự đề xuất
 | Đợt | Việc |

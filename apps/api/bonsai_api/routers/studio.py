@@ -55,6 +55,12 @@ class StudioOut(BaseModel):
 @router.get("/jobs/{job_id}/studio", response_model=StudioOut)
 def studio(job_id: uuid.UUID, user: CurrentUser, db: DB):
     job = _job(db, job_id, user)
+    mine = db.execute(select(DesignOption).where(DesignOption.job_id == job.id, DesignOption.rank == USER_RANK)).scalar_one_or_none()
+    return studio_payload(db, job, mine.design.get("_input") if mine else None)
+
+
+def studio_payload(db, job: DesignJob, draft: dict | None) -> StudioOut:
+    """Dữ liệu màn Tự thiết kế cho một phôi đã phân tích (dùng cả cho thử thách phôi)."""
     photo = db.get(TreePhoto, job.front_photo_id)
     a = Analysis.model_validate(job.analysis)
     t = _targets(job)
@@ -66,7 +72,6 @@ def studio(job_id: uuid.UUID, user: CurrentUser, db: DB):
                   "apex": o.design.get("apex", {}).get("point_px"), "pads": o.design.get("silhouette", {}).get("pads", 4),
                   "silhouette": o.design.get("silhouette"), "pot": o.design.get("pot")}
                  for o in rows if o.design.get("source", "ai") == "ai"]
-    mine = next((o for o in rows if o.rank == USER_RANK), None)
     tree = db.get(Tree, job.tree_id)
     return StudioOut(
         species_key=(tree.species_key if tree else None) or (a.species.guess if a.species else None),
@@ -74,7 +79,7 @@ def studio(job_id: uuid.UUID, user: CurrentUser, db: DB):
         trunk=a.trunk.model_dump() if a.trunk else {},
         branches=[b.model_dump() for b in a.branches],
         candidate_apex_px=list(t.candidate_apex_px), first_branch_y_range_px=list(t.first_branch_y_range_px),
-        styles=styles, templates=templates, draft=(mine.design.get("_input") if mine else None),
+        styles=styles, templates=templates, draft=draft,
     )
 
 

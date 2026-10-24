@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom';
 import { RequireAuth } from '@/components/RequireAuth';
 import { ReferralCapture } from '@/components/ReferralCapture';
 import { AuthProvider } from '@/lib/auth';
@@ -19,6 +19,11 @@ const ResultPrint = lazy(() => import('@/pages/ResultPrint'));
 const RoomPlace = lazy(() => import('@/pages/RoomPlace'));
 const TechDrawing = lazy(() => import('@/pages/TechDrawing'));
 const Worksheet = lazy(() => import('@/pages/Worksheet'));
+const VotePage = lazy(() => import('@/pages/community/Vote'));
+const ChallengesPage = lazy(() => import('@/pages/community/Challenges'));
+const ChallengeDetailPage = lazy(() => import('@/pages/community/ChallengeDetail'));
+const PassportPublicPage = lazy(() => import('@/pages/community/PassportPublic'));
+const AdminChallenges = lazy(() => import('@/pages/admin/Challenges'));
 const CreditHistory = lazy(() => import('@/pages/CreditHistory'));
 const Share = lazy(() => import('@/pages/Share'));
 const Garden = lazy(() => import('@/pages/Garden'));
@@ -56,6 +61,11 @@ const ArtisanStats = lazy(() => import('@/pages/artisan/Stats'));
 
 const guard = (el: JSX.Element) => <RequireAuth>{el}</RequireAuth>;
 
+function ChallengeStudio() {
+  const { challengeId = '' } = useParams();
+  return <Studio challengeId={challengeId} />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -79,6 +89,11 @@ export default function App() {
               <Route path="/ket-qua/:jobId/ban-ve-ky-thuat" element={guard(<TechDrawing />)} />
               <Route path="/ket-qua/:jobId/phieu-tap-ve" element={guard(<Worksheet />)} />
               <Route path="/vuon" element={guard(<Garden />)} />
+              <Route path="/chon-dang" element={guard(<VotePage />)} />
+              <Route path="/thu-thach" element={guard(<ChallengesPage />)} />
+              <Route path="/thu-thach/:challengeId" element={guard(<ChallengeDetailPage />)} />
+              <Route path="/thu-thach/:challengeId/thiet-ke" element={guard(<ChallengeStudio />)} />
+              <Route path="/so-cay/:code" element={<PassportPublicPage />} />
               <Route path="/tien-ich" element={<UtilitiesHub />} />
               <Route path="/tien-ich/mai-tet" element={<MaiTet />} />
               <Route path="/tien-ich/hop-menh" element={<MenhPage />} />
@@ -109,6 +124,7 @@ export default function App() {
                 <Route path="van-hanh" element={<AdminOps />} />
                 <Route path="ma-qua-tang" element={<AdminGiftCodes />} />
                 <Route path="thong-bao" element={<AdminBroadcast />} />
+                <Route path="thu-thach" element={<AdminChallenges />} />
               </Route>
               <Route path="/dieu-khoan" element={<Terms />} />
               <Route path="*" element={<ComingSoon title="Không tìm thấy trang" />} />

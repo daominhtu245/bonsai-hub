@@ -7,6 +7,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button, Notice, Segmented, Skeleton } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { cx } from '@/lib/cx';
+import { communityApi } from '@/lib/community';
 import { studioApi, type Preview, type Sprite, type StudioData } from '@/lib/studio';
 import {
   LEAF_OF, LEAF_VI, LIMIT, branchEnd, defaultPot, fromDraft, fromTemplate, liveHints, padName, toInput, uid,
@@ -68,8 +69,10 @@ function ToolButton({ icon, label, onClick, danger }: { icon: ReactNode; label: 
 
 const Row = ({ children }: { children: ReactNode }) => <div className="-mx-gutter flex gap-2 overflow-x-auto px-gutter pb-1">{children}</div>;
 
-export default function Studio() {
+/** `challengeId`: thiết kế bài dự thi trên phôi của thử thách (không lưu thành phương án, không xem thử AI). */
+export default function Studio({ challengeId }: { challengeId?: string } = {}) {
   const { jobId = '' } = useParams();
+  const back = challengeId ? `/thu-thach/${challengeId}` : `/chon/${jobId}`;
   const navigate = useNavigate();
   const [data, setData] = useState<StudioData | null>(null);
   const [lib, setLib] = useState<Map<string, Sprite>>(new Map());
@@ -93,17 +96,18 @@ export default function Studio() {
   const g = useRef<Gesture | null>(null);
 
   useEffect(() => {
-    Promise.all([studioApi.get(jobId), studioApi.library().catch(() => [] as Sprite[])]).then(([d, items]) => {
+    const source = challengeId ? communityApi.challengeStudio(challengeId) : studioApi.get(jobId);
+    Promise.all([source, studioApi.library().catch(() => [] as Sprite[])]).then(([d, items]) => {
       const m = new Map(items.map((x) => [x.key, x]));
       const lf = LEAF_OF[d.species_key ?? ''] ?? 'needle';
       setLib(m);
       setLeaf(lf);
       setData(d);
-      setS(d.draft ? fromDraft(d, d.draft, lf, m) : d.templates[0] ? fromTemplate(d, d.templates[0], lf, m)
+      setS(d.draft ? fromDraft(d, d.draft, lf, m) : !challengeId && d.templates[0] ? fromTemplate(d, d.templates[0], lf, m)
         : { style_key: d.styles[0]?.key ?? 'moyogi', removed: [], pads: [], accents: [], news: [], apex: d.candidate_apex_px, pot: defaultPot(d, m) });
     }).catch((e: ApiError) => setError(e.message));
-    studioApi.preview(jobId).then(setPreview).catch(() => null);
-  }, [jobId]);
+    if (!challengeId) studioApi.preview(jobId).then(setPreview).catch(() => null);
+  }, [jobId, challengeId]);
 
   useEffect(() => { // chờ ảnh xem thử
     if (preview?.state !== 'running') return;
@@ -127,8 +131,8 @@ export default function Studio() {
     return (
       <div className="mx-auto flex h-dvh max-w-content flex-col">
         <header className="flex h-14 items-center gap-1 border-b border-line px-2">
-          <Link to={`/chon/${jobId}`} aria-label="Quay lại" className="flex h-touch w-touch items-center justify-center text-ink"><ChevronLeft size={22} /></Link>
-          <h1 className="text-[15px] font-semibold">Tự thiết kế</h1>
+          <Link to={back} aria-label="Quay lại" className="flex h-touch w-touch items-center justify-center text-ink"><ChevronLeft size={22} /></Link>
+          <h1 className="text-[15px] font-semibold">{challengeId ? 'Bài dự thi' : 'Tự thiết kế'}</h1>
         </header>
         <div className="p-gutter">{error ? <Notice tone="danger">{error}</Notice> : <Skeleton className="aspect-[3/4] w-full rounded-card" />}</div>
       </div>
@@ -348,6 +352,18 @@ export default function Studio() {
       return null;
     }
   };
+  const submitEntry = async () => {
+    if (!challengeId) return;
+    setBusy('save');
+    setError(null);
+    try {
+      await communityApi.submitEntry(challengeId, toInput(s, data, lib));
+      navigate(`/thu-thach/${challengeId}`);
+    } catch (e) {
+      setError((e as ApiError).message);
+      setBusy(null);
+    }
+  };
   const saveAndChoose = async () => {
     setBusy('save');
     const id = await save();
@@ -498,6 +514,9 @@ export default function Studio() {
         </select>
       </label>
       {hints.length ? <Notice tone="info"><ul className="m-0 flex list-none flex-col gap-1 p-0">{hints.map((h) => <li key={h}>{h}</li>)}</ul></Notice> : null}
+      {error && challengeId ? <Notice tone="danger">{error}</Notice> : null}
+      {challengeId ? <Button onClick={submitEntry} loading={busy === 'save'} loadingLabel="Đang gửi…" disabled={busy !== null}>Gửi bài dự thi · {styleName}</Button> : null}
+      {challengeId ? null : <>
       <div className="grid grid-cols-2 gap-2">
         <Button variant="secondary" size="touch" className="whitespace-nowrap !px-2" onClick={quickPreview} loading={busy === 'preview'} loadingLabel="Đang gửi…"
           disabled={busy !== null || preview?.state === 'running' || preview?.remaining === 0}>
@@ -530,6 +549,7 @@ export default function Studio() {
       ) : null}
       <Button onClick={saveAndChoose} loading={busy === 'save'} loadingLabel="Đang lưu…" disabled={busy !== null}>Lưu thiết kế · {styleName}</Button>
       <span className="text-center text-label text-ink-subtle">Lưu, xem thử, nhờ góp ý miễn phí · tạo ảnh tương lai dùng 1 lượt</span>
+      </>}
     </div>
   );
   const panel = itemPanel ?? { branch: branchPanel, pad: padPanel, pot: potPanel, accent: accentPanel, done: donePanel }[tab];
@@ -537,8 +557,8 @@ export default function Studio() {
   return (
     <div className="mx-auto flex h-dvh max-w-content flex-col overflow-hidden bg-bg">
       <header className="flex h-14 flex-none items-center gap-1 border-b border-line px-1">
-        <Link to={`/chon/${jobId}`} aria-label="Quay lại" className="flex h-touch w-touch flex-none items-center justify-center rounded-btn text-ink"><ChevronLeft size={22} /></Link>
-        <h1 className="min-w-0 flex-1 truncate text-[15px] font-semibold">Tự thiết kế</h1>
+        <Link to={back} aria-label="Quay lại" className="flex h-touch w-touch flex-none items-center justify-center rounded-btn text-ink"><ChevronLeft size={22} /></Link>
+        <h1 className="min-w-0 flex-1 truncate text-[15px] font-semibold">{challengeId ? 'Bài dự thi' : 'Tự thiết kế'}</h1>
         <button type="button" aria-label="Hoàn tác" onClick={undo} disabled={!history.length}
           className="flex h-touch w-touch items-center justify-center rounded-btn text-ink disabled:text-ink-subtle"><Undo2 size={20} /></button>
         <button type="button" aria-label="Xem như thật" aria-pressed={real} onClick={() => { setReal(!real); setSel(null); }}

@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from .. import queue, storage
 from ..db.models import CreditLedger, PhotoSource, Tree, TreePhoto
 from ..security import DB, CurrentUser
+from ..services.community import diary_reward
 from ..services.gift_codes import GiftCodeError, redeem
 from ..services.ops import get_ops
 from .uploads import upload_prefix
@@ -17,7 +18,8 @@ from .uploads import upload_prefix
 router = APIRouter(tags=["account"])
 
 REASON_VI = {"purchase": "Mua lượt", "render": "Tạo ảnh tương lai", "refund": "Hoàn lượt (lỗi hệ thống)",
-             "gift": "Được tặng", "adjust": "Điều chỉnh"}
+             "gift": "Được tặng", "adjust": "Điều chỉnh", "referral": "Giới thiệu bạn", "reward": "Thưởng",
+             "consult": "Hỏi nghệ nhân"}
 
 
 class RedeemIn(BaseModel):
@@ -56,6 +58,8 @@ def credit_history(user: CurrentUser, db: DB):
         label = REASON_VI.get(e.reason.value, e.reason.value)
         if ref == "trial":
             label = "Quà chào mừng"
+        elif ref.startswith("diary:"):
+            label = f"Thưởng nhật ký mốc {ref.rsplit(':', 1)[1]} tháng"
         elif ref.startswith("code:"):
             label = f"Mã quà tặng {ref[5:]}"
         job = ref.split("#")[0] if e.reason.value in ("render", "refund") else None
@@ -86,6 +90,7 @@ class ProgressPhoto(BaseModel):
     url: str | None
     taken_at: datetime
     ready: bool
+    reward: int = 0  # lượt được tặng vì chụp đúng mốc 1 / 3 / 6 tháng
 
 
 def _own_tree(db, tree_id: uuid.UUID, user) -> Tree:
@@ -110,9 +115,10 @@ def add_progress(tree_id: uuid.UUID, body: ProgressIn, user: CurrentUser, db: DB
     photo = TreePhoto(tree_id=tree.id, storage_key=body.key, view_index=100 + n, is_front=False,
                       source=PhotoSource.progress, taken_at=datetime.now(UTC))
     db.add(photo)
+    reward = diary_reward(db, tree, photo.taken_at)
     db.commit()
     queue.enqueue("bonsai_worker.tasks.preprocess.normalize_tree_photos", str(tree.id))  # xóa EXIF/GPS, 1536 px
-    return ProgressPhoto(id=photo.id, url=None, taken_at=photo.taken_at, ready=False)
+    return ProgressPhoto(id=photo.id, url=None, taken_at=photo.taken_at, ready=False, reward=reward)
 
 
 @router.get("/trees/{tree_id}/progress", response_model=list[ProgressPhoto])

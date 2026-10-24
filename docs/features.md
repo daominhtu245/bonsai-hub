@@ -27,6 +27,12 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | **Bản vẽ kỹ thuật** (đánh số cành, chỗ quấn dây, mũi tên uốn, bảng cỡ dây + ô đánh dấu) | Kết quả → Bản vẽ kỹ thuật | In / Lưu PDF, mang ra vườn |
 | **Phiếu tập vẽ** (phác họa phôi mờ trên lưới ô) | Kết quả → Phiếu tập vẽ | In ra vẽ tay. Đọc nét vẽ tay bằng AI: chờ API |
 | **Đặt vào phòng / xem qua camera**: cây tương lai đã tách nền đặt lên ảnh phòng, sân hoặc camera trực tiếp; kéo, chụm hai ngón đổi cỡ; đế đôn gỗ / kệ đá; lưu ảnh | Kết quả → Đặt vào phòng | Tách nền trên worker (ISNet), ghép trên điện thoại |
+| **Mốc nhật ký có thưởng** 1 / 3 / 6 tháng (chụp sớm 1 tuần – muộn 3 tuần vẫn tính) | Kết quả → Nhật ký cây | Mỗi mốc tặng một lần, số lượt chỉnh ở Cấu hình vận hành |
+| **Dự đoán và thực tế**: ảnh giai đoạn lẽ ra đang tới cạnh ảnh cây thật mới nhất, chấm độ giống 1–5 | Kết quả → Nhật ký cây | Điểm lưu theo phiên — thước đo chất lượng AI theo thời gian |
+| **Chọn dáng đẹp**: chạm / quẹt chọn một trong hai phương án của cùng một phôi | Tiện ích → Chọn dáng đẹp | Chỉ dùng phôi chủ đã chia sẻ công khai; không chấm phôi của mình |
+| **Thử thách phôi**: cùng một phôi, tự thiết kế bài dự thi (bắt đầu trống), bầu một phiếu (đổi được), đang mở thì ẩn số phiếu | Tiện ích → Thử thách phôi | Quản trị tạo ở Thử thách phôi; phôi phải do quản trị / nghệ nhân tải lên |
+| **Bậc tay nghề** Học trò → Thợ → Nghệ nhân | Tài khoản | Tính từ số thiết kế, ảnh nhật ký, lượt chọn dáng, phiếu thử thách |
+| **Sổ cây**: mã QR, trang công khai lịch sử (bật / tắt), chuyển chủ bằng mã nhận cây (7 ngày), báo mất | Kết quả → Sổ cây; nhận cây ở Vườn | Chủ mới nhận cả ảnh, lộ trình, nhật ký; cây báo mất không chuyển được, trang sổ hiện cảnh báo |
 | Vườn của tôi | Thanh dưới → Vườn | |
 | Mua lượt (VietQR) | Tài khoản → Mua lượt | Gói, giá do quản trị chỉnh |
 | **Nhập mã quà tặng** | Tài khoản, Mua lượt | |

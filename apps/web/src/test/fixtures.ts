@@ -30,3 +30,18 @@ export function job(patch: Partial<Job> = {}): Job {
     ...patch,
   };
 }
+
+/** Dữ liệu màn Tự thiết kế (GET /jobs/{id}/studio) dùng chung cho các test. */
+export const studio = {
+  species_key: 'si',
+  photo_url: 'https://r2/p.webp', width: 1000, height: 1500,
+  trunk: { base_point_px: [500, 1300], apex_point_px: [520, 300], height_px: 1000, base_diameter_px: 120 },
+  branches: [
+    { id: 'b1', start_px: [480, 1000], end_px: [300, 950], direction: 'left', thickness: 'thick', height_ratio: 0.3 },
+    { id: 'b2', start_px: [520, 990], end_px: [700, 940], direction: 'right', thickness: 'medium', height_ratio: 0.31 },
+  ],
+  candidate_apex_px: [515, 400], first_branch_y_range_px: [900, 1050],
+  styles: [{ key: 'moyogi', name_vi: 'Trực uốn', suggested: true }, { key: 'chokkan', name_vi: 'Trực', suggested: false }],
+  templates: [{ rank: 1, style_key: 'moyogi', removed: ['b2'], apex: [515, 400], pads: 3, silhouette: { width_px: 600, height_px: 520, pads: 3 }, pot: { shape: 'oval', color: 'x', position: 'center' } }],
+  draft: null,
+};

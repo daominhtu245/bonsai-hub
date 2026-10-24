@@ -5,6 +5,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { GiftCodeBox } from '@/components/GiftCodeBox';
 import { ProfileExtras } from '@/components/ProfileExtras';
 import { ReferralCard } from '@/components/ReferralCard';
+import { SkillCard } from '@/components/SkillCard';
 import { Button, ButtonLink, Notice, Segmented, Skeleton } from '@/components/ui';
 import { accountApi, vnd, type Payment } from '@/lib/account';
 import { ApiError } from '@/lib/api';
@@ -136,6 +137,7 @@ export default function Account() {
           </Link>
         </div>
 
+        <SkillCard />
         <ReferralCard />
 
         <form onSubmit={save} className="flex flex-col gap-2">
