@@ -5,6 +5,7 @@ import { accountApi, type ProgressPhoto } from '@/lib/account';
 import { ApiError, uploadPhoto } from '@/lib/api';
 import { communityApi, type Milestone, type Reality } from '@/lib/community';
 import { cx } from '@/lib/cx';
+import { useFeatures } from '@/lib/features';
 
 const day = (iso: string) => new Date(iso).toLocaleDateString('vi-VN');
 const short = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' });
@@ -71,9 +72,10 @@ export function TreeDiary({ treeId }: { treeId: string }) {
   const input = useRef<HTMLInputElement>(null);
 
   const load = () => accountApi.progress(treeId).then(setPhotos).catch(() => setPhotos([]));
+  const on = useFeatures();
   const loadExtras = () => {
-    communityApi.milestones(treeId).then(setMiles).catch(() => setMiles([]));
-    communityApi.reality(treeId).then(setReality).catch(() => setReality(null));
+    if (on('diary_rewards')) communityApi.milestones(treeId).then(setMiles).catch(() => setMiles([]));
+    if (on('reality')) communityApi.reality(treeId).then(setReality).catch(() => setReality(null));
   };
   useEffect(() => {
     load();

@@ -65,7 +65,7 @@ describe('Chợ phôi', () => {
       ['PATCH /api/v1/listings/l1', () => { items = [listing({ status: 'hidden' })]; return json(items[0]); }],
     ]);
     renderAt('/tin-cua-toi?job=j1&tree=t1&title=Si%20s%C3%A2n', '/tin-cua-toi', <MyListingsPage />);
-    expect(await screen.findByText('Kèm dáng tương lai của cây này')).toBeInTheDocument();
+    expect(await screen.findByText('Tin kèm dáng tương lai của cây này')).toBeInTheDocument();
     expect(screen.getByLabelText('Tiêu đề')).toHaveValue('Si sân');
     await waitFor(() => expect(screen.getByLabelText('Điện thoại / Zalo')).toHaveValue('0909123456'));
     await userEvent.type(screen.getByLabelText('Giá (đ)'), '3.000.000');

@@ -61,3 +61,20 @@ def require_artisan(user: Annotated[User, Depends(get_current_user)]) -> User:
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
 DB = Annotated[Session, Depends(get_db)]
+
+
+def get_optional_user(
+    creds: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+    db: Annotated[Session, Depends(get_db)],
+) -> User | None:
+    """Trang công khai: có token hợp lệ thì trả người dùng, không thì None (không báo lỗi)."""
+    if creds is None or creds.scheme.lower() != "bearer":
+        return None
+    try:
+        user = db.get(User, decode_access_token(creds.credentials))
+    except HTTPException:
+        return None
+    return user if user is not None and user.deleted_at is None else None
+
+
+OptionalUser = Annotated[User | None, Depends(get_optional_user)]

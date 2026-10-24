@@ -4,6 +4,7 @@ import { RequireAuth } from '@/components/RequireAuth';
 import { ReferralCapture } from '@/components/ReferralCapture';
 import { AuthProvider } from '@/lib/auth';
 import { CaptureProvider } from '@/lib/capture';
+import { FeatureGate, FeaturesProvider, type FeatureKey } from '@/lib/features';
 import ComingSoon from '@/pages/ComingSoon';
 import Home from '@/pages/Home';
 import Login, { ZaloCallback } from '@/pages/Login';
@@ -35,6 +36,9 @@ const AssistantPage = lazy(() => import('@/pages/utilities/Assistant'));
 const WeatherPage = lazy(() => import('@/pages/utilities/Weather'));
 const PassportPrintPage = lazy(() => import('@/pages/community/PassportPrint'));
 const ArtisanConsults = lazy(() => import('@/pages/artisan/Consults'));
+const AdminFeatures = lazy(() => import('@/pages/admin/Features'));
+const AdminCommunity = lazy(() => import('@/pages/admin/Community'));
+const AdminAssistantLog = lazy(() => import('@/pages/admin/AssistantLog'));
 const ArtisansPage = lazy(() => import('@/pages/expert/Artisans'));
 const PersonPage = lazy(() => import('@/pages/expert/Person'));
 const expertPages = () => import('@/pages/expert/Consults');
@@ -81,6 +85,7 @@ const ArtisanRules = lazy(() => import('@/pages/artisan/Rules'));
 const ArtisanStats = lazy(() => import('@/pages/artisan/Stats'));
 
 const guard = (el: JSX.Element) => <RequireAuth>{el}</RequireAuth>;
+const gate = (k: FeatureKey | FeatureKey[], el: JSX.Element) => <FeatureGate k={k}>{el}</FeatureGate>;
 
 function ChallengeStudio() {
   const { challengeId = '' } = useParams();
@@ -90,6 +95,7 @@ function ChallengeStudio() {
 export default function App() {
   return (
     <AuthProvider>
+      <FeaturesProvider>
       <CaptureProvider>
         <BrowserRouter>
           <ReferralCapture />
@@ -106,36 +112,36 @@ export default function App() {
               <Route path="/tu-thiet-ke/:jobId" element={guard(<Studio />)} />
               <Route path="/ket-qua/:jobId" element={guard(<Result />)} />
               <Route path="/ket-qua/:jobId/in" element={guard(<ResultPrint />)} />
-              <Route path="/ket-qua/:jobId/dat-vao-phong" element={guard(<RoomPlace />)} />
-              <Route path="/ket-qua/:jobId/ban-ve-ky-thuat" element={guard(<TechDrawing />)} />
-              <Route path="/ket-qua/:jobId/phieu-tap-ve" element={guard(<Worksheet />)} />
+              <Route path="/ket-qua/:jobId/dat-vao-phong" element={gate('room_place', guard(<RoomPlace />))} />
+              <Route path="/ket-qua/:jobId/ban-ve-ky-thuat" element={gate('tech_drawing', guard(<TechDrawing />))} />
+              <Route path="/ket-qua/:jobId/phieu-tap-ve" element={gate('worksheet', guard(<Worksheet />))} />
               <Route path="/vuon" element={guard(<Garden />)} />
-              <Route path="/chon-dang" element={guard(<VotePage />)} />
-              <Route path="/thu-thach" element={guard(<ChallengesPage />)} />
-              <Route path="/thu-thach/:challengeId" element={guard(<ChallengeDetailPage />)} />
-              <Route path="/thu-thach/:challengeId/thiet-ke" element={guard(<ChallengeStudio />)} />
-              <Route path="/so-cay/:code" element={<PassportPublicPage />} />
-              <Route path="/so-cay/:code/in" element={<PassportPrintPage />} />
-              <Route path="/tien-ich/benh-la" element={guard(<HealthPage />)} />
-              <Route path="/tien-ich/hoi-dap" element={<AssistantPage />} />
-              <Route path="/tien-ich/thoi-tiet" element={<WeatherPage />} />
-              <Route path="/cho" element={<MarketPage />} />
-              <Route path="/tin/:code" element={<ListingPublicPage />} />
-              <Route path="/tin/:code/the" element={<ListingTagPage />} />
-              <Route path="/tin-cua-toi" element={guard(<MyListingsPage />)} />
-              <Route path="/tien-ich/gia" element={<PriceIndexPage />} />
-              <Route path="/nghe-nhan" element={<ArtisansPage />} />
-              <Route path="/nguoi/:slug" element={<PersonPage />} />
-              <Route path="/hoi-nghe-nhan" element={guard(<MyConsultsPage />)} />
-              <Route path="/hoi-nghe-nhan/moi" element={guard(<AskConsultPage />)} />
-              <Route path="/hoi-nghe-nhan/:consultId" element={guard(<ConsultDetailPage />)} />
-              <Route path="/cham-ho" element={guard(<CareListPage />)} />
-              <Route path="/cham-ho/moi" element={guard(<CareNewPage />)} />
-              <Route path="/cham-ho/:requestId" element={guard(<CareDetailPage />)} />
+              <Route path="/chon-dang" element={gate('design_votes', guard(<VotePage />))} />
+              <Route path="/thu-thach" element={gate('challenges', guard(<ChallengesPage />))} />
+              <Route path="/thu-thach/:challengeId" element={gate('challenges', guard(<ChallengeDetailPage />))} />
+              <Route path="/thu-thach/:challengeId/thiet-ke" element={gate('challenges', guard(<ChallengeStudio />))} />
+              <Route path="/so-cay/:code" element={gate('passport', <PassportPublicPage />)} />
+              <Route path="/so-cay/:code/in" element={gate('passport', <PassportPrintPage />)} />
+              <Route path="/tien-ich/benh-la" element={gate('health_check', guard(<HealthPage />))} />
+              <Route path="/tien-ich/hoi-dap" element={gate('assistant', <AssistantPage />)} />
+              <Route path="/tien-ich/thoi-tiet" element={gate('weather', <WeatherPage />)} />
+              <Route path="/cho" element={gate('market', <MarketPage />)} />
+              <Route path="/tin/:code" element={gate('market', <ListingPublicPage />)} />
+              <Route path="/tin/:code/the" element={gate('market', <ListingTagPage />)} />
+              <Route path="/tin-cua-toi" element={gate('market', guard(<MyListingsPage />))} />
+              <Route path="/tien-ich/gia" element={gate('price_index', <PriceIndexPage />)} />
+              <Route path="/nghe-nhan" element={gate(['consults', 'public_profiles'], <ArtisansPage />)} />
+              <Route path="/nguoi/:slug" element={gate('public_profiles', <PersonPage />)} />
+              <Route path="/hoi-nghe-nhan" element={gate('consults', guard(<MyConsultsPage />))} />
+              <Route path="/hoi-nghe-nhan/moi" element={gate('consults', guard(<AskConsultPage />))} />
+              <Route path="/hoi-nghe-nhan/:consultId" element={gate('consults', guard(<ConsultDetailPage />))} />
+              <Route path="/cham-ho" element={gate('care', guard(<CareListPage />))} />
+              <Route path="/cham-ho/moi" element={gate('care', guard(<CareNewPage />))} />
+              <Route path="/cham-ho/:requestId" element={gate('care', guard(<CareDetailPage />))} />
               <Route path="/tien-ich" element={<UtilitiesHub />} />
-              <Route path="/tien-ich/mai-tet" element={<MaiTet />} />
-              <Route path="/tien-ich/hop-menh" element={<MenhPage />} />
-              <Route path="/tien-ich/cap-cuu" element={<RescuePage />} />
+              <Route path="/tien-ich/mai-tet" element={gate('mai_tet', <MaiTet />)} />
+              <Route path="/tien-ich/hop-menh" element={gate('menh', <MenhPage />)} />
+              <Route path="/tien-ich/cap-cuu" element={gate('rescue', <RescuePage />)} />
               <Route path="/mua-luot" element={guard(<Buy />)} />
               <Route path="/chia-se/:jobId" element={guard(<Share />)} />
               <Route path="/tai-khoan" element={guard(<Account />)} />
@@ -165,6 +171,9 @@ export default function App() {
                 <Route path="thu-thach" element={<AdminChallenges />} />
                 <Route path="chau-doi-tac" element={<AdminPots />} />
                 <Route path="hoi-dap" element={<ArtisanConsults />} />
+                <Route path="tinh-nang" element={<AdminFeatures />} />
+                <Route path="cong-dong" element={<AdminCommunity />} />
+                <Route path="tro-ly" element={<AdminAssistantLog />} />
                 <Route path="hoi-dap/:consultId" element={<ArtisanConsults />} />
               </Route>
               <Route path="/dieu-khoan" element={<Terms />} />
@@ -173,6 +182,7 @@ export default function App() {
           </Suspense>
         </BrowserRouter>
       </CaptureProvider>
+      </FeaturesProvider>
     </AuthProvider>
   );
 }

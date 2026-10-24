@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ChevronRight, Star } from 'lucide-react';
+import { ChevronRight, Star, Users } from 'lucide-react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Avatar } from '@/components/Avatar';
 import { BackHeader } from '@/components/BackHeader';
 import { TreePicker } from '@/components/TreePicker';
 import { Button, ButtonLink, Notice, Skeleton } from '@/components/ui';
@@ -8,6 +9,7 @@ import { ApiError } from '@/lib/api';
 import { cx } from '@/lib/cx';
 import { expertApi, type Consult, type Person } from '@/lib/expert';
 
+const TEMPLATES = ['Thế này đã hợp chưa?', 'Cành nào nên cắt bỏ?', 'Nên uốn cành nào trước?', 'Có nên hạ ngọn không?', 'Chậu này hợp không?'];
 const STATUS_VI = { open: 'Chờ trả lời', answered: 'Đã trả lời', refunded: 'Đã hoàn lượt' } as const;
 const day = (iso: string) => new Date(iso).toLocaleDateString('vi-VN');
 
@@ -49,16 +51,30 @@ export function AskConsultPage() {
             <TreePicker value={treeId} onChange={(t) => { setTreeId(t.tree_id); setJobId(t.job_id); }} />
           </section>
         )}
-        <label className="flex flex-col gap-1 text-caption font-semibold">Nghệ nhân
-          <select value={artisan} onChange={(e) => setArtisan(e.target.value)} className="min-h-touch rounded-btn border border-line-strong bg-surface px-3 text-body font-normal">
-            <option value="">Ai rảnh trước</option>
-            {artisans.map((a) => <option key={a.slug} value={a.slug}>{a.name}</option>)}
-          </select>
-        </label>
+        {artisans.length ? (
+          <section className="flex flex-col gap-2">
+            <h2 className="m-0 text-caption font-semibold">Nghệ nhân</h2>
+            <div role="radiogroup" aria-label="Nghệ nhân" className="-mx-gutter flex gap-2 overflow-x-auto px-gutter pb-1">
+              {[{ slug: '', name: 'Ai rảnh trước' } as Pick<Person, 'slug' | 'name'>, ...artisans].map((a) => (
+                <button key={a.slug || 'any'} type="button" role="radio" aria-checked={artisan === a.slug} onClick={() => setArtisan(a.slug)}
+                  className={cx('flex w-24 flex-none flex-col items-center gap-1.5 rounded-card border p-2 text-label', artisan === a.slug ? 'border-ink bg-surface-2 font-semibold' : 'border-line bg-surface')}>
+                  {a.slug ? <Avatar name={a.name} /> : <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-ink-muted"><Users size={20} aria-hidden="true" /></span>}
+                  <span className="line-clamp-2 text-center leading-tight">{a.name}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : null}
         <label className="flex flex-col gap-1 text-caption font-semibold">Câu hỏi
-          <textarea rows={5} minLength={10} maxLength={2000} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Vd. Cành thứ nhất nên hạ thấp hơn không?"
+          <textarea rows={4} minLength={10} maxLength={2000} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Viết câu hỏi hoặc chọn gợi ý bên dưới"
             className="rounded-btn border border-line-strong bg-surface p-3 text-body font-normal" />
         </label>
+        <div className="flex flex-wrap gap-1.5" aria-label="Câu hỏi gợi ý">
+          {TEMPLATES.map((t) => (
+            <button key={t} type="button" onClick={() => setQ((cur) => (cur.trim() ? `${cur.trim()} ${t}` : t))}
+              className="min-h-touch rounded-full border border-line bg-surface px-3 text-label text-ink hover:bg-surface-2">+ {t}</button>
+          ))}
+        </div>
         {error ? <Notice tone="danger">{error}</Notice> : null}
         <Button onClick={submit} loading={busy} loadingLabel="Đang gửi…" disabled={!jobId || q.trim().length < 10 || busy}>
           Gửi câu hỏi{price ? ` · ${price.credits} lượt` : ''}

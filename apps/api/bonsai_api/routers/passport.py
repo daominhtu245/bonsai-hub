@@ -19,6 +19,8 @@ from ..db.models import (
 )
 from ..security import DB, CurrentUser
 from ..settings import get_settings
+from ..services.features import require_feature
+
 
 router = APIRouter(tags=["passport"])
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -68,7 +70,7 @@ def _out(db, tree: Tree) -> PassportOut:
                        transfer_expires_at=t.expires_at if t else None)
 
 
-@router.post("/trees/{tree_id}/passport", response_model=PassportOut)
+@router.post("/trees/{tree_id}/passport", dependencies=[require_feature("passport")], response_model=PassportOut)
 def open_passport(tree_id: uuid.UUID, db: DB, user: CurrentUser):
     """Tạo (một lần) mã sổ cây; gọi lại trả mã cũ."""
     tree = _own_tree(db, tree_id, user)
@@ -83,7 +85,7 @@ class PassportPatch(BaseModel):
     stolen: bool | None = None
 
 
-@router.patch("/trees/{tree_id}/passport", response_model=PassportOut)
+@router.patch("/trees/{tree_id}/passport", dependencies=[require_feature("passport")], response_model=PassportOut)
 def patch_passport(tree_id: uuid.UUID, body: PassportPatch, db: DB, user: CurrentUser):
     tree = _own_tree(db, tree_id, user)
     if not tree.passport_code:
@@ -96,7 +98,7 @@ def patch_passport(tree_id: uuid.UUID, body: PassportPatch, db: DB, user: Curren
     return _out(db, tree)
 
 
-@router.get("/public/passport/{code}/qr.svg")
+@router.get("/public/passport/{code}/qr.svg", dependencies=[require_feature("passport")])
 def passport_qr(code: str, db: DB):
     """QR chỉ chứa link trang sổ (công khai); trang sổ tự ẩn nếu chủ chưa công khai."""
     tree = db.execute(select(Tree).where(Tree.passport_code == code.upper())).scalar_one_or_none()
@@ -109,7 +111,7 @@ def passport_qr(code: str, db: DB):
 # ---------- chuyển chủ ----------
 
 
-@router.post("/trees/{tree_id}/transfer", response_model=PassportOut)
+@router.post("/trees/{tree_id}/transfer", dependencies=[require_feature("passport")], response_model=PassportOut)
 def start_transfer(tree_id: uuid.UUID, db: DB, user: CurrentUser):
     tree = _own_tree(db, tree_id, user)
     if tree.stolen_at is not None:
@@ -122,7 +124,7 @@ def start_transfer(tree_id: uuid.UUID, db: DB, user: CurrentUser):
     return _out(db, tree)
 
 
-@router.delete("/trees/{tree_id}/transfer", response_model=PassportOut)
+@router.delete("/trees/{tree_id}/transfer", dependencies=[require_feature("passport")], response_model=PassportOut)
 def cancel_transfer(tree_id: uuid.UUID, db: DB, user: CurrentUser):
     tree = _own_tree(db, tree_id, user)
     db.execute(update(TreeTransfer).where(TreeTransfer.tree_id == tree.id, TreeTransfer.accepted_at.is_(None))
@@ -135,7 +137,7 @@ class AcceptIn(BaseModel):
     code: str = Field(min_length=6, max_length=12)
 
 
-@router.post("/transfers/accept")
+@router.post("/transfers/accept", dependencies=[require_feature("passport")])
 def accept_transfer(body: AcceptIn, db: DB, user: CurrentUser):
     """Chủ mới nhập mã → cây cùng ảnh, lộ trình, nhật ký về tài khoản mới. Lượt đã dùng / sổ lượt không chuyển."""
     t = db.execute(select(TreeTransfer).where(TreeTransfer.code == body.code.strip().upper()).with_for_update()).scalar_one_or_none()
@@ -165,7 +167,7 @@ def _public_tree(db, code: str) -> Tree:
     return tree
 
 
-@router.get("/public/passport/{code}")
+@router.get("/public/passport/{code}", dependencies=[require_feature("passport")])
 def public_passport(code: str, db: DB):
     tree = _public_tree(db, code)
     owner = db.get(User, tree.user_id)

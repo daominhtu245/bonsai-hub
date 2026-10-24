@@ -16,6 +16,8 @@ from .. import queue, storage
 from ..db.models import DesignJob, JobStatus
 from ..security import DB, CurrentUser
 from ..services.stage_images import stage_keys
+from ..services.features import require_feature
+
 
 router = APIRouter(tags=["media"])
 Style = Literal["pencil", "ink"]
@@ -31,7 +33,7 @@ def _done(db, job_id: uuid.UUID, user) -> DesignJob:
 
 
 
-@router.get("/jobs/{job_id}/art")
+@router.get("/jobs/{job_id}/art", dependencies=[require_feature("art_styles", "worksheet")])
 def art(job_id: uuid.UUID, style: Style, db: DB, user: CurrentUser) -> dict[str, str]:
     """{giai đoạn: URL} ảnh đã chuyển kiểu tranh; chưa có thì tạo (≈ 0,1–2 s / ảnh) và lưu lại."""
     job = _done(db, job_id, user)
@@ -78,21 +80,21 @@ def _start(db, job: DesignJob, kind: str, task: str) -> MediaOut:
     return MediaOut(state="running")
 
 
-@router.get("/jobs/{job_id}/video", response_model=MediaOut)
+@router.get("/jobs/{job_id}/video", dependencies=[require_feature("timelapse")], response_model=MediaOut)
 def video(job_id: uuid.UUID, db: DB, user: CurrentUser):
     return _media(_done(db, job_id, user), "video")
 
 
-@router.post("/jobs/{job_id}/video", response_model=MediaOut, status_code=status.HTTP_202_ACCEPTED)
+@router.post("/jobs/{job_id}/video", dependencies=[require_feature("timelapse")], response_model=MediaOut, status_code=status.HTTP_202_ACCEPTED)
 def make_video(job_id: uuid.UUID, db: DB, user: CurrentUser):
     return _start(db, _done(db, job_id, user), "video", "bonsai_worker.tasks.media.timelapse")
 
 
-@router.get("/jobs/{job_id}/cutout", response_model=MediaOut)
+@router.get("/jobs/{job_id}/cutout", dependencies=[require_feature("room_place")], response_model=MediaOut)
 def final_cutout(job_id: uuid.UUID, db: DB, user: CurrentUser):
     return _media(_done(db, job_id, user), "cutout")
 
 
-@router.post("/jobs/{job_id}/cutout", response_model=MediaOut, status_code=status.HTTP_202_ACCEPTED)
+@router.post("/jobs/{job_id}/cutout", dependencies=[require_feature("room_place")], response_model=MediaOut, status_code=status.HTTP_202_ACCEPTED)
 def make_cutout(job_id: uuid.UUID, db: DB, user: CurrentUser):
     return _start(db, _done(db, job_id, user), "cutout", "bonsai_worker.tasks.media.final_cutout")

@@ -13,6 +13,7 @@ import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { disablePush, enablePush, pushState, type PushState } from '@/lib/push';
 import { getTheme, setTheme, type ThemePref } from '@/lib/theme';
+import { useFeatures } from '@/lib/features';
 
 const PUSH_TEXT: Record<PushState, string> = {
   on: 'Đang bật trên thiết bị này',
@@ -47,6 +48,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 const STATUS: Record<Payment['status'], string> = { pending: 'Chờ tiền về', paid: 'Đã cộng lượt', expired: 'Hết hạn', cancelled: 'Đã hủy' };
 
 export default function Account() {
+  const on = useFeatures();
   const { user, setUser, signOut } = useAuth();
   const navigate = useNavigate();
   const me = user.status === 'ready' ? user.data : null;
@@ -138,9 +140,9 @@ export default function Account() {
           </Link>
         </div>
 
-        <SkillCard />
-        <PublicProfile />
-        <ReferralCard />
+        {on('skill_levels') ? <SkillCard /> : null}
+        {on('public_profiles') ? <PublicProfile /> : null}
+        {on('referral') ? <ReferralCard /> : null}
 
         <form onSubmit={save} className="flex flex-col gap-2">
           <Group title="Hồ sơ">

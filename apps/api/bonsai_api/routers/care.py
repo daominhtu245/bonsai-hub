@@ -18,6 +18,8 @@ from ..db.models import CareRequest, CareUpdate, DesignJob, PhotoSource, Tree, T
 from ..security import DB, CurrentUser
 from .expert import _display, notify
 from .uploads import upload_prefix
+from ..services.features import require_feature
+
 
 router = APIRouter(tags=["care"])
 KIND_VI = {"care": "Chăm hộ", "grow": "Nuôi hộ"}
@@ -58,7 +60,7 @@ def _out(db, r: CareRequest, *, viewer: User, updates: bool = False) -> dict:
     return d
 
 
-@router.post("/care-requests", status_code=status.HTTP_201_CREATED)
+@router.post("/care-requests", dependencies=[require_feature("care")], status_code=status.HTTP_201_CREATED)
 def create(body: CareIn, db: DB, user: CurrentUser):
     tree = db.get(Tree, body.tree_id)
     if tree is None or tree.user_id != user.id:
@@ -82,7 +84,7 @@ def create(body: CareIn, db: DB, user: CurrentUser):
     return _out(db, r, viewer=user)
 
 
-@router.get("/care-requests")
+@router.get("/care-requests", dependencies=[require_feature("care")])
 def mine(db: DB, user: CurrentUser):
     rows = db.execute(select(CareRequest).where(or_(CareRequest.owner_id == user.id, CareRequest.nursery_id == user.id))
                       .order_by(CareRequest.created_at.desc()).limit(100)).scalars()
@@ -96,7 +98,7 @@ def _party(db, request_id: uuid.UUID, user: User) -> CareRequest:
     return r
 
 
-@router.get("/care-requests/{request_id}")
+@router.get("/care-requests/{request_id}", dependencies=[require_feature("care")])
 def detail(request_id: uuid.UUID, db: DB, user: CurrentUser):
     return _out(db, _party(db, request_id, user), viewer=user, updates=True)
 
@@ -105,7 +107,7 @@ class ActionIn(BaseModel):
     action: Literal["accept", "decline", "done", "cancel"]
 
 
-@router.post("/care-requests/{request_id}/action")
+@router.post("/care-requests/{request_id}/action", dependencies=[require_feature("care")])
 def act(request_id: uuid.UUID, body: ActionIn, db: DB, user: CurrentUser):
     r = _party(db, request_id, user)
     nursery_side = user.id == r.nursery_id
@@ -126,7 +128,7 @@ class UpdateIn(BaseModel):
     photo_key: str | None = None
 
 
-@router.post("/care-requests/{request_id}/updates", status_code=status.HTTP_201_CREATED)
+@router.post("/care-requests/{request_id}/updates", dependencies=[require_feature("care")], status_code=status.HTTP_201_CREATED)
 def post_update(request_id: uuid.UUID, body: UpdateIn, db: DB, user: CurrentUser):
     """Nhà vườn gửi ảnh / ghi chú. Ảnh được làm sạch (xóa GPS) rồi thêm vào nhật ký cây của chủ (không tính thưởng mốc)."""
     r = _party(db, request_id, user)

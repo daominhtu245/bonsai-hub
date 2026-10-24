@@ -9,3 +9,6 @@ export { SketchLegend } from './SketchLegend';
 export { StepList, type StepState } from './StepList';
 export { StageTimeline, type StageCode, type StageTab } from './StageTimeline';
 export { EmptyState, StateView, type ViewState } from './StateView';
+export { ChoiceChips } from './ChoiceChips';
+export { PhotoHero } from './PhotoHero';
+export { IconBadge, Tile, type Tone } from './Tile';

@@ -8,6 +8,7 @@ import { accountApi, type GardenTree } from '@/lib/account';
 import { ApiError } from '@/lib/api';
 import { SPECIES_NAME } from '@/lib/copy';
 import { cx } from '@/lib/cx';
+import { useFeatures } from '@/lib/features';
 
 function destination(t: GardenTree): { to: string; status: string; cta: string | null } {
   const id = t.job_id;
@@ -64,6 +65,7 @@ function TreeCard({ t }: { t: GardenTree }) {
 export default function Garden() {
   const [state, setState] = useState<ViewState<{ trees: GardenTree[]; credits: number }>>({ status: 'loading' });
   const [todoOnly, setTodoOnly] = useState(false);
+  const on = useFeatures();
 
   const load = () => {
     setState({ status: 'loading' });
@@ -106,7 +108,7 @@ export default function Garden() {
           }}
         </StateView>
       </main>
-      <ReceiveTree onReceived={load} />
+      {on('passport') ? <ReceiveTree onReceived={load} /> : null}
       <div className="h-6" />
       <BottomNav />
     </div>

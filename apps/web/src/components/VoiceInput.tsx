@@ -10,8 +10,10 @@ function getRecognition(): (new () => Recognition) | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+export const voiceSupported = () => typeof window !== 'undefined' && getRecognition() !== null;
+
 /** E4 — Nói thay gõ (nhận dạng giọng nói tiếng Việt của trình duyệt). Không hỗ trợ thì ẩn nút. */
-export function VoiceInput({ onText }: { onText: (t: string) => void }) {
+export function VoiceInput({ onText, size = 'md' }: { onText: (t: string) => void; size?: 'md' | 'lg' }) {
   const Rec = typeof window !== 'undefined' ? getRecognition() : null;
   const [on, setOn] = useState(false);
   const rec = useRef<Recognition | null>(null);
@@ -34,8 +36,9 @@ export function VoiceInput({ onText }: { onText: (t: string) => void }) {
   };
   return (
     <button type="button" onClick={toggle} aria-pressed={on} aria-label={on ? 'Dừng nghe' : 'Nói câu hỏi'}
-      className={cx('flex h-cta w-cta flex-none items-center justify-center rounded-full', on ? 'bg-seal text-primary-on' : 'bg-primary text-primary-on')}>
-      {on ? <MicOff size={22} aria-hidden="true" /> : <Mic size={22} aria-hidden="true" />}
+      className={cx('flex flex-none items-center justify-center rounded-full shadow-raised', size === 'lg' ? 'h-24 w-24' : 'h-cta w-cta',
+        on ? 'animate-pulse bg-seal text-primary-on' : 'bg-primary text-primary-on')}>
+      {on ? <MicOff size={size === 'lg' ? 40 : 22} aria-hidden="true" /> : <Mic size={size === 'lg' ? 40 : 22} aria-hidden="true" />}
     </button>
   );
 }

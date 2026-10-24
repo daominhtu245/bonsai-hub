@@ -40,11 +40,12 @@ describe('Nghệ nhân, chăm hộ', () => {
     ]);
     renderAt('/hoi-nghe-nhan/moi?nghe-nhan=ong-tu', '/hoi-nghe-nhan/moi', <AskConsultPage />, <Route path="/hoi-nghe-nhan/:consultId" element={<div>chi tiết câu hỏi</div>} />);
     await userEvent.click(await screen.findByRole('radio', { name: /Si sân/ }));
-    await waitFor(() => expect(screen.getByLabelText('Nghệ nhân')).toHaveValue('ong-tu'));
-    await userEvent.type(screen.getByLabelText('Câu hỏi'), 'Cành thứ nhất có nên hạ thấp hơn?');
+    await waitFor(() => expect(screen.getByRole('radio', { name: /Ông Tư/ })).toHaveAttribute('aria-checked', 'true'));
+    await userEvent.click(screen.getByRole('button', { name: '+ Cành nào nên cắt bỏ?' }));
+    await userEvent.type(screen.getByLabelText('Câu hỏi'), ' Cành thứ nhất có nên hạ thấp hơn?');
     await userEvent.click(screen.getByRole('button', { name: 'Gửi câu hỏi · 2 lượt' }));
     expect(await screen.findByText('chi tiết câu hỏi')).toBeInTheDocument();
-    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ question: 'Cành thứ nhất có nên hạ thấp hơn?', artisan_slug: 'ong-tu' });
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ question: 'Cành nào nên cắt bỏ? Cành thứ nhất có nên hạ thấp hơn?', artisan_slug: 'ong-tu' });
   });
 
   it('shows the answer and rates it', async () => {
@@ -83,6 +84,7 @@ describe('Nghệ nhân, chăm hộ', () => {
       ['GET /api/v1/public/people/vuon-a', () => json({ slug: 'vuon-a', name: 'Vườn A', role: 'nursery', bio: 'Chuyên si', specialties: ['Si'], province_vi: 'Cần Thơ',
         answered: 0, rating: null, contact_phone: '0909000111', listings: [{ code: 'L1', title: 'Phôi si', price_vnd: 2000000, photo_url: null }] })],
       ['GET /api/v1/garden', () => json(garden)],
+      ['GET /api/v1/public/people/vuon-a', () => json({ slug: 'vuon-a', name: 'Vườn A', role: 'nursery', bio: null, specialties: [], province_vi: 'Cần Thơ', answered: 0, rating: null })],
       ['POST /api/v1/care-requests', () => json({ id: 'r1' }, 201)],
     ]);
     const { unmount } = renderAt('/nguoi/vuon-a', '/nguoi/:slug', <PersonPage />);
@@ -90,7 +92,7 @@ describe('Nghệ nhân, chăm hộ', () => {
     expect(screen.getByRole('link', { name: /Phôi si/ })).toHaveAttribute('href', '/tin/L1');
     unmount();
     renderAt('/cham-ho/moi?vuon=vuon-a', '/cham-ho/moi', <CareNewPage />, <Route path="/cham-ho/:requestId" element={<div>yêu cầu đã gửi</div>} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Nuôi hộ (theo lộ trình)' }));
+    await userEvent.click(screen.getByRole('radio', { name: /Nuôi hộ/ }));
     await userEvent.click(await screen.findByRole('radio', { name: /Si sân/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Gửi yêu cầu' }));
     expect(await screen.findByText('yêu cầu đã gửi')).toBeInTheDocument();

@@ -1,66 +1,133 @@
-import { ChevronRight, type LucideIcon } from 'lucide-react';
-import { CalendarHeart, CloudSun, GraduationCap, Leaf, MessageCircleQuestion, HandHeart, HeartPulse, LineChart, Sparkles, Store, Swords, ThumbsUp } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  CalendarHeart, ChevronRight, CloudRain, CloudSun, GraduationCap, HandHeart, HeartPulse, Leaf, LineChart, MessageCircleQuestion,
+  Snowflake, Sparkles, Store, Sun, Swords, ThumbsUp, Wind, type LucideIcon,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { BottomNav } from '@/components/BottomNav';
+import { Tile, type Tone } from '@/components/ui';
+import { accountApi, type GardenTree } from '@/lib/account';
+import { assistApi, type Weather } from '@/lib/assist';
+import { useAuth } from '@/lib/auth';
+import { useFeatures, type FeatureKey } from '@/lib/features';
+import { toolsApi } from '@/lib/tools';
 
-export type HubItem = { to: string; title: string; sub: string; Icon: LucideIcon };
+export type HubItem = { to: string; title: string; sub: string; Icon: LucideIcon; feature: FeatureKey | FeatureKey[] };
 
-/** Nhóm tiện ích — mỗi đợt tính năng thêm mục vào đây (docs/ideas.md). */
-export const HUB: Array<{ group: string; items: HubItem[] }> = [
+/** Nhóm tiện ích — mỗi đợt tính năng thêm mục vào đây (docs/ideas.md). Mục đang tắt ở quản trị thì ẩn. */
+export const HUB: Array<{ group: string; tone: Tone; items: HubItem[] }> = [
   {
     group: 'Chăm cây',
+    tone: 'leaf',
     items: [
-      { to: '/tien-ich/mai-tet', title: 'Mai kịp Tết', sub: 'Ngày tuốt lá theo tỉnh', Icon: CalendarHeart },
-      { to: '/tien-ich/hoi-dap', title: 'Hỏi cách chăm', sub: 'Nói hoặc gõ câu hỏi, nghe đọc to', Icon: MessageCircleQuestion },
-      { to: '/tien-ich/benh-la', title: 'Lá có bệnh?', sub: 'Chụp lá, xem sâu bệnh và cách xử lý', Icon: Leaf },
-      { to: '/tien-ich/thoi-tiet', title: 'Thời tiết', sub: 'Mưa to, nắng nóng: việc cần làm', Icon: CloudSun },
-      { to: '/tien-ich/cap-cuu', title: 'Cấp cứu cây', sub: 'Cây héo, vàng lá, thối rễ', Icon: HeartPulse },
-      { to: '/nghe-nhan', title: 'Hỏi nghệ nhân', sub: 'Góp ý thiết kế, trả bằng lượt', Icon: GraduationCap },
-      { to: '/cham-ho', title: 'Chăm hộ, nuôi hộ', sub: 'Gửi cây cho nhà vườn', Icon: HandHeart },
+      { to: '/tien-ich/hoi-dap', title: 'Hỏi cách chăm', sub: 'Nói là có câu trả lời', Icon: MessageCircleQuestion, feature: 'assistant' },
+      { to: '/tien-ich/benh-la', title: 'Lá có bệnh?', sub: 'Chụp lá, xem cách chữa', Icon: Leaf, feature: 'health_check' },
+      { to: '/tien-ich/thoi-tiet', title: 'Thời tiết', sub: 'Việc cần làm 3 ngày tới', Icon: CloudSun, feature: 'weather' },
+      { to: '/tien-ich/mai-tet', title: 'Mai kịp Tết', sub: 'Ngày tuốt lá theo tỉnh', Icon: CalendarHeart, feature: 'mai_tet' },
+      { to: '/tien-ich/cap-cuu', title: 'Cấp cứu cây', sub: 'Héo, vàng lá, thối rễ', Icon: HeartPulse, feature: 'rescue' },
+      { to: '/tien-ich/hop-menh', title: 'Cây hợp mệnh', sub: 'Theo năm sinh', Icon: Sparkles, feature: 'menh' },
     ],
   },
   {
-    group: 'Chọn cây',
-    items: [{ to: '/tien-ich/hop-menh', title: 'Cây hợp mệnh', sub: 'Theo năm sinh', Icon: Sparkles }],
+    group: 'Nghệ nhân & nhà vườn',
+    tone: 'ink',
+    items: [
+      { to: '/nghe-nhan', title: 'Hỏi nghệ nhân', sub: 'Góp ý thiết kế', Icon: GraduationCap, feature: ['consults', 'public_profiles'] },
+      { to: '/cham-ho', title: 'Chăm hộ, nuôi hộ', sub: 'Gửi cây cho vườn', Icon: HandHeart, feature: 'care' },
+    ],
   },
   {
     group: 'Mua bán',
+    tone: 'clay',
     items: [
-      { to: '/cho', title: 'Chợ phôi', sub: 'Phôi, cây kèm dáng tương lai', Icon: Store },
-      { to: '/tien-ich/gia', title: 'Giá thị trường', sub: 'Giá mỗi cm gốc theo loài', Icon: LineChart },
+      { to: '/cho', title: 'Chợ phôi', sub: 'Kèm dáng tương lai', Icon: Store, feature: 'market' },
+      { to: '/tien-ich/gia', title: 'Giá thị trường', sub: 'Giá mỗi cm gốc', Icon: LineChart, feature: 'price_index' },
     ],
   },
   {
     group: 'Cộng đồng',
+    tone: 'brass',
     items: [
-      { to: '/thu-thach', title: 'Thử thách phôi', sub: 'Cùng một phôi, ai thiết kế đẹp nhất', Icon: Swords },
-      { to: '/chon-dang', title: 'Chọn dáng đẹp', sub: 'Chạm vào dáng bạn thích hơn', Icon: ThumbsUp },
+      { to: '/thu-thach', title: 'Thử thách phôi', sub: 'Ai thiết kế đẹp nhất', Icon: Swords, feature: 'challenges' },
+      { to: '/chon-dang', title: 'Chọn dáng đẹp', sub: 'Chạm dáng bạn thích', Icon: ThumbsUp, feature: 'design_votes' },
     ],
   },
 ];
 
+const WEATHER_ICON = { heavy_rain: CloudRain, heat: Sun, cold: Snowflake, wind: Wind } as const;
+const daysUntil = (iso: string) => Math.max(0, Math.ceil((new Date(`${iso}T00:00:00`).getTime() - Date.now()) / 86400000));
+
+/** "Hôm nay": thời tiết nơi ở + cảnh báo, đếm ngược Tết, việc tiếp theo của cây — lý do để mở app mỗi ngày. */
+function Today() {
+  const { user } = useAuth();
+  const on = useFeatures();
+  const me = user.status === 'ready' ? user.data : null;
+  const province = me?.province ?? null;
+  const [w, setW] = useState<Weather | null>(null);
+  const [tet, setTet] = useState<{ tet: string; from: string } | null>(null);
+  const [task, setTask] = useState<GardenTree | null>(null);
+  useEffect(() => {
+    if (province && on('weather')) assistApi.weather(province).then(setW).catch(() => null);
+    if (on('mai_tet')) toolsApi.maiTet(province).then((p) => setTet({ tet: p.tet, from: p.defoliate_from })).catch(() => null);
+  }, [province]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (me) accountApi.garden().then((g) => setTask(g.trees.find((t) => t.next_task_vi) ?? null)).catch(() => null);
+  }, [me?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const today = w?.days[0];
+  const alert = w?.alerts[0];
+  const WIcon = alert ? WEATHER_ICON[alert.kind] : today && today.rain_mm >= 5 ? CloudRain : today && today.max_c >= 33 ? Sun : CloudSun;
+  if (!today && !tet && !task) return null;
+  return (
+    <section aria-label="Hôm nay" className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
+      <div className="grid grid-cols-2 divide-x divide-line">
+        {today ? (
+          <Link to="/tien-ich/thoi-tiet" className="flex items-center gap-3 p-3 text-ink no-underline">
+            <WIcon size={30} strokeWidth={1.5} className={alert ? 'text-warn' : 'text-primary'} aria-hidden="true" />
+            <span className="flex flex-col">
+              <span className="tabular text-h2">{Math.round(today.min_c)}–{Math.round(today.max_c)}°</span>
+              <span className="text-label text-ink-muted">{alert ? alert.title_vi : w?.province_vi}</span>
+            </span>
+          </Link>
+        ) : (
+          <Link to="/tai-khoan" className="flex items-center gap-3 p-3 text-caption text-ink-muted no-underline"><CloudSun size={26} aria-hidden="true" />Chọn tỉnh để xem thời tiết</Link>
+        )}
+        {tet ? (
+          <Link to="/tien-ich/mai-tet" className="flex items-center gap-3 p-3 text-ink no-underline">
+            <span className="tabular text-display text-clay">{daysUntil(tet.tet)}</span>
+            <span className="flex flex-col text-label text-ink-muted"><span className="font-semibold text-ink">ngày tới Tết</span>tuốt lá còn {daysUntil(tet.from)} ngày</span>
+          </Link>
+        ) : <span />}
+      </div>
+      {task ? (
+        <Link to={task.job_id ? `/ket-qua/${task.job_id}` : '/vuon'} className="flex min-h-touch items-center gap-3 border-t border-line px-3 py-2.5 text-ink no-underline hover:bg-surface-2">
+          {task.thumbnail_url ? <img src={task.thumbnail_url} alt="" className="h-10 w-10 flex-none rounded-img object-cover" /> : null}
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="text-label text-ink-muted">Việc tiếp theo · {task.nickname || 'Cây của bạn'}</span>
+            <span className="truncate text-caption font-medium">{task.next_task_vi}</span>
+          </span>
+          <ChevronRight size={18} className="text-ink-subtle" aria-hidden="true" />
+        </Link>
+      ) : null}
+    </section>
+  );
+}
+
 export default function UtilitiesHub() {
+  const on = useFeatures();
+  const groups = HUB.map((g) => ({ ...g, items: g.items.filter((i) => (Array.isArray(i.feature) ? i.feature.some(on) : on(i.feature))) }))
+    .filter((g) => g.items.length);
   return (
     <div className="mx-auto flex min-h-dvh max-w-content flex-col">
       <BackHeader to="/" title="Tiện ích" />
-      <div className="flex flex-col gap-5 px-gutter py-4">
-        {HUB.map((g) => (
+      <div className="flex flex-col gap-5 px-gutter pb-24 pt-3">
+        <Today />
+        {groups.map((g) => (
           <section key={g.group}>
             <h2 className="eyebrow mb-2 px-1">{g.group}</h2>
-            <ul className="m-0 list-none divide-y divide-line overflow-hidden rounded-card border border-line bg-surface p-0 shadow-card">
-              {g.items.map(({ to, title, sub, Icon }) => (
-                <li key={to}>
-                  <Link to={to} className="flex min-h-[64px] items-center gap-3 px-4 py-3 text-ink no-underline hover:bg-surface-2">
-                    <span className="flex h-10 w-10 flex-none items-center justify-center rounded-btn bg-surface-2"><Icon size={20} strokeWidth={1.75} aria-hidden="true" /></span>
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="text-body font-medium">{title}</span>
-                      <span className="text-caption text-ink-muted">{sub}</span>
-                    </span>
-                    <ChevronRight size={18} className="text-ink-subtle" aria-hidden="true" />
-                  </Link>
-                </li>
-              ))}
+            <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0">
+              {g.items.map(({ to, title, sub, Icon }) => <li key={to}><Tile to={to} title={title} sub={sub} Icon={Icon} tone={g.tone} /></li>)}
             </ul>
           </section>
         ))}

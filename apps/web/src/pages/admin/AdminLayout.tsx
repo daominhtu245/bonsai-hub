@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import {
   Activity, BarChart3, Bell, BookOpen, Brush, ClipboardCheck, CreditCard, FileCode2, Gift, LayoutDashboard, ListChecks, Menu,
   MessageSquare, Receipt, Scale, ScrollText, Search, Settings2, SlidersHorizontal, Users, X,
-  Swords, Amphora, MessagesSquare,
+  Swords, Amphora, MessagesSquare, ShieldCheck, Bot, ToggleRight,
 } from 'lucide-react';
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { BrandMark } from '@/components/BrandMark';
@@ -39,8 +39,15 @@ const NAV: NavGroup[] = [
       { to: '/admin/thanh-toan', label: 'Thanh toán', Icon: CreditCard },
       { to: '/admin/ma-qua-tang', label: 'Mã quà tặng', Icon: Gift },
       { to: '/admin/thong-bao', label: 'Gửi thông báo', Icon: Bell },
+    ],
+  },
+  {
+    group: 'Cộng đồng & chợ',
+    items: [
+      { to: '/admin/cong-dong', label: 'Kiểm duyệt & dịch vụ', Icon: ShieldCheck },
       { to: '/admin/thu-thach', label: 'Thử thách phôi', Icon: Swords },
       { to: '/admin/chau-doi-tac', label: 'Chậu đối tác', Icon: Amphora },
+      { to: '/admin/tro-ly', label: 'Trợ lý chăm cây', Icon: Bot },
     ],
   },
   {
@@ -56,6 +63,7 @@ const NAV: NavGroup[] = [
   {
     group: 'Hệ thống',
     items: [
+      { to: '/admin/tinh-nang', label: 'Tính năng', Icon: ToggleRight },
       { to: '/admin/van-hanh', label: 'Cấu hình vận hành', Icon: Settings2 },
       { to: '/admin/he-thong', label: 'Sức khỏe hệ thống', Icon: Activity },
       { to: '/admin/nhat-ky', label: 'Nhật ký quản trị', Icon: ScrollText },

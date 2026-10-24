@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { marketApi, type PartnerPot } from '@/lib/market';
 import { toolsApi, type GraftSpot, type Price, type WirePlan } from '@/lib/tools';
+import { useFeatures } from '@/lib/features';
 
 const vnd = (n: number) => `${n.toLocaleString('vi-VN')} đ`;
 
@@ -26,9 +27,11 @@ export function TreeTools({ jobId }: { jobId: string }) {
   const [pots, setPots] = useState<PartnerPot[] | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const fail = (e: ApiError) => setError(e.message);
+  const on = useFeatures();
   return (
     <section aria-label="Công cụ cho cây này" className="mx-gutter mt-4 flex flex-col gap-2">
       {error ? <p className="m-0 text-label text-danger">{error}</p> : null}
+      {on('tree_tools') ? <>
       <Fold title="Tính dây uốn" onOpen={() => wire === undefined && toolsApi.wire(jobId).then(setWire).catch(fail)}>
         {wire === undefined ? <Skeleton className="h-24" /> : wire ? (
           <div className="flex flex-col gap-3">
@@ -63,7 +66,8 @@ export function TreeTools({ jobId }: { jobId: string }) {
           </div>
         ) : <span className="text-ink-muted">Nhập chiều cao thật của cây để định giá.</span>}
       </Fold>
-      <Fold title="Chậu hợp dáng" onOpen={() => pots === undefined && marketApi.pots(jobId).then(setPots).catch(fail)}>
+      </> : null}
+      {on('partner_pots') ? <Fold title="Chậu hợp dáng" onOpen={() => pots === undefined && marketApi.pots(jobId).then(setPots).catch(fail)}>
         {pots === undefined ? <Skeleton className="h-16" /> : pots.length ? (
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {pots.map((p) => (
@@ -79,7 +83,7 @@ export function TreeTools({ jobId }: { jobId: string }) {
             ))}
           </ul>
         ) : <span className="text-ink-muted">Chưa có chậu phù hợp.</span>}
-      </Fold>
+      </Fold> : null}
     </section>
   );
 }

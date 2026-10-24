@@ -18,6 +18,7 @@ import { cx } from '@/lib/cx';
 import { accountApi } from '@/lib/account';
 import { jobsApi, resultApi, watchJob, type Job, type ResultView, type StageView } from '@/lib/jobs';
 import { mediaApi, type ArtStyle } from '@/lib/media';
+import { useFeatures } from '@/lib/features';
 
 type View = 'photo' | ArtStyle;
 
@@ -189,11 +190,12 @@ function Done({ result, onToggle }: { result: ResultView; onToggle: (code: strin
     if (v !== 'photo' && !arts[v]) mediaApi.art(result.job_id, v).then((m) => setArts((a) => ({ ...a, [v]: m }))).catch((e: ApiError) => setArtError(e.message));
   };
   const artMap = view === 'photo' ? undefined : arts[view];
+  const on = useFeatures();
 
   return (
     <>
       <div className="mx-gutter mt-3">
-        <Segmented<View> label="Kiểu xem" value={view} onChange={pickView} options={[['photo', 'Ảnh'], ['pencil', 'Bút chì'], ['ink', 'Thủy mặc']]} />
+        {on('art_styles') ? <Segmented<View> label="Kiểu xem" value={view} onChange={pickView} options={[['photo', 'Ảnh'], ['pencil', 'Bút chì'], ['ink', 'Thủy mặc']]} /> : null}
       </div>
       {view !== 'photo' && !artMap && !artError ? (
         <Skeleton className="mx-gutter mt-4 aspect-[3/4] rounded-card" />
@@ -209,7 +211,7 @@ function Done({ result, onToggle }: { result: ResultView; onToggle: (code: strin
         {guide ? (
           <>
             <GuideCard guide={guide} done={new Set(stage.done_tasks)} onToggle={(i) => onToggle(stage.code, i)} />
-            <SpeakButton className="mt-2" text={[guide.name, guide.see, 'Việc cần làm:', ...guide.actions, guide.season ? `Thời điểm tốt: ${guide.season}` : ''].filter(Boolean).join('. ')} label="Đọc to hướng dẫn" />
+            {on('read_aloud') ? <SpeakButton className="mt-2" text={[guide.name, guide.see, 'Việc cần làm:', ...guide.actions, guide.season ? `Thời điểm tốt: ${guide.season}` : ''].filter(Boolean).join('. ')} label="Đọc to hướng dẫn" /> : null}
           </>
         ) : (
           <Notice tone="warn">Chưa có hướng dẫn cho giai đoạn này.</Notice>
@@ -236,8 +238,8 @@ function Done({ result, onToggle }: { result: ResultView; onToggle: (code: strin
 
       <SaveAndRemind jobId={result.job_id} />
       <TreeDiary treeId={result.tree_id} />
-      <TreeTools jobId={result.job_id} />
-      <TreePassport treeId={result.tree_id} />
+      {on('tree_tools') || on('partner_pots') ? <TreeTools jobId={result.job_id} /> : null}
+      {on('passport') ? <TreePassport treeId={result.tree_id} /> : null}
 
       <section className="mx-gutter mt-4 grid grid-cols-2 gap-2">
         <ButtonLink to={`/chia-se/${result.job_id}`}>
@@ -249,12 +251,12 @@ function Done({ result, onToggle }: { result: ResultView; onToggle: (code: strin
       <nav aria-label="Làm thêm với cây này" className="mx-gutter mt-3">
         <ul className="m-0 list-none divide-y divide-line overflow-hidden rounded-card border border-line bg-surface p-0 shadow-card">
           {([
-            [`/ket-qua/${result.job_id}/ban-ve-ky-thuat`, 'Bản vẽ kỹ thuật', Ruler],
-            [`/ket-qua/${result.job_id}/dat-vao-phong`, 'Đặt vào phòng', Sofa],
-            [`/hoi-nghe-nhan/moi?job=${result.job_id}`, 'Hỏi nghệ nhân', GraduationCap],
-            [`/tin-cua-toi?job=${result.job_id}&tree=${result.tree_id}&title=${encodeURIComponent(result.tree_nickname ?? '')}`, 'Đăng bán', Store],
-            [`/ket-qua/${result.job_id}/phieu-tap-ve`, 'Phiếu tập vẽ', SquarePen],
-          ] as const).map(([to, label, Icon]) => (
+            [`/ket-qua/${result.job_id}/ban-ve-ky-thuat`, 'Bản vẽ kỹ thuật', Ruler, 'tech_drawing'],
+            [`/ket-qua/${result.job_id}/dat-vao-phong`, 'Đặt vào phòng', Sofa, 'room_place'],
+            [`/hoi-nghe-nhan/moi?job=${result.job_id}`, 'Hỏi nghệ nhân', GraduationCap, 'consults'],
+            [`/tin-cua-toi?job=${result.job_id}&tree=${result.tree_id}&title=${encodeURIComponent(result.tree_nickname ?? '')}`, 'Đăng bán', Store, 'market'],
+            [`/ket-qua/${result.job_id}/phieu-tap-ve`, 'Phiếu tập vẽ', SquarePen, 'worksheet'],
+          ] as const).filter(([, , , k]) => on(k)).map(([to, label, Icon]) => (
             <li key={label}>
               <Link to={to} className="flex min-h-touch items-center gap-3 px-4 py-2.5 text-body text-ink no-underline hover:bg-surface-2">
                 <Icon size={18} strokeWidth={1.75} className="text-ink-muted" aria-hidden="true" />

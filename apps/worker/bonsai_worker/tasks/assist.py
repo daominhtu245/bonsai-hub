@@ -86,11 +86,19 @@ def run_question(db, question_id: uuid.UUID, llm=None) -> None:
 
 def run_weather_daily(db, r, http=None, today: date | None = None) -> int:
     """Trả số thông báo đã gửi. `r`: Redis (khóa chống gửi trùng), `http`: httpx.Client (test truyền giả)."""
+    from bonsai_api.services.features import is_staff, load
+
+    cfg = load(db)
+    state = cfg["flags"]["weather"]
+    if state == "off":
+        return 0
     base = os.environ.get("PUBLIC_BASE_URL", "http://localhost:8080").rstrip("/")
     with_trees = select(Tree.user_id).distinct()
     users = db.execute(select(User).where(User.province.is_not(None), User.deleted_at.is_(None), User.id.in_(with_trees))).scalars().all()
     by_province: dict[str, list[User]] = {}
     for u in users:
+        if state == "staff" and not is_staff(u, cfg["testers"]):
+            continue
         if u.province in PROVINCES:
             by_province.setdefault(u.province, []).append(u)
     sent = 0

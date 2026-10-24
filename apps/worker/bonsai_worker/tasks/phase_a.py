@@ -232,9 +232,11 @@ def run_phase_a(db: Session, job_id: uuid.UUID) -> None:
         set_progress(db, job, "design", "done", options=len(design.options))
         set_status(db, job, JobStatus.awaiting_choice)
         try:  # giới thiệu bạn: phiên phân tích đầu tiên của người được mời → tặng lượt cả hai (không làm hỏng phiên)
+            from bonsai_api.db.models import User
+            from bonsai_api.services.features import enabled
             from bonsai_api.services.referrals import reward_if_due
 
-            if reward_if_due(db, job.user_id):
+            if enabled(db, "referral", db.get(User, job.user_id)) and reward_if_due(db, job.user_id):
                 db.commit()
         except Exception:  # noqa: BLE001
             db.rollback()

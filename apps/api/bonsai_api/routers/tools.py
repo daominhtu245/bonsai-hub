@@ -21,6 +21,8 @@ from .. import storage
 from ..db.models import DesignJob, DesignOption as OptionRow, Listing, Tree, TreePhoto
 from ..security import DB, CurrentUser
 from ..services.provinces import PROVINCES, region_of
+from ..services.features import require_feature
+
 
 router = APIRouter(prefix="/tools", tags=["tools"])
 VN = ZoneInfo("Asia/Ho_Chi_Minh")
@@ -38,13 +40,13 @@ def _design(db, job_id: uuid.UUID, user, option_id: uuid.UUID | None) -> tuple[D
     return job, Analysis.model_validate(job.analysis), DesignOption.model_validate(row.design), db.get(Tree, job.tree_id)
 
 
-@router.get("/wire/{job_id}")
+@router.get("/wire/{job_id}", dependencies=[require_feature("tree_tools")])
 def wire(job_id: uuid.UUID, db: DB, user: CurrentUser, option_id: uuid.UUID | None = None):
     _, a, o, tree = _design(db, job_id, user, option_id)
     return asdict(wire_plan(a, o, tree.real_height_cm))
 
 
-@router.get("/drawing/{job_id}")
+@router.get("/drawing/{job_id}", dependencies=[require_feature("tech_drawing")])
 def drawing(job_id: uuid.UUID, db: DB, user: CurrentUser, option_id: uuid.UUID | None = None):
     """Bản vẽ kỹ thuật in ra vườn (A4): SVG đè lên ảnh phôi + bảng việc theo số."""
     job, a, o, tree = _design(db, job_id, user, option_id)
@@ -56,14 +58,14 @@ def drawing(job_id: uuid.UUID, db: DB, user: CurrentUser, option_id: uuid.UUID |
             "photo_url": storage.presign_get(photo.storage_key)}
 
 
-@router.get("/graft/{job_id}")
+@router.get("/graft/{job_id}", dependencies=[require_feature("tree_tools")])
 def graft(job_id: uuid.UUID, db: DB, user: CurrentUser, option_id: uuid.UUID | None = None):
     _, a, o, tree = _design(db, job_id, user, option_id)
     spots, season = graft_suggestions(a, o, tree.species_key)
     return {"spots": [asdict(s) for s in spots], "season_vi": season}
 
 
-@router.get("/price/{job_id}")
+@router.get("/price/{job_id}", dependencies=[require_feature("tree_tools")])
 def price(job_id: uuid.UUID, db: DB, user: CurrentUser):
     job, a, _, tree = _design(db, job_id, user, None)
     comps = [float(p) / float(t) for p, t in db.execute(
@@ -73,7 +75,7 @@ def price(job_id: uuid.UUID, db: DB, user: CurrentUser):
     return asdict(est) if est else None
 
 
-@router.get("/rescue/questions")
+@router.get("/rescue/questions", dependencies=[require_feature("rescue")])
 def rescue_questions():
     return [{"key": k, "text_vi": t} for k, t in RESCUE_QUESTIONS]
 
@@ -82,12 +84,12 @@ class RescueIn(BaseModel):
     answers: dict[str, bool]
 
 
-@router.post("/rescue")
+@router.post("/rescue", dependencies=[require_feature("rescue")])
 def rescue(body: RescueIn):
     return asdict(rescue_plan(body.answers))
 
 
-@router.get("/menh")
+@router.get("/menh", dependencies=[require_feature("menh")])
 def menh_for(year: int = Query(ge=1920, le=2030)):
     return asdict(menh(year))
 
@@ -97,7 +99,7 @@ def provinces():
     return [{"code": k, "name": v[0], "region": v[1]} for k, v in PROVINCES.items()]
 
 
-@router.get("/mai-tet")
+@router.get("/mai-tet", dependencies=[require_feature("mai_tet")])
 def mai_tet(province: str | None = None, avg_temp_c: float | None = None):
     plan = mai_plan(date.today(), region_of(province), avg_temp_c)
     out = asdict(plan)

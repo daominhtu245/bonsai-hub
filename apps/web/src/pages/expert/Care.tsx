@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Camera, ChevronRight } from 'lucide-react';
+import { Camera, ChevronRight, Plane, Sprout } from 'lucide-react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { TreePicker } from '@/components/TreePicker';
-import { Button, Notice, Segmented, Skeleton } from '@/components/ui';
+import { Avatar } from '@/components/Avatar';
+import { Button, IconBadge, Notice, Skeleton } from '@/components/ui';
 import { ApiError, uploadPhoto } from '@/lib/api';
-import { expertApi, type CareKind, type CareRequest } from '@/lib/expert';
+import { cx } from '@/lib/cx';
+import { expertApi, type CareKind, type CareRequest, type Person } from '@/lib/expert';
 import { zaloUrl } from '@/lib/market';
 
 const day = (iso: string) => new Date(iso).toLocaleDateString('vi-VN');
@@ -53,6 +55,8 @@ export function CareNewPage() {
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [nursery, setNursery] = useState<Person | null>(null);
+  useEffect(() => { if (slug) expertApi.person(slug).then(setNursery).catch(() => null); }, [slug]);
   const submit = async () => {
     if (!tree) return;
     setBusy(true);
@@ -70,7 +74,23 @@ export function CareNewPage() {
     <div className="mx-auto flex min-h-dvh max-w-content flex-col">
       <BackHeader to={slug ? `/nguoi/${slug}` : '/cham-ho'} title="Gửi cây" />
       <div className="flex flex-col gap-4 px-gutter py-3">
-        <Segmented<CareKind> label="Hình thức" value={kind} onChange={setKind} options={[['care', 'Chăm hộ (đi xa)'], ['grow', 'Nuôi hộ (theo lộ trình)']]} />
+        {nursery ? (
+          <div className="flex items-center gap-3 rounded-card border border-line bg-surface p-3 shadow-card">
+            <Avatar name={nursery.name} />
+            <span className="flex flex-col"><span className="text-body font-semibold">{nursery.name}</span><span className="text-label text-ink-muted">{nursery.province_vi ?? 'Nhà vườn'}</span></span>
+          </div>
+        ) : null}
+        <div role="radiogroup" aria-label="Hình thức" className="grid grid-cols-2 gap-2">
+          {([['care', 'Chăm hộ', 'Khi bạn đi xa, về quê', Plane], ['grow', 'Nuôi hộ', 'Vườn chăm theo lộ trình', Sprout]] as const).map(([k, t, sub, Icon]) => (
+            <button key={k} type="button" role="radio" aria-checked={kind === k} onClick={() => setKind(k)}
+              className={cx('flex flex-col items-start gap-2 rounded-card border p-3 text-left', kind === k ? 'border-primary bg-primary-soft' : 'border-line bg-surface')}>
+              <IconBadge Icon={Icon} tone={kind === k ? 'leaf' : 'ink'} />
+              <span className="text-body font-semibold">{t}</span>
+              <span className="text-label text-ink-muted">{sub}</span>
+            </button>
+          ))}
+        </div>
+        <h2 className="m-0 -mb-2 text-caption font-semibold">Cây gửi</h2>
         <TreePicker value={tree?.tree_id ?? null} onChange={(t) => setTree({ tree_id: t.tree_id, job_id: t.job_id })} needJob={kind === 'grow'} />
         <div className="grid grid-cols-2 gap-2">
           <label className="flex flex-col gap-1 text-caption font-semibold">Từ ngày<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={input} /></label>

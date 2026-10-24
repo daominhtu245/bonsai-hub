@@ -44,6 +44,10 @@ class OpsIn(BaseModel):
     diary_reward_credits: int | None = Field(default=None, ge=0, le=10)
     consult_credits: int | None = Field(default=None, ge=1, le=20)
     nursery_listing_free: int | None = Field(default=None, ge=0, le=100)
+    nursery_featured_max: int | None = Field(default=None, ge=0, le=50)
+    nursery_preview_limit: int | None = Field(default=None, ge=2, le=50)
+    health_daily_free: int | None = Field(default=None, ge=0, le=100)
+    assistant_daily_ai: int | None = Field(default=None, ge=0, le=500)
 
 
 @router.get("/ops")

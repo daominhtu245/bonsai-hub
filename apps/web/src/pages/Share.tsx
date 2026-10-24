@@ -8,6 +8,7 @@ import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { cx } from '@/lib/cx';
 import { mediaApi, pollMedia, type MediaState } from '@/lib/media';
+import { useFeature } from '@/lib/features';
 
 type Fmt = '9x16' | '1x1';
 
@@ -28,6 +29,7 @@ export default function Share() {
   const [busy, setBusy] = useState(false);
   const [video, setVideo] = useState<MediaState | null>(null);
   const [videoPoll, setVideoPoll] = useState(false);
+  const timelapse = useFeature('timelapse');
 
   const me = user.status === 'ready' ? user.data : null;
   const isNursery = me?.role === 'nursery' || me?.role === 'admin';
@@ -46,8 +48,9 @@ export default function Share() {
   }, [toast]);
 
   useEffect(() => {
+    if (!timelapse) return;
     mediaApi.video(jobId).then((v) => { setVideo(v); if (v.state === 'running') setVideoPoll(true); }).catch(() => setVideo(null));
-  }, [jobId]);
+  }, [jobId, timelapse]);
 
   useEffect(() => {
     if (!videoPoll) return;
@@ -151,7 +154,7 @@ export default function Share() {
           ))}
         </ul>
 
-        <button type="button" disabled={busy || videoPoll} onClick={videoAction}
+        {timelapse ? <button type="button" disabled={busy || videoPoll} onClick={videoAction}
           className="flex min-h-[56px] w-full items-center gap-3 rounded-card border border-line bg-surface px-4 text-left shadow-card hover:bg-surface-2 disabled:opacity-60">
           <Clapperboard size={18} strokeWidth={1.75} className="flex-none text-ink-muted" aria-hidden="true" />
           <span className="flex-1">
@@ -159,7 +162,7 @@ export default function Share() {
             <span className="block text-label text-ink-subtle" aria-live="polite">{videoHint}</span>
           </span>
           <ChevronRight size={16} className="text-ink-subtle" aria-hidden="true" />
-        </button>
+        </button> : null}
       </div>
 
       {toast ? <div className="fixed inset-x-gutter bottom-6 mx-auto max-w-content shadow-raised"><Notice tone="success">{toast}</Notice></div> : null}

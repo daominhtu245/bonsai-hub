@@ -22,6 +22,8 @@ from ..services.provinces import PROVINCES
 from ..settings import get_settings
 from .passport import qr_svg
 from .uploads import upload_prefix
+from ..services.features import require_feature
+
 
 router = APIRouter(tags=["market"])
 Admin = Annotated[User, Depends(require_admin)]
@@ -121,7 +123,7 @@ def _out(db, x: Listing, *, public: bool = False) -> dict:
 # ---------- tin của tôi ----------
 
 
-@router.get("/me/listings")
+@router.get("/me/listings", dependencies=[require_feature("market")])
 def my_listings(db: DB, user: CurrentUser):
     rows = db.execute(select(Listing).where(Listing.user_id == user.id).order_by(Listing.created_at.desc())).scalars()
     ops = get_ops(db)
@@ -130,7 +132,7 @@ def my_listings(db: DB, user: CurrentUser):
             "items": [_out(db, x) for x in rows]}
 
 
-@router.post("/listings", status_code=status.HTTP_201_CREATED)
+@router.post("/listings", dependencies=[require_feature("market")], status_code=status.HTTP_201_CREATED)
 def create_listing(body: ListingIn, db: DB, user: CurrentUser):
     _check_refs(db, user, body)
     if not market.can_activate(db, user):
@@ -152,7 +154,7 @@ def _mine(db, listing_id: uuid.UUID, user: User) -> Listing:
     return x
 
 
-@router.patch("/listings/{listing_id}")
+@router.patch("/listings/{listing_id}", dependencies=[require_feature("market")])
 def patch_listing(listing_id: uuid.UUID, body: ListingPatch, db: DB, user: CurrentUser):
     x = _mine(db, listing_id, user)
     data = body.model_dump(exclude_unset=True)
@@ -174,7 +176,7 @@ def patch_listing(listing_id: uuid.UUID, body: ListingPatch, db: DB, user: Curre
     return _out(db, x)
 
 
-@router.delete("/listings/{listing_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/listings/{listing_id}", dependencies=[require_feature("market")], status_code=status.HTTP_204_NO_CONTENT)
 def delete_listing(listing_id: uuid.UUID, db: DB, user: CurrentUser):
     x = _mine(db, listing_id, user)
     if x.photo_key and x.photo_key.startswith("listings/"):
@@ -190,7 +192,7 @@ def delete_listing(listing_id: uuid.UUID, db: DB, user: CurrentUser):
 # ---------- công khai: chợ, trang tin, thẻ QR, chỉ số giá ----------
 
 
-@router.get("/public/listings")
+@router.get("/public/listings", dependencies=[require_feature("market")])
 def browse(db: DB, species: str | None = None, province: str | None = None, kind: Kind | None = None,
            q: str | None = Query(default=None, max_length=80), offset: int = Query(default=0, ge=0), limit: int = Query(default=20, ge=1, le=50)):
     now = datetime.now(UTC)
@@ -215,7 +217,7 @@ def _public(db, code: str) -> Listing:
     return x
 
 
-@router.get("/public/listings/{code}")
+@router.get("/public/listings/{code}", dependencies=[require_feature("market")])
 def public_listing(code: str, db: DB):
     x = _public(db, code)
     db.execute(update(Listing).where(Listing.id == x.id).values(views=Listing.views + 1))
@@ -224,13 +226,13 @@ def public_listing(code: str, db: DB):
     return _out(db, x, public=True)
 
 
-@router.get("/public/listings/{code}/qr.svg")
+@router.get("/public/listings/{code}/qr.svg", dependencies=[require_feature("market")])
 def listing_qr(code: str, db: DB):
     x = _public(db, code)
     return Response(qr_svg(listing_url(x.code)), media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=86400"})
 
 
-@router.get("/public/price-index")
+@router.get("/public/price-index", dependencies=[require_feature("price_index")])
 def public_price_index(db: DB, species: str | None = None):
     names = {s.key: s.name_vi for s in db.execute(select(Species)).scalars()}
     return [{**r, "species_vi": names.get(r["species_key"], r["species_key"])} for r in market.price_index(db, species)]
@@ -239,7 +241,7 @@ def public_price_index(db: DB, species: str | None = None):
 # ---------- C7: chậu đối tác ----------
 
 
-@router.get("/jobs/{job_id}/pots")
+@router.get("/jobs/{job_id}/pots", dependencies=[require_feature("partner_pots")])
 def pots_for_job(job_id: uuid.UUID, db: DB, user: CurrentUser):
     job = db.get(DesignJob, job_id)
     if job is None or job.user_id != user.id:

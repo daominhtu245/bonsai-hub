@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Camera, X } from 'lucide-react';
+import { Bug, Camera, Check, Leaf, Sprout, X, type LucideIcon } from 'lucide-react';
 import { BackHeader } from '@/components/BackHeader';
 import { SpeakButton } from '@/components/SpeakButton';
-import { Button, ButtonLink, Notice, Skeleton } from '@/components/ui';
+import { Button, ButtonLink, IconBadge, Notice, Skeleton } from '@/components/ui';
 import { ApiError, uploadPhoto } from '@/lib/api';
 import { assistApi, pollUntilDone, type Finding, type HealthCheck } from '@/lib/assist';
 import { cx } from '@/lib/cx';
@@ -10,7 +10,8 @@ import { cx } from '@/lib/cx';
 function FindingCard({ f, first }: { f: Finding; first: boolean }) {
   const speech = [f.name_vi, f.reason_vi, 'Xử lý ngay:', ...f.treat_now_vi].filter(Boolean).join('. ');
   return (
-    <section className="flex flex-col gap-2 rounded-card border border-line bg-surface p-4 shadow-card">
+    <section className={cx('flex flex-col gap-2 rounded-card border border-l-4 border-line bg-surface p-4 shadow-card',
+      f.likelihood === 'high' ? 'border-l-seal' : f.likelihood === 'medium' ? 'border-l-warn' : 'border-l-line-strong')}>
       <div className="flex items-start justify-between gap-2">
         <div>
           <h2 className="m-0 text-body font-semibold">{f.name_vi}</h2>
@@ -26,6 +27,25 @@ function FindingCard({ f, first }: { f: Finding; first: boolean }) {
       {f.prevent_vi.length ? <div className="text-caption"><div className="font-semibold">Phòng lần sau</div><ul className="m-0 pl-5">{f.prevent_vi.map((t) => <li key={t}>{t}</li>)}</ul></div> : null}
       {f.see_expert_if_vi ? <p className="m-0 text-label text-ink-muted">Hỏi nghệ nhân nếu: {f.see_expert_if_vi}</p> : null}
     </section>
+  );
+}
+
+const GROUPS: Array<{ title: string; Icon: LucideIcon; codes: string[] }> = [
+  { title: 'Trên lá', Icon: Leaf, codes: ['yellow_leaves', 'speckled_leaves', 'brown_spots', 'burnt_edges', 'chewed_leaves', 'pale_new_leaves'] },
+  { title: 'Sâu, tơ, phấn', Icon: Bug, codes: ['white_cotton', 'sticky_leaves', 'fine_webs', 'small_insects_shoots', 'white_powder'] },
+  { title: 'Rễ và sức cây', Icon: Sprout, codes: ['wilting_wet_soil', 'soft_dark_roots'] },
+];
+
+function Steps({ step }: { step: 1 | 2 | 3 }) {
+  return (
+    <ol className="m-0 flex list-none items-center gap-2 p-0 text-label" aria-label="Các bước">
+      {['Chụp lá', 'Dấu hiệu', 'Kết quả'].map((t, i) => (
+        <li key={t} className={cx('flex items-center gap-1.5', i + 1 <= step ? 'font-semibold text-ink' : 'text-ink-subtle')}>
+          <span className={cx('flex h-6 w-6 items-center justify-center rounded-full tabular', i + 1 <= step ? 'bg-primary text-primary-on' : 'bg-surface-2')}>{i + 1}</span>
+          {t}{i < 2 ? <span aria-hidden="true" className="ml-1 h-px w-4 bg-line-strong" /> : null}
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -61,6 +81,8 @@ export default function HealthPage() {
       <div className="flex flex-col gap-4 px-gutter py-3">
         {check ? (
           <>
+            <Steps step={3} />
+            {check.photo_url ? <img src={check.photo_url} alt="Ảnh lá" className="h-28 w-full rounded-card object-cover" /> : null}
             {check.status === 'queued' ? <Notice tone="info">Đang xem kỹ ảnh lá…</Notice> : null}
             {r?.photo_unusable && r.issue_vi ? <Notice tone="warn">{r.issue_vi}</Notice> : null}
             {r?.healthy ? <Notice tone="success">Lá trông khỏe, chưa thấy dấu hiệu sâu bệnh rõ.</Notice> : null}
@@ -75,11 +97,15 @@ export default function HealthPage() {
           </>
         ) : (
           <>
+            <Steps step={preview ? 2 : 1} />
             <button type="button" onClick={() => input.current?.click()}
-              className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-card border border-dashed border-line-strong bg-surface text-caption font-medium">
+              className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-card bg-photo text-caption font-medium">
               {preview ? <img src={preview} alt="Ảnh lá đã chọn" className="absolute inset-0 h-full w-full object-cover" /> : (
-                <span className="flex flex-col items-center gap-2"><Camera size={28} aria-hidden="true" />Chụp gần lá, cành bị bệnh</span>
+                <span className="flex flex-col items-center gap-2 text-ink-muted"><IconBadge Icon={Camera} tone="leaf" size="lg" />Chụp gần lá, cành bị bệnh</span>
               )}
+              {['left-3 top-3 border-l-2 border-t-2', 'right-3 top-3 border-r-2 border-t-2', 'bottom-3 left-3 border-b-2 border-l-2', 'bottom-3 right-3 border-b-2 border-r-2'].map((c) => (
+                <span key={c} aria-hidden="true" className={cx('absolute h-6 w-6 rounded-[3px] border-primary', c)} />
+              ))}
             </button>
             {preview ? (
               <button type="button" onClick={() => { setFile(null); setPreview(null); }} className="-mt-2 inline-flex min-h-touch items-center gap-1 self-start text-caption text-ink-muted">
@@ -88,18 +114,31 @@ export default function HealthPage() {
             ) : null}
             <input ref={input} type="file" accept="image/*" capture="environment" hidden
               onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) { setFile(f); setPreview(URL.createObjectURL(f)); } }} />
-            <fieldset className="m-0 border-0 p-0">
-              <legend className="mb-2 text-caption font-semibold">Thấy dấu hiệu nào?</legend>
-              <div className="flex flex-wrap gap-1.5">
-                {symptoms.map((s) => (
-                  <button key={s.code} type="button" aria-pressed={chosen.includes(s.code)}
-                    onClick={() => setChosen((c) => (c.includes(s.code) ? c.filter((x) => x !== s.code) : [...c, s.code]))}
-                    className={cx('min-h-touch rounded-chip border px-3 text-left text-label', chosen.includes(s.code) ? 'border-ink bg-surface-2 font-semibold text-ink' : 'border-line text-ink-muted')}>
-                    {s.label_vi}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
+            {GROUPS.map((g) => {
+              const items = symptoms.filter((x) => g.codes.includes(x.code));
+              if (!items.length) return null;
+              return (
+                <fieldset key={g.title} className="m-0 border-0 p-0">
+                  <legend className="mb-2 flex items-center gap-2 text-caption font-semibold"><g.Icon size={16} className="text-primary" aria-hidden="true" />{g.title}</legend>
+                  <div className="grid grid-cols-2 gap-2">
+                    {items.map((x) => {
+                      const on = chosen.includes(x.code);
+                      return (
+                        <button key={x.code} type="button" aria-pressed={on}
+                          onClick={() => setChosen((c) => (on ? c.filter((y) => y !== x.code) : [...c, x.code]))}
+                          className={cx('flex min-h-[56px] items-start gap-2 rounded-card border p-2.5 text-left text-label leading-snug transition-colors duration-fast',
+                            on ? 'border-primary bg-primary-soft font-semibold text-primary-ink' : 'border-line bg-surface text-ink')}>
+                          <span className={cx('mt-0.5 flex h-4 w-4 flex-none items-center justify-center rounded-[4px] border', on ? 'border-primary bg-primary text-primary-on' : 'border-line-strong')}>
+                            {on ? <Check size={12} aria-hidden="true" /> : null}
+                          </span>
+                          {x.label_vi}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              );
+            })}
             {error ? <Notice tone="danger">{error}</Notice> : null}
             <Button onClick={submit} loading={busy} loadingLabel="Đang gửi…" disabled={busy || (!file && !chosen.length)}>Xem bệnh gì</Button>
           </>

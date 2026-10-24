@@ -24,6 +24,8 @@ from ..services.ops import get_ops
 from ..services.provinces import PROVINCES
 from ..services.settings import get_setting
 from .uploads import upload_prefix
+from ..services.features import require_feature
+
 
 router = APIRouter(tags=["assist"])
 
@@ -45,7 +47,7 @@ def _own_tree(db, tree_id: uuid.UUID | None, user) -> Tree | None:
 # ---------- E3: đoán sâu bệnh ----------
 
 
-@router.get("/tools/health/symptoms")
+@router.get("/tools/health/symptoms", dependencies=[require_feature("health_check")])
 def symptoms():
     return health.symptoms()
 
@@ -61,7 +63,7 @@ def _health_out(h: HealthCheck) -> dict:
             "photo_url": storage.presign_get(h.photo_key) if h.photo_key else None}
 
 
-@router.post("/health-checks", status_code=status.HTTP_201_CREATED)
+@router.post("/health-checks", dependencies=[require_feature("health_check")], status_code=status.HTTP_201_CREATED)
 def create_health(body: HealthIn, db: DB, user: CurrentUser):
     codes = {s["code"] for s in health.symptoms()}
     if not set(body.symptoms) <= codes:
@@ -96,7 +98,7 @@ def create_health(body: HealthIn, db: DB, user: CurrentUser):
     return _health_out(h)
 
 
-@router.get("/health-checks/{check_id}")
+@router.get("/health-checks/{check_id}", dependencies=[require_feature("health_check")])
 def get_health(check_id: uuid.UUID, db: DB, user: CurrentUser):
     h = db.get(HealthCheck, check_id)
     if h is None or h.user_id != user.id:
@@ -104,7 +106,7 @@ def get_health(check_id: uuid.UUID, db: DB, user: CurrentUser):
     return _health_out(h)
 
 
-@router.get("/me/health-checks")
+@router.get("/me/health-checks", dependencies=[require_feature("health_check")])
 def my_health(db: DB, user: CurrentUser):
     rows = db.execute(select(HealthCheck).where(HealthCheck.user_id == user.id).order_by(HealthCheck.created_at.desc()).limit(30)).scalars()
     return [_health_out(h) for h in rows]
@@ -122,7 +124,7 @@ def _q_out(q: AssistantQuestion) -> dict:
     return {"id": str(q.id), "question": q.question, "status": q.status, "answer": q.answer, "created_at": q.created_at.isoformat()}
 
 
-@router.post("/assistant/questions", status_code=status.HTTP_201_CREATED)
+@router.post("/assistant/questions", dependencies=[require_feature("assistant")], status_code=status.HTTP_201_CREATED)
 def ask(body: QuestionIn, db: DB, user: CurrentUser):
     tree = _own_tree(db, body.tree_id, user)
     q = AssistantQuestion(id=uuid.uuid4(), user_id=user.id, tree_id=body.tree_id, question=body.question.strip())
@@ -138,7 +140,7 @@ def ask(body: QuestionIn, db: DB, user: CurrentUser):
     return _q_out(q)
 
 
-@router.get("/assistant/questions/{question_id}")
+@router.get("/assistant/questions/{question_id}", dependencies=[require_feature("assistant")])
 def get_question(question_id: uuid.UUID, db: DB, user: CurrentUser):
     q = db.get(AssistantQuestion, question_id)
     if q is None or q.user_id != user.id:
@@ -163,7 +165,7 @@ def forecast(province: str) -> dict:
     return out
 
 
-@router.get("/tools/weather")
+@router.get("/tools/weather", dependencies=[require_feature("weather")])
 def get_weather(province: str = Query(max_length=32)):
     if province not in PROVINCES:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Tỉnh, thành không hợp lệ.")

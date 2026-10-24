@@ -22,6 +22,8 @@ from ..security import DB, CurrentUser, require_artisan
 from ..services.credits import InsufficientCredits, apply_credit
 from ..services.ops import get_ops
 from ..services.provinces import PROVINCES
+from ..services.features import require_feature
+
 
 router = APIRouter(tags=["expert"])
 Artisan = Annotated[User, Depends(require_artisan)]
@@ -65,12 +67,12 @@ def _consult_out(db, c: Consult, *, full: bool) -> dict:
     return d
 
 
-@router.get("/consults/price")
+@router.get("/consults/price", dependencies=[require_feature("consults")])
 def consult_price(db: DB):
     return {"credits": int(get_ops(db).get("consult_credits") or 0), "answer_within_hours": 72}
 
 
-@router.post("/jobs/{job_id}/consults", status_code=status.HTTP_201_CREATED)
+@router.post("/jobs/{job_id}/consults", dependencies=[require_feature("consults")], status_code=status.HTTP_201_CREATED)
 def ask(job_id: uuid.UUID, body: ConsultIn, db: DB, user: CurrentUser):
     job = db.get(DesignJob, job_id)
     if job is None or job.user_id != user.id or not job.analysis:
@@ -103,7 +105,7 @@ def ask(job_id: uuid.UUID, body: ConsultIn, db: DB, user: CurrentUser):
     return _consult_out(db, c, full=False)
 
 
-@router.get("/me/consults")
+@router.get("/me/consults", dependencies=[require_feature("consults")])
 def my_consults(db: DB, user: CurrentUser):
     rows = db.execute(select(Consult).where(Consult.user_id == user.id).order_by(Consult.created_at.desc()).limit(50)).scalars()
     return [_consult_out(db, c, full=False) for c in rows]
@@ -203,7 +205,7 @@ def _people_out(db, u: User, *, full: bool) -> dict:
     return d
 
 
-@router.get("/public/artisans")
+@router.get("/public/artisans", dependencies=[require_feature("public_profiles", "consults")])
 def artisans(db: DB):
     rows = db.execute(select(User).where(User.role == UserRole.artisan, User.public_slug.is_not(None),
                                          User.deleted_at.is_(None))).scalars().all()
@@ -211,7 +213,7 @@ def artisans(db: DB):
     return sorted(out, key=lambda x: (-(x["rating"] or 0), -x["answered"]))
 
 
-@router.get("/public/people/{slug}")
+@router.get("/public/people/{slug}", dependencies=[require_feature("public_profiles")])
 def person(slug: str, db: DB):
     u = db.execute(select(User).where(User.public_slug == slug.lower(), User.deleted_at.is_(None))).scalar_one_or_none()
     if u is None or u.role not in (UserRole.nursery, UserRole.artisan, UserRole.admin):

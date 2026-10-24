@@ -82,3 +82,24 @@ def test_weather_daily_dedupes(db, login, monkeypatch):
     assert pushed == [(user.id, "weather_heavy_rain", pushed[0][2])] and pushed[0][2].startswith("Ngày 26/10:")
     assert len(calls) == 1  # chỉ tỉnh có người dùng có cây
     assert assist.run_weather_daily(db, r, http=http, today=date(2026, 10, 25)) == 0  # không báo lại
+
+
+def test_weather_daily_respects_feature_flag(db, login, monkeypatch):
+    from bonsai_api.services.features import save
+
+    user, _ = _tree(db, login)
+    db.get(User, user.id).province = "can_tho"
+    db.commit()
+    pushed = []
+    monkeypatch.setattr(assist, "send_web_push", lambda db, uid, msg, base: pushed.append(uid) or 1)
+    rain = {"daily": {"time": ["2026-10-26"], "temperature_2m_max": [30], "temperature_2m_min": [24], "precipitation_sum": [90], "wind_speed_10m_max": [10]}}
+    http = httpx.Client(transport=httpx.MockTransport(lambda req: httpx.Response(200, json=rain)))
+    save(db, {"weather": "off"}, None, by=None)
+    db.commit()
+    assert assist.run_weather_daily(db, FakeRedis(), http=http, today=date(2026, 10, 25)) == 0
+    save(db, {"weather": "staff"}, None, by=None)  # người chơi thường không nhận
+    db.commit()
+    assert assist.run_weather_daily(db, FakeRedis(), http=http, today=date(2026, 10, 25)) == 0
+    save(db, {"weather": "staff"}, [db.get(User, user.id).email], by=None)  # có trong danh sách người thử
+    db.commit()
+    assert assist.run_weather_daily(db, FakeRedis(), http=http, today=date(2026, 10, 25)) == 1 and pushed == [user.id]

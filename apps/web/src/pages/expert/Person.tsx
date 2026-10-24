@@ -5,6 +5,7 @@ import { ButtonLink, Notice, Skeleton } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { expertApi, type Person } from '@/lib/expert';
 import { vnd, zaloUrl } from '@/lib/market';
+import { useFeatures } from '@/lib/features';
 
 const ROLE_VI = { nursery: 'Nhà vườn', artisan: 'Nghệ nhân', admin: 'Bonsai AI', player: '' } as const;
 
@@ -13,6 +14,7 @@ export default function PersonPage() {
   const { slug = '' } = useParams();
   const [p, setP] = useState<Person | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const on = useFeatures();
   useEffect(() => { expertApi.person(slug).then(setP).catch((e: ApiError) => setError(e.message)); }, [slug]);
   if (error) return <div className="mx-auto max-w-content px-gutter py-6"><Notice tone="danger">{error}</Notice></div>;
   if (!p) return <div className="mx-auto max-w-content px-gutter py-6"><Skeleton className="h-60 rounded-card" /></div>;
@@ -31,8 +33,8 @@ export default function PersonPage() {
       ) : null}
       {p.bio ? <p className="m-0 whitespace-pre-line text-body">{p.bio}</p> : null}
       <div className="grid grid-cols-2 gap-2">
-        {p.role === 'artisan' ? <ButtonLink to={`/hoi-nghe-nhan/moi?nghe-nhan=${p.slug}`}>Hỏi nghệ nhân</ButtonLink> : null}
-        {p.role === 'nursery' ? <ButtonLink to={`/cham-ho/moi?vuon=${p.slug}`}>Gửi chăm hộ</ButtonLink> : null}
+        {p.role === 'artisan' && on('consults') ? <ButtonLink to={`/hoi-nghe-nhan/moi?nghe-nhan=${p.slug}`}>Hỏi nghệ nhân</ButtonLink> : null}
+        {p.role === 'nursery' && on('care') ? <ButtonLink to={`/cham-ho/moi?vuon=${p.slug}`}>Gửi chăm hộ</ButtonLink> : null}
         {p.contact_phone ? (
           <a href={zaloUrl(p.contact_phone)} target="_blank" rel="noreferrer"
             className="flex min-h-cta items-center justify-center gap-2 rounded-btn border border-line-strong font-semibold text-ink no-underline">

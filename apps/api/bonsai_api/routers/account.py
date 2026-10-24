@@ -11,6 +11,7 @@ from .. import queue, storage
 from ..db.models import CreditLedger, PhotoSource, Tree, TreePhoto
 from ..security import DB, CurrentUser
 from ..services.community import diary_reward
+from ..services.features import enabled as feature_enabled
 from ..services.gift_codes import GiftCodeError, redeem
 from ..services.ops import get_ops
 from .uploads import upload_prefix
@@ -117,7 +118,7 @@ def add_progress(tree_id: uuid.UUID, body: ProgressIn, user: CurrentUser, db: DB
     photo = TreePhoto(tree_id=tree.id, storage_key=body.key, view_index=100 + n, is_front=False,
                       source=PhotoSource.progress, taken_at=datetime.now(UTC))
     db.add(photo)
-    reward = diary_reward(db, tree, photo.taken_at)
+    reward = diary_reward(db, tree, photo.taken_at) if feature_enabled(db, "diary_rewards", user) else 0
     db.commit()
     queue.enqueue("bonsai_worker.tasks.preprocess.normalize_tree_photos", str(tree.id))  # xóa EXIF/GPS, 1536 px
     return ProgressPhoto(id=photo.id, url=None, taken_at=photo.taken_at, ready=False, reward=reward)

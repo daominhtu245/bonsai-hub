@@ -161,6 +161,14 @@ export interface Ops {
   pause_render: boolean;
   pause_message: string;
   announcement: { active: boolean; text: string; tone: 'info' | 'success' | 'warn' };
+  referral_credits: number;
+  diary_reward_credits: number;
+  consult_credits: number;
+  nursery_listing_free: number;
+  nursery_featured_max: number;
+  nursery_preview_limit: number;
+  health_daily_free: number;
+  assistant_daily_ai: number;
 }
 export interface PackageAdmin {
   code: string; name_vi: string; credits: number; amount_vnd: number; note_vi: string; popular: boolean; nursery: boolean;

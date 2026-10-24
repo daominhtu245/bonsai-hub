@@ -74,6 +74,16 @@ function OpsForm({ ops, onSaved }: { ops: Ops; onSaved: (o: Ops) => void }) {
           <input type="number" min={10000} max={50000} step={100} className={input} value={f.usd_vnd_rate} onChange={(e) => setF({ ...f, usd_vnd_rate: Number(e.target.value) })} />
         </label>
       </div>
+      <fieldset className="m-0 flex flex-col gap-3 rounded-card border border-line p-4">
+        <legend className="px-1 text-caption font-semibold">Thông số tính năng</legend>
+        <div className="grid gap-3 md:grid-cols-3">
+          {FEATURE_PARAMS.map(([k, label, min, max]) => (
+            <label key={k} className="flex flex-col gap-1 text-caption font-medium">{label}
+              <input type="number" min={min} max={max} className={input} value={f[k]} onChange={(e) => setF({ ...f, [k]: Number(e.target.value) })} />
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <div className="flex gap-2">
         <Button type="submit" size="touch" block={false} loading={busy} disabled={!dirty}>Lưu thay đổi</Button>
         {dirty ? <Button variant="ghost" size="touch" block={false} onClick={() => setF(ops)}>Hủy</Button> : null}
@@ -82,6 +92,19 @@ function OpsForm({ ops, onSaved }: { ops: Ops; onSaved: (o: Ops) => void }) {
     </form>
   );
 }
+
+type NumKey = 'referral_credits' | 'diary_reward_credits' | 'consult_credits' | 'nursery_listing_free' | 'nursery_featured_max'
+  | 'nursery_preview_limit' | 'health_daily_free' | 'assistant_daily_ai';
+const FEATURE_PARAMS: Array<[NumKey, string, number, number]> = [
+  ['referral_credits', 'Giới thiệu bạn: lượt tặng mỗi bên', 0, 10],
+  ['diary_reward_credits', 'Nhật ký đúng mốc: lượt thưởng', 0, 10],
+  ['consult_credits', 'Hỏi nghệ nhân: số lượt', 1, 20],
+  ['nursery_listing_free', 'Tin đăng miễn phí (chưa có gói)', 0, 100],
+  ['nursery_featured_max', 'Gói tháng: số tin nổi bật', 0, 50],
+  ['nursery_preview_limit', 'Gói tháng: xem thử AI / phiên', 2, 50],
+  ['health_daily_free', 'Đoán sâu bệnh / người / ngày', 0, 100],
+  ['assistant_daily_ai', 'Hỏi đáp bằng AI / người / ngày', 0, 500],
+];
 
 function PackagesTable() {
   const [state, , setData] = useLoad(() => consoleApi.packages());

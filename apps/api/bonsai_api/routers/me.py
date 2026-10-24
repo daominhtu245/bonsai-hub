@@ -9,6 +9,8 @@ from ..schemas import UserOut
 from ..security import DB, CurrentUser
 from ..services import referrals
 from ..services.provinces import PROVINCES
+from ..services.features import require_feature
+
 
 router = APIRouter(tags=["me"])
 
@@ -91,7 +93,7 @@ def delete_me(body: DeleteMeIn, user: CurrentUser, db: DB):
     db.commit()
 
 
-@router.get("/me/referral")
+@router.get("/me/referral", dependencies=[require_feature("referral")])
 def my_referral(user: CurrentUser, db: DB):
     code = referrals.ensure_code(db, user)
     from ..settings import get_settings
@@ -100,7 +102,7 @@ def my_referral(user: CurrentUser, db: DB):
             "claimed": user.referred_by is not None, **referrals.stats(db, user)}
 
 
-@router.post("/me/referral/claim", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/me/referral/claim", dependencies=[require_feature("referral")], status_code=status.HTTP_204_NO_CONTENT)
 def claim_referral(body: ReferralClaimIn, user: CurrentUser, db: DB):
     try:
         referrals.claim(db, user, body.code)

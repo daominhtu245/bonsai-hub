@@ -122,7 +122,7 @@ describe('Cộng đồng', () => {
     mockFetch([['GET /api/v1/me/skill', () => json({ level: 'hoc_tro', level_vi: 'Học trò', next_vi: 'Thợ',
       progress: [{ key: 'designs', label_vi: 'Bản thiết kế đã tạo ảnh', have: 1, need: 3 }] })]]);
     render(<SkillCard />);
-    expect(await screen.findByText('Học trò')).toBeInTheDocument();
+    expect((await screen.findAllByText('Học trò')).length).toBeGreaterThan(0);
     expect(screen.getByRole('progressbar', { name: 'Bản thiết kế đã tạo ảnh' })).toHaveAttribute('aria-valuenow', '1');
     await waitFor(() => expect(screen.getByText('1/3')).toBeInTheDocument());
   });

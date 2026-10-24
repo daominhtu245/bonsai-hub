@@ -25,6 +25,8 @@ from ..security import DB, CurrentUser, require_admin
 from ..services import community
 from ..services.audit import audit
 from .studio import StudioOut, studio_payload
+from ..services.features import require_feature
+
 
 router = APIRouter(tags=["community"])
 Admin = Annotated[User, Depends(require_admin)]
@@ -51,7 +53,7 @@ def _stage_url(db, job: DesignJob, code: str) -> str | None:
 # ---------- B2: mốc nhật ký ----------
 
 
-@router.get("/trees/{tree_id}/milestones")
+@router.get("/trees/{tree_id}/milestones", dependencies=[require_feature("diary_rewards")])
 def milestones(tree_id: uuid.UUID, db: DB, user: CurrentUser):
     from ..services.ops import get_ops
 
@@ -69,7 +71,7 @@ class RealityIn(BaseModel):
     score: int = Field(ge=1, le=5)  # cây thật giống ảnh dự đoán: 1 không giống – 5 rất giống
 
 
-@router.get("/trees/{tree_id}/reality")
+@router.get("/trees/{tree_id}/reality", dependencies=[require_feature("reality")])
 def reality(tree_id: uuid.UUID, db: DB, user: CurrentUser):
     tree = _own_tree(db, tree_id, user)
     job = _latest_done(db, tree)
@@ -86,7 +88,7 @@ def reality(tree_id: uuid.UUID, db: DB, user: CurrentUser):
             "score": ((job.progress or {}).get("reality") or {}).get("score")}
 
 
-@router.post("/trees/{tree_id}/reality", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/trees/{tree_id}/reality", dependencies=[require_feature("reality")], status_code=status.HTTP_204_NO_CONTENT)
 def rate_reality(tree_id: uuid.UUID, body: RealityIn, db: DB, user: CurrentUser):
     """Người dùng tự chấm độ giống → thước đo chất lượng AI theo thời gian (admin xem ở thống kê)."""
     tree = _own_tree(db, tree_id, user)
@@ -107,7 +109,7 @@ def _style_vi(db, key: str) -> str:
     return st.name_vi if st else key
 
 
-@router.get("/votes/next")
+@router.get("/votes/next", dependencies=[require_feature("design_votes")])
 def next_pair(db: DB, user: CurrentUser):
     pair = community.vote_pair(db, user)
     if pair is None:
@@ -123,7 +125,7 @@ class VoteIn(BaseModel):
     loser_id: uuid.UUID
 
 
-@router.post("/votes", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/votes", dependencies=[require_feature("design_votes")], status_code=status.HTTP_204_NO_CONTENT)
 def vote(body: VoteIn, db: DB, user: CurrentUser):
     job = db.get(DesignJob, body.job_id)
     ids = {o.id for o in db.execute(select(DesignOption).where(DesignOption.job_id == body.job_id)).scalars()}
@@ -141,7 +143,7 @@ def vote(body: VoteIn, db: DB, user: CurrentUser):
 # ---------- B7: bậc tay nghề ----------
 
 
-@router.get("/me/skill")
+@router.get("/me/skill", dependencies=[require_feature("skill_levels")])
 def my_skill(db: DB, user: CurrentUser):
     return community.skill(db, user)
 
@@ -180,14 +182,14 @@ def _summary(db, c: Challenge, now: datetime) -> dict:
             "ends_at": c.ends_at.isoformat(), "state": _state(c, now), "photo_url": _photo_url(db, c), "entries": n}
 
 
-@router.get("/challenges")
+@router.get("/challenges", dependencies=[require_feature("challenges")])
 def list_challenges(db: DB, user: CurrentUser):
     now = datetime.now(UTC)
     rows = db.execute(select(Challenge).where(Challenge.starts_at <= now).order_by(Challenge.ends_at.desc()).limit(24)).scalars()
     return [_summary(db, c, now) for c in rows]
 
 
-@router.get("/challenges/{challenge_id}")
+@router.get("/challenges/{challenge_id}", dependencies=[require_feature("challenges")])
 def challenge_detail(challenge_id: uuid.UUID, db: DB, user: CurrentUser):
     now = datetime.now(UTC)
     c = _challenge(db, challenge_id)
@@ -206,7 +208,7 @@ def challenge_detail(challenge_id: uuid.UUID, db: DB, user: CurrentUser):
                          "votes": e.votes if state == "closed" else None, "mine": e.user_id == user.id} for e in entries]}
 
 
-@router.get("/challenges/{challenge_id}/studio", response_model=StudioOut)
+@router.get("/challenges/{challenge_id}/studio", dependencies=[require_feature("challenges")], response_model=StudioOut)
 def challenge_studio(challenge_id: uuid.UUID, db: DB, user: CurrentUser):
     c = _challenge(db, challenge_id)
     if _state(c, datetime.now(UTC)) != "open":
@@ -215,7 +217,7 @@ def challenge_studio(challenge_id: uuid.UUID, db: DB, user: CurrentUser):
     return studio_payload(db, db.get(DesignJob, c.job_id), mine.design if mine else None)
 
 
-@router.post("/challenges/{challenge_id}/entry")
+@router.post("/challenges/{challenge_id}/entry", dependencies=[require_feature("challenges")])
 def submit_entry(challenge_id: uuid.UUID, body: UserDesignIn, db: DB, user: CurrentUser):
     from bonsai_pipeline.studio_compose import compose
 
@@ -241,7 +243,7 @@ class ChallengeVoteIn(BaseModel):
     entry_id: int
 
 
-@router.post("/challenges/{challenge_id}/vote", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/challenges/{challenge_id}/vote", dependencies=[require_feature("challenges")], status_code=status.HTTP_204_NO_CONTENT)
 def challenge_vote(challenge_id: uuid.UUID, body: ChallengeVoteIn, db: DB, user: CurrentUser):
     c = _challenge(db, challenge_id)
     if _state(c, datetime.now(UTC)) != "open":
