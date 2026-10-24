@@ -65,6 +65,7 @@ def job_out(db: Session, job: DesignJob, user: User) -> JobOut:
             new_branch_notes_vi=[n["note_vi"] for n in d.get("new_branches_needed", [])],
             counts=o.sketch_meta or {},
             sketch_svg_url=storage.presign_get(o.sketch_svg_key) if o.sketch_svg_key else None,
+            source=d.get("source", "ai"),
         ))
     result = None
     if job.status == JobStatus.done:

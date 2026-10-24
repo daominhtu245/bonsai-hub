@@ -108,6 +108,15 @@ class Pot(_Model):
     position: Literal["off_center_left", "off_center_right", "center"]
 
 
+class Pad(_Model):
+    """Tầng lá người dùng tự đặt (màn Tự thiết kế): elip tâm `center_px`, bán trục rx/ry, xoay `rotation` độ."""
+
+    center_px: Point
+    rx: float = Field(gt=0)
+    ry: float = Field(gt=0)
+    rotation: float = 0
+
+
 class DesignOption(_Model):
     style_key: str
     suitability: float = Field(ge=0, le=1)
@@ -120,6 +129,8 @@ class DesignOption(_Model):
     silhouette: Silhouette
     pot: Pot
     care_steps_vi: list[str] = []
+    source: Literal["ai", "user"] = "ai"
+    pads_layout: list[Pad] = []  # chỉ thiết kế người dùng: vị trí từng tầng lá (bản vẽ vẽ elip thay khung tam giác)
 
 
 class DesignResult(_Model):

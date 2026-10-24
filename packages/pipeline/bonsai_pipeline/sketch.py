@@ -82,6 +82,18 @@ def branch_end(b: Branch, trunk_height: float) -> tuple[float, float]:
     return b.start_px[0] + ux * length, b.start_px[1] + uy * length
 
 
+def ellipse_points(center, rx: float, ry: float, rotation_deg: float = 0, n: int = 28) -> list[tuple[float, float]]:
+    cx, cy = center
+    r = math.radians(rotation_deg)
+    cos, sin = math.cos(r), math.sin(r)
+    pts = []
+    for i in range(n):
+        t = 2 * math.pi * i / n
+        x, y = rx * math.cos(t), ry * math.sin(t)
+        pts.append((cx + x * cos - y * sin, cy + x * sin + y * cos))
+    return pts
+
+
 def build_scene(analysis: Analysis, option: DesignOption, image_size: tuple[int, int]) -> Scene:
     if analysis.trunk is None:
         raise ValueError("analysis has no trunk")
@@ -97,14 +109,19 @@ def build_scene(analysis: Analysis, option: DesignOption, image_size: tuple[int,
     for k in option.keep_branches:
         if k.role == "first_branch" and k.id in branches and branches[k.id].direction in ("left", "right"):
             first_side = branches[k.id].direction
-    long_, short = 0.6 * sw, 0.4 * sw
-    base_y = min(ay + sh, float(h))
-    lift = sh * 0.12  # góc phía cạnh ngắn cao hơn một chút
-    if first_side == "left":
-        tri = [(ax - long_, base_y), (ax, ay), (ax + short, base_y - lift)]
+    if option.pads_layout:  # thiết kế người dùng: mỗi tầng lá một elip
+        for pad in option.pads_layout:
+            scene.items.append(Line("canopy", ellipse_points(pad.center_px, pad.rx, pad.ry, pad.rotation),
+                                    dashed=True, width=0.8, closed=True))
     else:
-        tri = [(ax - short, base_y - lift), (ax, ay), (ax + long_, base_y)]
-    scene.items.append(Line("canopy", tri, dashed=True, width=0.6, closed=True))
+        long_, short = 0.6 * sw, 0.4 * sw
+        base_y = min(ay + sh, float(h))
+        lift = sh * 0.12  # góc phía cạnh ngắn cao hơn một chút
+        if first_side == "left":
+            tri = [(ax - long_, base_y), (ax, ay), (ax + short, base_y - lift)]
+        else:
+            tri = [(ax - short, base_y - lift), (ax, ay), (ax + long_, base_y)]
+        scene.items.append(Line("canopy", tri, dashed=True, width=0.6, closed=True))
 
     for k in option.keep_branches:
         b = branches.get(k.id)

@@ -27,6 +27,7 @@ export interface DesignOptionView {
   new_branch_notes_vi: string[];
   counts: { cut?: number; keep?: number; new?: number; chop_apex?: boolean };
   sketch_svg_url: string | null;
+  source?: 'ai' | 'user'; // user = người dùng tự thiết kế
 }
 
 export interface Job {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Maximize2, X } from 'lucide-react';
+import { ChevronDown, Maximize2, PenTool, X } from 'lucide-react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { Button, ButtonLink, Notice, Segmented, Skeleton, SketchLegend, StyleName } from '@/components/ui';
@@ -95,7 +95,8 @@ export default function Choose() {
       .get(jobId)
       .then((j) => {
         setJob(j);
-        setSelected((s) => s ?? j.options[0]?.id ?? null);
+        const wanted = new URLSearchParams(window.location.search).get('option'); // quay về từ Tự thiết kế
+        setSelected((s) => s ?? (j.options.some((o) => o.id === wanted) ? wanted : j.options[0]?.id) ?? null);
       })
       .catch((e: ApiError) => setLoadError(e.message));
   };
@@ -222,9 +223,18 @@ export default function Choose() {
               className={cx('flex min-h-[56px] flex-col items-start justify-center rounded-btn border px-3 py-2 text-left transition-colors',
                 o.id === option.id ? 'border-ink bg-surface shadow-card' : 'border-line bg-surface-2 text-ink-muted hover:text-ink')}>
               <span className="text-caption font-semibold [overflow-wrap:anywhere]">{o.name_vi}</span>
-              <span className="tabular text-label text-ink-subtle">{score(o.suitability)}/10</span>
+              <span className="tabular text-label text-ink-subtle">{o.source === 'user' ? 'Của bạn' : `${score(o.suitability)}/10`}</span>
             </button>
           ))}
+        </div>
+      ) : null}
+
+      {!readOnly && job.status === 'awaiting_choice' ? (
+        <div className="mx-gutter mt-3">
+          <ButtonLink to={`/tu-thiet-ke/${job.id}`} variant="secondary" size="touch">
+            <PenTool size={18} strokeWidth={1.75} aria-hidden="true" />
+            {job.options.some((o) => o.source === 'user') ? 'Sửa thiết kế của bạn' : 'Tự thiết kế'}
+          </ButtonLink>
         </div>
       ) : null}
 
@@ -234,7 +244,7 @@ export default function Choose() {
             <h2 id="opt-title" className="text-h1">
               <StyleName vi={option.name_vi} jp={option.name_jp} />
             </h2>
-            <div className="text-caption text-ink-muted">{option.rank === 1 ? 'Phù hợp nhất' : `Phương án ${option.rank}`}</div>
+            <div className="text-caption text-ink-muted">{option.source === 'user' ? 'Thiết kế của bạn' : option.rank === 1 ? 'Phù hợp nhất' : `Phương án ${option.rank}`}</div>
           </div>
           {readOnly ? <span className="flex-none rounded-chip bg-primary-soft px-2 py-0.5 text-label font-medium text-primary-ink">Đã dùng</span> : null}
         </div>
@@ -256,13 +266,13 @@ export default function Choose() {
         <div className="flex flex-col gap-3 p-4">
           <SketchLegend />
           <Counts option={option} lowerApexCm={a?.lower_apex_cm ?? null} />
-          <div className="flex items-center gap-3">
+          {option.source === 'user' ? null : <div className="flex items-center gap-3">
             <span className="text-caption text-ink-muted">Mức phù hợp</span>
             <div className="h-1 flex-1 rounded-full bg-surface-2" aria-hidden="true">
               <div className="h-full rounded-full bg-primary" style={{ width: `${score(option.suitability) * 10}%` }} />
             </div>
             <span className="tabular text-caption font-semibold">{score(option.suitability)}/10</span>
-          </div>
+          </div>}
           <p className="m-0 text-caption">{option.why_vi}</p>
           {option.remove_reasons_vi.length || option.new_branch_notes_vi.length || option.care_steps_vi.length ? (
             <details className="group text-caption">

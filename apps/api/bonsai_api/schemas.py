@@ -145,6 +145,7 @@ class OptionOut(BaseModel):
     new_branch_notes_vi: list[str]
     counts: dict
     sketch_svg_url: str | None
+    source: str = "ai"  # "user" = người dùng tự thiết kế (màn Tự thiết kế)
 
 
 class ResultOut(BaseModel):

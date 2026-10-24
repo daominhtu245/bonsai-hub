@@ -3,8 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#F6F6F4" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0F0F0E" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F6F6F4" />
+    <script>
+      // Giao diện mặc định SÁNG; người dùng đổi ở Tài khoản (src/lib/theme.ts). Chạy trước React để không nháy nền tối.
+      try {
+        var t = localStorage.getItem('bonsai.theme');
+        if (t !== 'system') document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    </script>
     <meta name="description" content="Chụp phôi, nhận bản vẽ thế cây và lộ trình chăm từng giai đoạn." />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

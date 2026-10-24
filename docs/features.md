@@ -9,6 +9,8 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 |---|---|---|
 | Chụp / chọn ảnh phôi, nhập loài và chiều cao | Trang chủ → Phân tích phôi mới | Ảnh mờ / tối bị báo chụp lại ngay, không tốn API |
 | Phân tích phôi + 2–3 thế kèm bản vẽ cắt / giữ / nuôi cành | Màn Chọn thế | Miễn phí |
+| **Tự thiết kế**: chạm cành để Giữ / Cắt, kéo tầng lá (A, B, C…), cành mới, điểm ngọn; chọn thế, dáng / màu / vị trí chậu; bắt đầu từ mẫu AI; hoàn tác; gợi ý theo luật (không bắt buộc) | Chọn thế → Tự thiết kế | Lưu miễn phí; "Tạo ảnh tương lai" dùng 1 lượt, model ảnh đặt tầng lá đúng các vị trí người dùng vẽ |
+| Giao diện Sáng (mặc định) / Tối / Theo máy | Tài khoản → Giao diện | |
 | Ảnh tương lai + 3 ảnh giai đoạn + hướng dẫn từng giai đoạn | Màn Kết quả | Trả 1 lượt; lỗi tự hoàn lượt |
 | Đánh dấu việc đã làm theo giai đoạn | Màn Kết quả | |
 | **Thêm nhắc việc vào lịch điện thoại** (.ics) | Kết quả → Lưu & nhắc việc | Mốc từng giai đoạn + nhắc kiểm tra dây uốn 3/6/10 tuần, báo trước 1 ngày |

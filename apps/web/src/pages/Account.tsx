@@ -3,11 +3,12 @@ import { ChevronRight, LogOut, Shield } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BottomNav } from '@/components/BottomNav';
 import { GiftCodeBox } from '@/components/GiftCodeBox';
-import { Button, ButtonLink, Notice, Skeleton } from '@/components/ui';
+import { Button, ButtonLink, Notice, Segmented, Skeleton } from '@/components/ui';
 import { accountApi, vnd, type Payment } from '@/lib/account';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { disablePush, enablePush, pushState, type PushState } from '@/lib/push';
+import { getTheme, setTheme, type ThemePref } from '@/lib/theme';
 
 const PUSH_TEXT: Record<PushState, string> = {
   on: 'Đang bật trên thiết bị này',
@@ -49,6 +50,7 @@ export default function Account() {
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [payments, setPayments] = useState<Payment[] | null>(null);
+  const [theme, setThemeState] = useState<ThemePref>(getTheme);
   const [push, setPush] = useState<PushState | null>(null);
   const [prefError, setPrefError] = useState<string | null>(null);
 
@@ -147,6 +149,13 @@ export default function Account() {
             disabled={push !== 'on' && push !== 'off'} onChange={togglePush} />
           <Toggle id="zalo" label="Qua Zalo" hint={me?.phone ? undefined : 'Cần số điện thoại'}
             checked={Boolean(me?.notify_zalo)} disabled={!me?.phone} onChange={(v) => setPref({ notify_zalo: v })} />
+        </Group>
+
+        <Group title="Giao diện">
+          <div className="px-4 py-3">
+            <Segmented<ThemePref> label="Giao diện" value={theme} onChange={(v) => { setThemeState(v); setTheme(v); }}
+              options={[['light', 'Sáng'], ['dark', 'Tối'], ['system', 'Theo máy']]} />
+          </div>
         </Group>
 
         <Group title="Quyền riêng tư">

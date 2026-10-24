@@ -12,6 +12,7 @@ const Capture = lazy(() => import('@/pages/Capture'));
 const TreeInfo = lazy(() => import('@/pages/TreeInfo'));
 const Analyzing = lazy(() => import('@/pages/Analyzing'));
 const Choose = lazy(() => import('@/pages/Choose'));
+const Studio = lazy(() => import('@/pages/Studio'));
 const Result = lazy(() => import('@/pages/Result'));
 const ResultPrint = lazy(() => import('@/pages/ResultPrint'));
 const CreditHistory = lazy(() => import('@/pages/CreditHistory'));
@@ -59,6 +60,7 @@ export default function App() {
               <Route path="/chup/thong-tin" element={guard(<TreeInfo />)} />
               <Route path="/phan-tich/:jobId" element={guard(<Analyzing />)} />
               <Route path="/chon/:jobId" element={guard(<Choose />)} />
+              <Route path="/tu-thiet-ke/:jobId" element={guard(<Studio />)} />
               <Route path="/ket-qua/:jobId" element={guard(<Result />)} />
               <Route path="/ket-qua/:jobId/in" element={guard(<ResultPrint />)} />
               <Route path="/vuon" element={guard(<Garden />)} />

@@ -111,7 +111,13 @@ def p3a_variables(
         "apex_lean": _APEX_LEAN.get(option.apex.lean, option.apex.lean),
         "first_branch_side": first_side,
         "species_foliage_description": species_desc,
-        "pads": option.silhouette.pads,
+        "pads": len(option.pads_layout) or option.silhouette.pads,
+        "silhouette_note": (
+            "Place exactly one foliage pad inside each dashed ellipse of the sketch, matching its position and size; "
+            "no foliage outside the ellipses. The owner designed this layout — follow it rather than an ideal triangle."
+            if option.pads_layout else
+            "Overall silhouette: asymmetric (scalene) triangle following the dashed outline."
+        ),
         "pot_description": pot_desc,
         "pot_position": _POT_POSITION.get(pot.position, pot.position),
         "repot_note": "The tree has been repotted into this bonsai pot." if years >= 3 else "",

@@ -54,6 +54,8 @@ Tài liệu kỹ thuật vẫn là nguồn chính. Đây là những chỗ code 
 | 38 | Link tải Excel / .ics là **link ký sẵn 1 giờ** (HMAC), không cần header đăng nhập | Thẻ `<a>` và ứng dụng Lịch của iPhone mở URL trực tiếp |
 | 39 | **Cấu hình vận hành & gói bán đổi lúc chạy** (`app_settings` "ops", "packages"); đơn thanh toán chốt số lượt lúc tạo (`payments.credits`) | Đổi giá / khuyến mãi / bảo trì không cần triển khai lại; đổi gói không ảnh hưởng đơn đã tạo |
 | 40 | Gửi thông báo hàng loạt **chỉ qua Web Push** | Zalo ZNS chỉ cho tin giao dịch theo mẫu đã duyệt |
+| 41 | **Giao diện mặc định sáng**, không tự theo chế độ tối của máy; người dùng chọn Sáng / Tối / Theo máy ở Tài khoản (áp dụng trước khi React chạy, không nháy) | Người dùng phản hồi nền "đen xì"; đối tượng lớn tuổi quen nền sáng |
+| 42 | **Tự thiết kế**: thiết kế người dùng là một `DesignOption` (`source=user`, rank 9, `pads_layout` = elip từng tầng lá) → dùng lại bản vẽ, màn Chọn thế, trả lượt, phiên B. P3a v2: "đặt đúng một tầng lá trong mỗi elip". Gợi ý luật (cành chống, tầng chồng nhau, tầng sát gốc, ngọn thấp, tầng trên to hơn) chỉ tham khảo | Người dùng muốn tự quyết dáng; giữ nguyên tắc "model ảnh chỉ thực thi thiết kế" (lần này thiết kế do người dùng) |
 | 33 | ultralytics/torch chỉ cài vào worker khi `WORKER_WITH_CV=true` | Nặng ~1 GB; chưa có trọng số thì không cần |
 | 31 | OpenAI ảnh: đệm lề ảnh vào vào khổ gần nhất (1024², 1536×1024, 1024×1536) rồi cắt ảnh ra về đúng tỉ lệ gốc | Không thì CV loại vì sai tỉ lệ → sinh lại, tốn tiền |
 
