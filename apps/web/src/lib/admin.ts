@@ -49,11 +49,12 @@ export type AiSettings = {
   analysis_mode: 'api' | 'hybrid';
   design_mode: 'api' | 'rules';
   seg_model_ready: boolean;
+  app_env: string;
 };
 
 export const adminApi = {
   settings: () => api<AiSettings>('/admin/settings'),
-  saveSettings: (patch: Partial<Omit<AiSettings, 'seg_model_ready'>>) => api<AiSettings>('/admin/settings', { method: 'PUT', json: patch }),
+  saveSettings: (patch: Partial<Omit<AiSettings, 'seg_model_ready' | 'app_env'>>) => api<AiSettings>('/admin/settings', { method: 'PUT', json: patch }),
   prompts: () => api<PromptRow[]>('/admin/prompts'),
   createPrompt: (body: { step_code: string; system: string | null; user: string; description?: string }) =>
     api<PromptRow>('/admin/prompts', { method: 'POST', json: body }),

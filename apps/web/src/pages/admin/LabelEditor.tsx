@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { Eye, Plus, RotateCcw, Trash2 } from 'lucide-react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { BackHeader } from '@/components/BackHeader';
+import { ChevronLeft, Eye, Plus, RotateCcw, Trash2 } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button, Notice, Segmented, Skeleton } from '@/components/ui';
 import { ApiError } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
 import { cx } from '@/lib/cx';
 import { labelsApi, type LabelDetail, type LabelObject, type SegClass } from '@/lib/labels';
 
@@ -64,7 +62,6 @@ function objName(o: LabelObject) {
 /** /admin/gan-nhan/:id — sửa mask nháp thân / cành / rễ bằng cọ, tẩy; đánh dấu đúng/sai từng đối tượng. */
 export default function LabelEditor() {
   const { labelId = '' } = useParams();
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [detail, setDetail] = useState<LabelDetail | null>(null);
   const [objects, setObjects] = useState<EditObject[]>([]);
@@ -236,7 +233,7 @@ export default function LabelEditor() {
       const d = await labelsApi.save(detail.id, { status, objects: keep.map(({ id, cls, accepted }) => ({ id, cls, accepted })) });
       setObjects(keep);
       setDetail(d);
-      if (status) navigate(d.next_id ? `/admin/gan-nhan/${d.next_id}` : '/admin?tab=labels');
+      if (status) navigate(d.next_id ? `/admin/gan-nhan/${d.next_id}` : '/admin/gan-nhan');
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Chưa lưu được, thử lại.');
     } finally {
@@ -264,19 +261,18 @@ export default function LabelEditor() {
     };
   }, []);
 
-  if (user.status === 'ready' && user.data.role !== 'admin') return <Navigate to="/" replace />;
   const unsaved = objects.some((o) => o.dirty);
   const hasRoot = objects.some((o) => o.cls === 'root');
   const hasTrunk = objects.some((o) => o.cls === 'trunk');
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-wide flex-col">
-      <BackHeader to="/admin?tab=labels" title="Gán nhãn" />
-      {error ? <div className="px-gutter pt-3"><Notice tone="danger">{error}</Notice></div> : null}
+    <div className="flex flex-col">
+      <Link to="/admin/gan-nhan" className="mb-2 inline-flex items-center gap-1 text-caption text-ink-muted no-underline hover:text-ink"><ChevronLeft size={16} />Gán nhãn</Link>
+      {error ? <div className="pb-3"><Notice tone="danger">{error}</Notice></div> : null}
       {!detail ? (
-        error ? null : <div className="p-gutter"><Skeleton className="aspect-[4/3] w-full rounded-card" /></div>
+        error ? null : <Skeleton className="aspect-[4/3] w-full rounded-card" />
       ) : (
-        <div className="flex flex-col gap-4 px-gutter py-4 lg:flex-row lg:items-start">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
           <div className="min-w-0 flex-1">
             <div className="relative overflow-hidden rounded-card border border-line bg-photo" style={{ aspectRatio: `${detail.width} / ${detail.height}` }}>
               <img src={detail.image_url} alt="Ảnh phôi cần gán nhãn" className="absolute inset-0 h-full w-full select-none" draggable={false} />
@@ -335,7 +331,7 @@ export default function LabelEditor() {
               <Button variant="secondary" size="touch" block={false} onClick={() => addObject('branch')}><Plus size={16} aria-hidden="true" />Cành</Button>
               {!hasRoot ? <Button variant="secondary" size="touch" block={false} onClick={() => addObject('root')}><Plus size={16} aria-hidden="true" />Rễ</Button> : null}
               {!hasTrunk ? <Button variant="secondary" size="touch" block={false} onClick={() => addObject('trunk')}><Plus size={16} aria-hidden="true" />Thân</Button> : null}
-              <Button variant="ghost" size="touch" block={false} onClick={() => labelsApi.redraft(detail.id).then(() => navigate('/admin?tab=labels'))}>
+              <Button variant="ghost" size="touch" block={false} onClick={() => labelsApi.redraft(detail.id).then(() => navigate('/admin/gan-nhan'))}>
                 <RotateCcw size={16} aria-hidden="true" />Tạo lại nháp
               </Button>
             </div>
@@ -347,7 +343,7 @@ export default function LabelEditor() {
                 <Button variant="secondary" size="touch" onClick={() => save()} loading={saving === 'save'} disabled={saving !== null || !unsaved}>Lưu</Button>
                 <Button variant="danger" size="touch" onClick={() => save('rejected')} loading={saving === 'reject'} disabled={saving !== null}>Bỏ ảnh</Button>
               </div>
-              <Link to="/admin?tab=labels" className="text-center text-ink-muted">Danh sách ảnh</Link>
+              <Link to="/admin/gan-nhan" className="text-center text-ink-muted">Danh sách ảnh</Link>
             </div>
           </aside>
         </div>

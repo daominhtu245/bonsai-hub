@@ -5,6 +5,7 @@ Chạy mỗi 10 phút bằng Celery beat. Mỗi loại cảnh báo gửi tối �
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 from datetime import UTC, datetime, time, timedelta
@@ -92,4 +93,9 @@ def check() -> dict:
         if r.set(f"alert:{kind}", "1", nx=True, ex=3600):  # 1 lần/giờ mỗi loại
             if send_telegram(f"⚠️ Bonsai AI [{env}] {msg}"):
                 sent.append(kind)
+    result = {"alerts": alerts, "sent": sent, "queue": queue_len, "at": datetime.now(UTC).isoformat()}
+    r.set("bonsai:monitoring:last", json.dumps(result, ensure_ascii=False), ex=86400)  # trang admin → Hệ thống
+    from ..seg_status import report
+
+    report()  # làm mới cấu hình worker mỗi 10 phút (khóa Redis có hạn 2 ngày)
     return {"alerts": list(alerts), "sent": sent, "queue": queue_len}

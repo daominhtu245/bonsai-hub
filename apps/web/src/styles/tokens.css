@@ -25,6 +25,9 @@
   --danger: #B9382A;
   --danger-soft: #FBEBE8;
   --photo-bg: #ECEBE7;
+  --chart-1: #1BAF7A;
+  --chart-2: #EB6834;
+  --chart-3: #2A78D6;
   --motion-fast: 150ms;
   --motion-base: 220ms;
   --easing: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -56,6 +59,9 @@
     --danger: #EE7462;
     --danger-soft: #2C1714;
     --photo-bg: #22221F;
+    --chart-1: #199E70;
+    --chart-2: #D95926;
+    --chart-3: #3987E5;
   }
 }
 :root[data-theme='dark'],
@@ -85,6 +91,9 @@
   --danger: #EE7462;
   --danger-soft: #2C1714;
   --photo-bg: #22221F;
+  --chart-1: #199E70;
+  --chart-2: #D95926;
+  --chart-3: #3987E5;
 }
 /* Nội dung đóng vai "ảnh chụp" (hình minh họa) giữ màu bảng sáng ở mọi chế độ. */
 .theme-light {
@@ -112,4 +121,7 @@
   --danger: #B9382A;
   --danger-soft: #FBEBE8;
   --photo-bg: #ECEBE7;
+  --chart-1: #1BAF7A;
+  --chart-2: #EB6834;
+  --chart-3: #2A78D6;
 }

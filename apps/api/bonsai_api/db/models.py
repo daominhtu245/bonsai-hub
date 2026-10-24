@@ -90,6 +90,7 @@ class CreditReason(str, enum.Enum):
     render = "render"
     refund = "refund"
     gift = "gift"
+    adjust = "adjust"  # admin cộng/trừ tay, có ghi lý do trong admin_audit
 
 
 class PaymentStatus(str, enum.Enum):
@@ -385,6 +386,7 @@ class Species(Base):
     prompt_desc_en: Mapped[str] = mapped_column(Text)
     growth_speed: Mapped[str] = mapped_column(String(16))
     ref_image_keys: Mapped[list[Any]] = mapped_column(JSONB, default=list)
+    admin_edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # có → seed không ghi đè
 
     __table_args__ = (CheckConstraint("growth_speed IN ('slow','medium','fast')", name="growth_speed_valid"),)
 
@@ -398,6 +400,7 @@ class Style(Base):
     prompt_desc_en: Mapped[str] = mapped_column(Text)
     growth_speed: Mapped[str | None] = mapped_column(String(16))
     ref_image_keys: Mapped[list[Any]] = mapped_column(JSONB, default=list)
+    admin_edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # có → seed không ghi đè
 
 
 class AppSetting(Base):
@@ -442,3 +445,17 @@ class SegLabel(Base):
     reviewed_by: Mapped[str | None] = mapped_column(String(320))
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class AdminAudit(Base):
+    """Nhật ký thao tác của admin (đổi vai trò, cộng/trừ lượt, xác nhận thanh toán, chạy lại phiên, đổi cấu hình…)."""
+
+    __tablename__ = "admin_audit"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    admin_email: Mapped[str | None] = mapped_column(String(320), index=True)
+    action: Mapped[str] = mapped_column(String(64), index=True)
+    target_type: Mapped[str | None] = mapped_column(String(32))
+    target_id: Mapped[str | None] = mapped_column(String(64), index=True)
+    detail: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = _created()

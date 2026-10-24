@@ -13,6 +13,7 @@ from ..db.models import (
     CreditReason, DesignJob, DesignOption, Feedback, JobStatus, PipelineStep, PromptVersion, Species, User,
 )
 from ..security import DB, require_admin
+from ..services.audit import audit
 from ..services.credits import apply_credit
 from ..services.settings import get_all, seg_model_ready, set_setting
 
@@ -44,7 +45,7 @@ def prompts(db: DB):
 
 
 @router.post("/prompts", response_model=PromptOut, status_code=status.HTTP_201_CREATED)
-def create_prompt(body: PromptCreate, db: DB):
+def create_prompt(body: PromptCreate, db: DB, admin: Annotated[User, Depends(require_admin)]):
     """Tạo phiên bản mới (chưa kích hoạt). Không sửa phiên bản cũ để kết quả cũ còn truy được."""
     existing = db.execute(select(PromptVersion).where(PromptVersion.step_code == body.step_code)).scalars().all()
     if not existing:
@@ -53,20 +54,51 @@ def create_prompt(body: PromptCreate, db: DB):
     row = PromptVersion(step_code=body.step_code, version=f"v{max(nums, default=0) + 1}", kind=existing[0].kind,
                         template={"system": body.system, "user": body.user}, description=body.description, active=False)
     db.add(row)
+    audit(db, admin, "prompt.create", "prompt", f"{body.step_code}.{row.version}", description=body.description)
     db.commit()
     return PromptOut.model_validate(row, from_attributes=True)
 
 
 @router.post("/prompts/{prompt_id}/activate", response_model=PromptOut)
-def activate_prompt(prompt_id: int, db: DB):
+def activate_prompt(prompt_id: int, db: DB, admin: Annotated[User, Depends(require_admin)]):
     row = db.get(PromptVersion, prompt_id)
     if row is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
+    previous = db.execute(select(PromptVersion.version).where(PromptVersion.step_code == row.step_code,
+                                                              PromptVersion.active)).scalar_one_or_none()
+    audit(db, admin, "prompt.activate", "prompt", f"{row.step_code}.{row.version}", previous=previous)
     db.execute(update(PromptVersion).where(PromptVersion.step_code == row.step_code).values(active=False))
     db.flush()
     row.active = True
     db.commit()
     return PromptOut.model_validate(row, from_attributes=True)
+
+
+class PromptStat(BaseModel):
+    prompt_version: str
+    calls: int
+    fail_rate: float
+    avg_cost_usd: float
+    avg_latency_ms: int
+    avg_tokens_out: int
+    first_used: datetime
+    last_used: datetime
+
+
+@router.get("/prompts/stats", response_model=list[PromptStat])
+def prompt_stats(db: DB, days: int = 90):
+    """Hiệu quả từng phiên bản prompt (từ pipeline_steps): để so sánh trước/sau khi kích hoạt bản mới."""
+    since = datetime.now(UTC) - timedelta(days=days)
+    rows = db.execute(
+        select(PipelineStep.prompt_version, func.count(), func.avg(case((PipelineStep.ok, 0.0), else_=1.0)),
+               func.avg(PipelineStep.cost_usd), func.avg(PipelineStep.latency_ms), func.avg(PipelineStep.tokens_out),
+               func.min(PipelineStep.created_at), func.max(PipelineStep.created_at))
+        .where(PipelineStep.prompt_version.isnot(None), PipelineStep.created_at >= since)
+        .group_by(PipelineStep.prompt_version).order_by(PipelineStep.prompt_version)
+    ).all()
+    return [PromptStat(prompt_version=v, calls=n, fail_rate=round(float(f or 0), 3), avg_cost_usd=round(float(c or 0), 5),
+                       avg_latency_ms=int(lat or 0), avg_tokens_out=int(t or 0), first_used=a, last_used=b)
+            for v, n, f, c, lat, t, a, b in rows]
 
 
 class DayCost(BaseModel):
@@ -184,12 +216,13 @@ class GiftOut(BaseModel):
 
 
 @router.post("/credits/gift", response_model=GiftOut)
-def gift_credits(body: GiftIn, db: DB):
+def gift_credits(body: GiftIn, db: DB, admin: Annotated[User, Depends(require_admin)]):
     """Cộng lượt cho một người (đã đăng nhập ít nhất 1 lần). Mỗi người chỉ nhận 1 lần mỗi đợt (`batch`)."""
     user = db.execute(select(User).where(func.lower(User.email) == body.email.lower())).scalar_one_or_none()
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Chưa có tài khoản với email này (người dùng cần đăng nhập trước).")
     credited = apply_credit(db, user.id, body.credits, CreditReason.gift, f"batch:{body.batch}")
+    audit(db, admin, "credits.gift", "user", user.id, credits=body.credits, batch=body.batch, credited=credited)
     db.commit()
     db.refresh(user)
     return GiftOut(email=user.email, credited=credited, credits=user.credits)
@@ -203,6 +236,7 @@ class SettingsOut(BaseModel):
     analysis_mode: Literal["api", "hybrid"]
     design_mode: Literal["api", "rules"]
     seg_model_ready: bool = False  # worker có trọng số YOLO-seg (báo cáo qua Redis heartbeat; xem worker monitoring)
+    app_env: str = "dev"  # nhãn môi trường ở thanh trên trang quản trị
 
 
 class SettingsIn(BaseModel):
@@ -212,7 +246,9 @@ class SettingsIn(BaseModel):
 
 
 def _settings_out(db) -> SettingsOut:
-    return SettingsOut(**get_all(db), seg_model_ready=seg_model_ready())
+    from ..settings import get_settings
+
+    return SettingsOut(**get_all(db), seg_model_ready=seg_model_ready(), app_env=get_settings().app_env)
 
 
 @router.get("/settings", response_model=SettingsOut)
@@ -224,6 +260,9 @@ def get_settings(db: DB):
 def put_settings(body: SettingsIn, db: DB, admin: Annotated[User, Depends(require_admin)]):
     """Áp dụng cho job bắt đầu sau khi đổi; job đang chạy giữ chế độ cũ."""
     for key, value in body.model_dump(exclude_none=True).items():
+        before = get_all(db)[key]
+        if before != value:
+            audit(db, admin, "settings.update", "setting", key, before=before, after=value)
         set_setting(db, key, value, by=admin.email)
     return _settings_out(db)
 
@@ -305,10 +344,11 @@ class RestoreIn(BaseModel):
 
 
 @router.post("/users/restore")
-def restore_user(body: RestoreIn, db: DB):
+def restore_user(body: RestoreIn, db: DB, admin: Annotated[User, Depends(require_admin)]):
     user = db.execute(select(User).where(func.lower(User.email) == body.email.lower())).scalar_one_or_none()
     if user is None or user.deleted_at is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Không có tài khoản đã xóa với email này.")
     user.deleted_at = None
+    audit(db, admin, "user.unlock", "user", user.id)
     db.commit()
     return {"email": user.email, "restored": True}

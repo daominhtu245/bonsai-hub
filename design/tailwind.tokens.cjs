@@ -21,6 +21,7 @@ module.exports = {
         warn: { DEFAULT: v('warn'), soft: v('warn-soft'), ink: v('warn-ink') },
         danger: { DEFAULT: v('danger'), soft: v('danger-soft') },
         photo: v('photo-bg'),
+        chart: { 1: v('chart-1'), 2: v('chart-2'), 3: v('chart-3') }, // biểu đồ admin — đã kiểm tra mù màu (dataviz validator)
       },
       fontFamily: { body: sans, display: sans, sans },
       fontSize: {

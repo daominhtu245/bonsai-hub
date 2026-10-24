@@ -37,12 +37,14 @@ def seed_dictionaries(db: Session) -> None:
         db.execute(stmt.on_conflict_do_update(
             index_elements=["key"],
             set_={k: stmt.excluded[k] for k in ("name_vi", "prompt_desc_en", "growth_speed")},
+            where=Species.admin_edited_at.is_(None),  # admin đã sửa ở /admin → Danh mục: giữ bản của admin
         ))
     for row in STYLES:
         stmt = insert(Style).values(**row, ref_image_keys=[])
         db.execute(stmt.on_conflict_do_update(
             index_elements=["key"],
             set_={k: stmt.excluded[k] for k in ("name_vi", "name_jp", "prompt_desc_en")},
+            where=Style.admin_edited_at.is_(None),
         ))
 
 

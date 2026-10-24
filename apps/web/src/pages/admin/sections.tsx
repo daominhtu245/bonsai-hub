@@ -1,69 +1,13 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link, Navigate, useSearchParams } from 'react-router-dom';
-import { BackHeader } from '@/components/BackHeader';
-import { Button, FilterChip, Notice, Skeleton, StateView, type ViewState } from '@/components/ui';
-import { adminApi, type AiSettings, type CostMode, type Costs, type FailedJob, type FeedbackRow, type PromptRow, type SpeciesRefs } from '@/lib/admin';
+// Các mục quản trị chuyển từ trang tab cũ (prompt, phản hồi, chế độ AI, gán nhãn, ảnh loài) — nay là trang riêng.
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Button, FilterChip, Notice, Skeleton, StateView } from '@/components/ui';
+import { adminApi, type AiSettings, type CostMode, type FeedbackRow, type PromptRow, type SpeciesRefs } from '@/lib/admin';
 import { ApiError } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
 import { labelsApi, type LabelList, type LabelStatus } from '@/lib/labels';
+import { useLoad } from './kit';
 
-const usd = (n: number) => `$${n.toFixed(n < 1 ? 4 : 2)}`;
-
-function useLoad<T>(fn: () => Promise<T>, deps: unknown[] = []): [ViewState<T>, () => void] {
-  const [s, setS] = useState<ViewState<T>>({ status: 'loading' });
-  const load = () => {
-    setS({ status: 'loading' });
-    fn().then((data) => setS({ status: 'ready', data })).catch((e: ApiError) => setS({ status: 'error', message: e.message, retry: load }));
-  };
-  useEffect(load, deps); // eslint-disable-line react-hooks/exhaustive-deps
-  return [s, load];
-}
-
-function CostsTab() {
-  const [state] = useLoad<Costs>(() => adminApi.costs(14));
-  return (
-    <StateView state={state} skeleton={<Skeleton className="h-64 rounded-card" />} empty={null}>
-      {(c) => {
-        const max = Math.max(0.0001, ...c.days.map((d) => d.cost_usd));
-        return (
-          <div className="flex flex-col gap-4 text-caption">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-card border border-line bg-surface p-3"><div className="text-ink-muted">Tổng 14 ngày</div><div className="text-h2 font-display">{usd(c.total_usd)}</div></div>
-              <div className="rounded-card border border-line bg-surface p-3"><div className="text-ink-muted">TB mỗi lượt trả phí</div><div className="text-h2 font-display">{c.avg_cost_per_paid_job_usd !== null ? usd(c.avg_cost_per_paid_job_usd) : '—'}</div></div>
-            </div>
-            <div className="overflow-x-auto"><table className="w-full border-collapse">
-              <caption className="mb-1 text-left font-semibold">Theo ngày</caption>
-              <thead><tr className="text-left text-ink-muted"><th className="py-1">Ngày</th><th>Chi phí</th><th>Phiên</th><th>Trả phí</th><th>Lỗi</th></tr></thead>
-              <tbody>
-                {c.days.map((d) => (
-                  <tr key={d.day} className="border-t border-line">
-                    <td className="py-1.5">{d.day.slice(5)}</td>
-                    <td><div className="flex items-center gap-2"><div className="h-2 rounded-full bg-primary" style={{ width: `${(d.cost_usd / max) * 60}px` }} />{usd(d.cost_usd)}</div></td>
-                    <td>{d.jobs}</td><td>{d.paid_jobs}</td><td className={d.failed_jobs ? 'font-semibold text-danger' : undefined}>{d.failed_jobs}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table></div>
-            <div className="overflow-x-auto"><table className="w-full border-collapse">
-              <caption className="mb-1 text-left font-semibold">Theo bước</caption>
-              <thead><tr className="text-left text-ink-muted"><th className="py-1">Bước</th><th>Lần gọi</th><th>Chi phí</th><th>Độ trễ TB</th><th>Tỉ lệ lỗi</th></tr></thead>
-              <tbody>
-                {c.steps.map((s) => (
-                  <tr key={s.step_code} className="border-t border-line">
-                    <td className="py-1.5 font-mono">{s.step_code}</td><td>{s.calls}</td><td>{usd(s.cost_usd)}</td>
-                    <td>{(s.avg_latency_ms / 1000).toFixed(1)} s</td><td className={s.fail_rate > 0.1 ? 'font-semibold text-danger' : undefined}>{Math.round(s.fail_rate * 100)}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table></div>
-          </div>
-        );
-      }}
-    </StateView>
-  );
-}
-
-function PromptsTab() {
+export function PromptsTab() {
   const [state, reload] = useLoad<PromptRow[]>(adminApi.prompts);
   const [step, setStep] = useState('P1');
   const [draft, setDraft] = useState<{ system: string; user: string; description: string } | null>(null);
@@ -124,26 +68,7 @@ function PromptsTab() {
   );
 }
 
-function FailedTab() {
-  const [state] = useLoad<FailedJob[]>(adminApi.failed);
-  return (
-    <StateView state={state} skeleton={<Skeleton className="h-40 rounded-card" />} empty={null}>
-      {(jobs) => jobs.length === 0 ? <p className="text-caption text-ink-muted">Không có job lỗi.</p> : (
-        <ul className="m-0 flex list-none flex-col gap-2 p-0 text-caption">
-          {jobs.map((j) => (
-            <li key={j.id} className="rounded-card border border-line bg-surface p-3">
-              <div className="flex justify-between gap-2"><span className="font-mono">{j.id.slice(0, 8)} · {j.error_code}</span><span className="text-ink-muted">{new Date(j.created_at).toLocaleString('vi-VN')}</span></div>
-              {j.charged ? <div className="text-label text-ink-muted">Đã trừ lượt → đã hoàn</div> : null}
-              <div className="mt-1 break-words font-mono text-label text-ink-muted">{j.error}</div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </StateView>
-  );
-}
-
-function FeedbackTab() {
+export function FeedbackTab() {
   const [rating, setRating] = useState<1 | -1 | undefined>(-1);
   const [state] = useLoad<FeedbackRow[]>(() => adminApi.feedback(rating), [rating]);
   return (
@@ -162,7 +87,7 @@ function FeedbackTab() {
                   <span className={r.rating === 1 ? 'font-semibold text-primary-ink' : 'font-semibold text-danger'}>{r.rating === 1 ? 'Hợp lý' : 'Chưa đúng'}</span>
                   <span className="text-ink-muted">{new Date(r.created_at).toLocaleString('vi-VN')}</span>
                 </div>
-                <div className="text-ink-muted">{r.user_email} · {r.style_key ?? '—'} · <span className="font-mono">{r.job_id.slice(0, 8)}</span></div>
+                <div className="text-ink-muted">{r.user_email} · {r.style_key ?? '—'} · <Link to={`/admin/phien/${r.job_id}`} className="font-mono">{r.job_id.slice(0, 8)}</Link>{r.reason_tags.length ? ` · ${r.reason_tags.join(', ')}` : ''}</div>
                 {r.comment ? <p className="m-0 mt-1">{r.comment}</p> : null}
               </li>
             ))}
@@ -170,36 +95,6 @@ function FeedbackTab() {
         )}
       </StateView>
     </div>
-  );
-}
-
-function GiftTab() {
-  const [email, setEmail] = useState('');
-  const [credits, setCredits] = useState(3);
-  const [batch, setBatch] = useState('beta-1');
-  const [msg, setMsg] = useState<{ tone: 'success' | 'warn' | 'danger'; text: string } | null>(null);
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    try {
-      const r = await adminApi.gift(email.trim(), credits, batch.trim());
-      setMsg(r.credited ? { tone: 'success', text: `Đã cộng ${credits} lượt cho ${r.email} (hiện có ${r.credits}).` } : { tone: 'warn', text: `${r.email} đã nhận lượt của đợt "${batch}" rồi.` });
-    } catch (err) {
-      setMsg({ tone: 'danger', text: (err as ApiError).message });
-    }
-  };
-  const input = 'min-h-touch rounded-btn border border-line-strong bg-surface px-3 text-body text-ink';
-  return (
-    <form onSubmit={submit} className="flex flex-col gap-2 text-caption">
-      <p className="m-0 text-ink-muted">Tặng lượt cho người dùng thử (họ cần đăng nhập ít nhất 1 lần). Mỗi người nhận 1 lần mỗi đợt.</p>
-      <label htmlFor="g-email" className="font-medium">Email</label>
-      <input id="g-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
-      <label htmlFor="g-n" className="font-medium">Số lượt</label>
-      <input id="g-n" type="number" min={1} max={100} value={credits} onChange={(e) => setCredits(Number(e.target.value))} className={input} />
-      <label htmlFor="g-batch" className="font-medium">Mã đợt</label>
-      <input id="g-batch" required pattern="[a-zA-Z0-9_-]+" value={batch} onChange={(e) => setBatch(e.target.value)} className={input} />
-      {msg ? <Notice tone={msg.tone}>{msg.text}</Notice> : null}
-      <Button type="submit">Tặng lượt</Button>
-    </form>
   );
 }
 
@@ -239,7 +134,7 @@ function ChoiceGroup<K extends string>({ legend, name, choices, value, disabled,
 }
 
 /** Chế độ AI (apps/api/bonsai_api/services/settings.py) — áp dụng cho job bắt đầu sau khi đổi. */
-function AiModeTab() {
+export function AiModeTab() {
   const [state, reload] = useLoad(adminApi.settings);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -278,7 +173,7 @@ const LABEL_STATUS: Array<[LabelStatus, string]> = [
 const LABEL_TARGET = 300;
 
 /** Bộ dữ liệu YOLO-seg 3 lớp: tải ảnh lên / lấy ảnh từ phiên đã chạy → worker tạo mask nháp → duyệt ở trang sửa. */
-function LabelsTab() {
+export function LabelsTab() {
   const [filter, setFilter] = useState<LabelStatus | undefined>('draft');
   const [state, reload] = useLoad<LabelList>(() => labelsApi.list(filter), [filter]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -374,7 +269,7 @@ function LabelsTab() {
   );
 }
 
-function SpeciesTab() {
+export function SpeciesTab() {
   const [state, reload] = useLoad<SpeciesRefs[]>(adminApi.species);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -427,31 +322,6 @@ function SpeciesTab() {
           </ul>
         )}
       </StateView>
-    </div>
-  );
-}
-
-type Tab = 'costs' | 'ai' | 'labels' | 'prompts' | 'failed' | 'feedback' | 'gift' | 'species';
-
-/** Trang quản trị: chi phí (pipeline_steps), prompt (phiên bản trong DB), job lỗi, phản hồi, tặng lượt, ảnh tham chiếu loài. */
-export default function Admin() {
-  const { user } = useAuth();
-  const [params, setParams] = useSearchParams();
-  const tab = (params.get('tab') as Tab | null) ?? 'costs';
-  const setTab = (t: Tab) => setParams({ tab: t }, { replace: true });
-  if (user.status === 'ready' && user.data.role !== 'admin') return <Navigate to="/" replace />;
-  return (
-    <div className="mx-auto flex min-h-dvh max-w-wide flex-col">
-      <BackHeader to="/tai-khoan" title="Quản trị" />
-      <div className="h-3" />
-      <div className="flex flex-wrap gap-2 px-gutter pb-3" role="group" aria-label="Mục">
-        {([['costs', 'Chi phí'], ['ai', 'Chế độ AI'], ['labels', 'Gán nhãn'], ['prompts', 'Prompt'], ['failed', 'Job lỗi'], ['feedback', 'Phản hồi'], ['gift', 'Tặng lượt'], ['species', 'Ảnh loài']] as const).map(([k, label]) => (
-          <FilterChip key={k} selected={tab === k} onClick={() => setTab(k)}>{label}</FilterChip>
-        ))}
-      </div>
-      <main className="px-gutter pb-8">
-        {{ costs: <CostsTab />, ai: <AiModeTab />, labels: <LabelsTab />, prompts: <PromptsTab />, failed: <FailedTab />, feedback: <FeedbackTab />, gift: <GiftTab />, species: <SpeciesTab /> }[tab]}
-      </main>
     </div>
   );
 }

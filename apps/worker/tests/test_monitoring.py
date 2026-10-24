@@ -56,13 +56,14 @@ def test_check_dedupes_per_hour(db, login, monkeypatch):
         def llen(self, q):
             return 40
 
-        def set(self, k, v, nx, ex):
-            if k in self.keys:
+        def set(self, k, v, nx=False, ex=None):
+            if nx and k in self.keys:
                 return False
             self.keys.add(k)
             return True
 
     monkeypatch.setattr(monitoring.redis.Redis, "from_url", staticmethod(lambda url: FakeRedis()))
+    monkeypatch.setattr("bonsai_worker.seg_status.report", lambda: None)
     sent = []
     monkeypatch.setattr(monitoring, "send_telegram", lambda text: sent.append(text) or True)
     first = monitoring.check.run()

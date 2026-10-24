@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    usd_vnd_rate: int = 26_000  # quy đổi chi phí AI sang VND ở trang quản trị (docs/architecture.md §6)
     app_env: str = "dev"
     database_url: str = "postgresql+psycopg://bonsai:bonsai@localhost:5432/bonsai"
     redis_url: str = "redis://localhost:6379/0"

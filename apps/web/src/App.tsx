@@ -17,8 +17,23 @@ const Share = lazy(() => import('@/pages/Share'));
 const Garden = lazy(() => import('@/pages/Garden'));
 const Buy = lazy(() => import('@/pages/Buy'));
 const Account = lazy(() => import('@/pages/Account'));
-const Admin = lazy(() => import('@/pages/Admin'));
-const LabelEditor = lazy(() => import('@/pages/LabelEditor'));
+const AdminLayout = lazy(() => import('@/pages/admin/AdminLayout'));
+const AdminDashboard = lazy(() => import('@/pages/admin/Dashboard'));
+const AdminJobs = lazy(() => import('@/pages/admin/Jobs'));
+const AdminJobDetail = lazy(() => import('@/pages/admin/JobDetail'));
+const AdminUsers = lazy(() => import('@/pages/admin/Users'));
+const AdminUserDetail = lazy(() => import('@/pages/admin/UserDetail'));
+const AdminPayments = lazy(() => import('@/pages/admin/Payments'));
+const AdminSystem = lazy(() => import('@/pages/admin/System'));
+const AdminAudit = lazy(() => import('@/pages/admin/Audit'));
+const LabelEditor = lazy(() => import('@/pages/admin/LabelEditor'));
+const adminPages = () => import('@/pages/admin/pages');
+const AdminCosts = lazy(() => adminPages().then((m) => ({ default: m.CostsPage })));
+const AdminPrompts = lazy(() => adminPages().then((m) => ({ default: m.PromptsPage })));
+const AdminCatalog = lazy(() => adminPages().then((m) => ({ default: m.CatalogPage })));
+const AdminFeedback = lazy(() => adminPages().then((m) => ({ default: m.FeedbackPage })));
+const AdminAiMode = lazy(() => adminPages().then((m) => ({ default: m.AiModePage })));
+const AdminLabels = lazy(() => adminPages().then((m) => ({ default: m.LabelsPage })));
 const Terms = lazy(() => import('@/pages/Terms'));
 
 const guard = (el: JSX.Element) => <RequireAuth>{el}</RequireAuth>;
@@ -43,8 +58,23 @@ export default function App() {
               <Route path="/mua-luot" element={guard(<Buy />)} />
               <Route path="/chia-se/:jobId" element={guard(<Share />)} />
               <Route path="/tai-khoan" element={guard(<Account />)} />
-              <Route path="/admin" element={guard(<Admin />)} />
-              <Route path="/admin/gan-nhan/:labelId" element={guard(<LabelEditor />)} />
+              <Route path="/admin" element={guard(<AdminLayout />)}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="phien" element={<AdminJobs />} />
+                <Route path="phien/:jobId" element={<AdminJobDetail />} />
+                <Route path="nguoi-dung" element={<AdminUsers />} />
+                <Route path="nguoi-dung/:userId" element={<AdminUserDetail />} />
+                <Route path="thanh-toan" element={<AdminPayments />} />
+                <Route path="he-thong" element={<AdminSystem />} />
+                <Route path="nhat-ky" element={<AdminAudit />} />
+                <Route path="chi-phi" element={<AdminCosts />} />
+                <Route path="prompt" element={<AdminPrompts />} />
+                <Route path="danh-muc" element={<AdminCatalog />} />
+                <Route path="phan-hoi" element={<AdminFeedback />} />
+                <Route path="che-do-ai" element={<AdminAiMode />} />
+                <Route path="gan-nhan" element={<AdminLabels />} />
+                <Route path="gan-nhan/:labelId" element={<LabelEditor />} />
+              </Route>
               <Route path="/dieu-khoan" element={<Terms />} />
               <Route path="*" element={<ComingSoon title="Không tìm thấy trang" />} />
             </Routes>
