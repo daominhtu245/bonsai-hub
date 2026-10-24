@@ -29,4 +29,4 @@ build-backend = "setuptools.build_meta"
 include = ["bonsai_pipeline*"]
 
 [tool.setuptools.package-data]
-bonsai_pipeline = ["rules/*.yaml", "assets/fonts/*", "assets/studio/*"]
+bonsai_pipeline = ["rules/*.yaml", "rules/*.md", "assets/fonts/*", "assets/studio/*"]

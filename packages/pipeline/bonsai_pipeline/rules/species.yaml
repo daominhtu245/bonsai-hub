@@ -1,0 +1,69 @@
+# Đặc điểm loài dùng cho thiết kế, vẽ ảnh và lộ trình — seed từ nguồn công khai, xem rules/SOURCES.md.
+# Khí hậu Việt Nam nhiệt đới: các mốc mùa vụ lấy từ người trồng vùng nhiệt đới; nghệ nhân duyệt lại.
+version: 1
+
+si:
+  name_vi: Si
+  scientific: Ficus microcarpa (cần xác minh — tên si/sanh dùng lẫn lộn giữa các vùng) [nparks_ficus, mytour_sanh]
+  foliage: lá bóng, hình elip hơi nhọn; gân bên gần vuông góc gân giữa; vỏ xám nhẵn [nparks_ficus, bonsaibark_ficus]
+  growth: fast
+  aerial_roots: nhiều rễ khí sinh khi ẩm cao, rễ chạm đất thành cột, có thể áp vào thân cho to thân [empire_ficus, nparks_ficus]
+  pruning: để 6–8 lá rồi cắt về 2 lá; muốn to thân thì để mọc tự do 1–2 năm rồi mới cắt mạnh [empire_ficus]
+  defoliation: tối đa ~2 lần/năm khi cây khỏe; lá mới ~2 tuần, đủ tán sau 4–6 tuần [forum_ficus]
+  wiring: cành nhỏ – vừa uốn dễ; dây hằn nhanh, kiểm tra thường xuyên; cành lớn dùng dây néo [empire_ficus]
+  repot_years: [2, 3]
+  root_pruning: chịu tốt [empire_ficus]
+  styles_fit: [moyogi, vn_long, sekijoju, banyan_aerial_roots]
+  render_hints: lá nhỏ bóng xanh đậm, vỏ xám nhẵn, có thể có rễ khí sinh rủ
+
+sanh:
+  name_vi: Sanh
+  scientific: Ficus benjamina (một số nguồn Việt; cần xác minh) [mytour_sanh]
+  foliage: lá thon dài hơn, đầu lá kéo dài, cành có xu hướng rủ, ít rễ khí sinh hơn si [nparks_ficus, bonsaibark_ficus]
+  growth: fast
+  pruning: như si — 6–8 lá cắt về 2 lá [empire_ficus]
+  repot_years: [2, 3]
+  styles_fit: [moyogi, vn_truc_quan_tu, vn_long]
+  render_hints: lá nhỏ dày, vỏ xám sáng nhẵn, rễ nổi khỏe
+
+mai_chieu_thuy:
+  name_vi: Mai chiếu thủy
+  scientific: Wrightia religiosa [wiki_wrightia]
+  foliage: lá nhỏ hình mác, mọc đối, xanh nhạt; hoa trắng nhỏ rủ, thơm như nhài, nở quanh năm [wiki_wrightia, nparks_wrightia, empire_wrightia]
+  growth: medium
+  light: nắng toàn phần, ưa nóng [empire_wrightia]
+  pruning: để vài cặp lá rồi cắt về 1 cặp lá; cành lớn cắt trước đợt đâm chồi mạnh; nảy mầm lại tốt sau cắt mạnh [empire_wrightia]
+  defoliation: vùng nhiệt đới 2–4 lần/năm; hoa nở rộ ~30–35 ngày sau tuốt lá; hoa ra sau cặp lá thứ ba [forum_wrightia, empire_wrightia]
+  wiring: chỉ uốn cành non (gỗ giòn); tháo dây sớm; ngừng tưới 3–4 ngày trước khi uốn cho cành dẻo [empire_wrightia, forum_wrightia]
+  repot_years: [1, 2]
+  root_pruning: chịu cắt rễ nhiều; tuốt lá giúp giảm sốc sau cắt rễ [empire_wrightia]
+  styles_fit: [moyogi, vn_truc_quan_tu, bunjingi, han_kengai]
+  render_hints: lá li ti xanh nhạt, chùm hoa trắng nhỏ rủ, cành mảnh nhiều nhánh
+
+tung_la_han:
+  name_vi: Tùng la hán
+  scientific: Podocarpus macrophyllus [empire_podo, bonsai4me_podo]
+  foliage: lá dải hẹp xanh đậm mọc thành chùm; vỏ nâu sợi [empire_podo]
+  growth: slow
+  light: nửa bóng là tốt nhất, nắng gắt dễ cháy lá [empire_podo]
+  pruning: để chồi dài ~10 cm rồi cắt ngắn, không cắt xuyên lá; cắt mạnh kích thích nảy mầm lại nhiều [empire_podo, bonsai4me_podo]
+  wiring: quanh năm; chờ chồi non hóa gỗ nhẹ; gỗ già rất cứng khó uốn; tháo dây sau vài tháng [empire_podo]
+  repot_years: {young: [2, 3], old: [4, 5]}
+  root_pruning: không cắt quá 1/8 bộ rễ mỗi lần [bonsai4me_podo]
+  soil_ph: [5, 6]
+  styles_fit: [chokkan, vn_truc_quan_tu, moyogi]
+  render_hints: lá dải xanh đậm chùm dày, tầng tán gọn, vỏ nâu sợi
+
+linh_sam:
+  name_vi: Linh sam
+  scientific: Trifidacanthus unifoliolatus (đồng danh Desmodium unifoliatum) [efloraindia_linhsam]
+  foliage: cây bụi có gai; hoa tím xanh thơm, nở nhiều quanh năm; vỏ già sần sùi được ưa chuộng [efloraindia_linhsam, empire_desmodium]
+  growth: medium
+  pruning: cắt tỉa, bấm ngọn hằng năm để giữ dáng; cẩn thận khi cắt rễ cây con [efloraindia_linhsam, forum_linhsam]
+  styles_fit: [moyogi, vn_long, bunjingi]
+  render_hints: lá rất nhỏ tròn, vỏ sần tối màu, phân cành rất dày mịn, có thể có hoa tím nhỏ
+
+other:
+  name_vi: Loài khác
+  growth: medium
+  render_hints: giữ đúng loại lá trong ảnh gốc

@@ -1,0 +1,32 @@
+# Bảng chấm (bản nháp cho Cổng 1 / Cổng 2 và P4) — ghép từ cách chấm triển lãm bonsai + yêu cầu riêng của app.
+# Nguồn cách chấm: [judging_forum] [judging_swindon] [judging_bsam] [judging_rebs] [vn_cokymyvan] — xem rules/SOURCES.md.
+# Quy trình chấm triển lãm: loại trước các lỗi nặng, rồi mới xếp hạng [judging_bsam].
+version: 1
+
+# Phần A — ảnh kết quả có ĐÚNG với phôi và thiết kế không (riêng của app; sai một mục là không đạt).
+fidelity_hard_fail:
+  - trunk_changed           # thân (đường cong, vị trí gốc, độ nghiêng, sẹo, u) khác ảnh gốc
+  - trunk_too_thick         # thân dày lên quá mức cho phép theo số năm và tốc độ lớn của loài
+  - removed_branch_present  # cành đã đánh dấu cắt vẫn còn
+  - extra_trunk_or_major_branch   # mọc thêm thân / cành lớn không có trong thiết kế
+  - wrong_species_foliage   # lá không đúng loài
+  - camera_or_background_changed  # đổi góc chụp, khung hình, nền
+  - pot_style_wrong         # chậu khác thiết kế (dáng, màu, vị trí)
+
+# Phần B — ảnh có ĐẠT CHUẨN thẩm mỹ bonsai không (điểm; thân có trọng số lớn nhất) [judging_forum, judging_rebs].
+criteria:
+  trunk_nebari:  {weight: 20, check: [taper, movement_natural, nebari_radial_flare, front_correct]}
+  branches:      {weight: 15, check: [first_branch_height, alternation_left_right_back, decreasing_size, no_forbidden_branches]}
+  foliage_pads:  {weight: 15, check: [pad_count_matches_design, negative_space, scalene_triangle, foliage_to_scale]}
+  apex:          {weight: 10, check: [single_apex, apex_position_matches_design, slight_lean_to_viewer]}
+  proportions:   {weight: 10, check: [height_to_trunk, branch_to_trunk_caliper, canopy_width]}
+  pot_harmony:   {weight: 10, check: [pot_size_ratio, shape_matches_style, color_subdued, placement_off_center]}
+  realism_age:   {weight: 10, check: [ramification_believable_for_years, no_masterpiece_look_too_early]}
+  overall:       {weight: 10, check: [style_reads_clearly, balance, natural_mature_tree_impression]}
+pass_score: 70             # trên 100, và không dính lỗi phần A
+
+# Phần C — cảm nhận theo truyền thống Việt (không chấm điểm, ghi nhận xét) [vn_cokymyvan]
+vn_notes: [co, ky, my, van]
+
+# Trình bày khi trưng bày [judging_swindon, wiki]
+presentation_faults: [visible_wire, fresh_scars_on_front, pot_overpowers_tree, clutter_in_pot]

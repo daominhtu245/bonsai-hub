@@ -12,6 +12,7 @@ Phản hồi beta (25/10/2026): ảnh kết quả đẹp nhưng không đúng ph
 ## Các bước
 | # | Bước | Cần train? | Ước lượng |
 |---|---|---|---|
+| 0a | ✅ Bộ luật + bảng chấm nháp từ nguồn công khai (`rules/*.yaml`, `rules/SOURCES.md`) + 380 ảnh tham chiếu có giấy phép (`data/seed/`) | Không | xong 25/10 |
 | 0 | Gom 5–10 phiên bị chê + bảng chấm "đúng chuẩn" (~10 tiêu chí) cùng nghệ nhân | Không | 1–2 buổi |
 | 1 | Nghệ nhân chấm thiết kế P2 trên bản vẽ (Cổng 1) trước khi bàn tới ảnh | Không | công cụ chấm: 1–2 ngày |
 | 2 | **Khóa phần không được đổi**: dùng mặt nạ (tách nền + thân) giữ nguyên pixel thân, gốc, chậu, nền; model chỉ được vẽ vùng tán (inpaint có mask) | Không | 3–4 ngày |

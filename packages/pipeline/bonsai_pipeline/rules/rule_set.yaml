@@ -1,24 +1,95 @@
-# Bộ luật tỉ lệ (docs/prompt_system.md §0.3) — dùng trong rule engine và chèn vào P2, P4.
-# Nghệ nhân duyệt lại từ tuần 2.
-proportions:
-  height_to_base_diameter: [5, 7]        # lý tưởng ~6
-  first_branch_height_ratio: [0.25, 0.4] # ~1/3 chiều cao
-  pot_length_to_tree_height: [0.6, 0.75] # ~2/3 (thế đứng); thế huyền dùng chậu sâu
-  pot_depth_to_base_diameter: [0.8, 1.2]
-silhouette:
-  shape: scalene_triangle
-  apex_lean: toward_viewer_slightly
-  negative_space: required
-branches:
-  order: alternate_left_right_back
-  thickness: decreasing_upwards
-  length: decreasing_upwards
-  forbidden:
-    - bar_branches
-    - eye_poke_branches
-    - crossing_branches
-    - inside_of_curve_branches
-    - reverse_taper
+# Bộ luật tạo dáng — dùng trong rule engine (khóa `proportions`) và chèn nguyên văn vào P2 (thiết kế), P4 (chấm ảnh).
+# v2 (25/10/2026): tổng hợp từ nguồn công khai, mỗi luật có mã nguồn [src] — xem rules/SOURCES.md.
+# Đây là "hướng dẫn" chứ không phải luật tuyệt đối (mọi nguồn đều nói vậy); nghệ nhân duyệt lại ở Cổng 1.
+version: 2
+
+proportions:                              # rule engine đọc 4 khoảng này — giữ tên khóa
+  height_to_base_diameter: [5, 7]         # cao ≈ 6 × đường kính gốc [walston]
+  first_branch_height_ratio: [0.25, 0.4]  # cành 1 ở ~1/3 chiều cao; trực có thể ~1/4 [vt, walston, wiki, empire]
+  pot_length_to_tree_height: [0.6, 0.75]  # dài chậu ≈ 2/3 chiều cao (cây thấp tán rộng: 2/3 độ xòe) [walston, bsd]
+  pot_depth_to_base_diameter: [0.8, 1.2]  # sâu chậu ≈ đường kính gốc, trừ thế huyền [walston, bsd]
+  branch_to_trunk_caliper_max: 0.33       # cành không to quá 1/3 thân tại chỗ mọc [walston]
+  next_branch_spacing: one_third_of_remaining_height   # mỗi cành sau cách 1/3 quãng còn lại tới ngọn [walston]
+  nebari_visible_above_soil: about_one_third           # rễ nổi lộ ~1/3 trên mặt chậu [viwiki]
+
 trunk:
-  taper: required
-  front_selection: [best_nebari, best_taper, visible_movement]
+  taper: required_never_reverse           # thon dần từ gốc lên ngọn, "đầu voi đuôi chuột" [wiki, walston, viwiki]
+  lean_toward_viewer: slight              # thân và ngọn hơi nghiêng về người xem [wiki, walston]
+  curves:
+    - tighten_toward_apex                 # khúc uốn nhỏ dần lên ngọn [walston]
+    - no_c_shape_doubling_back            # không cong gập ngược kiểu chữ C [walston]
+    - no_bulge_toward_viewer              # không "ưỡn ngực" về phía người xem [walston]
+    - avoid_too_many_s_curves_in_moyogi   # [walston]
+  lower_trunk_visible_from_front: true    # nửa dưới thân nhìn rõ, không cành che phía trước (chỉ cành hai bên) [vt]
+  twin_trunk_split: at_base_only          # song thụ tách từ gốc, không tách cao [walston]
+  front_selection: [best_nebari, best_taper, visible_movement, scars_to_back]   # sẹo cắt đưa ra sau [vt, wiki]
+
+roots:
+  flare: required                         # gốc loe, rễ tỏa đều quanh gốc [wiki, walston]
+  forbidden: [crossing_roots, root_pointing_at_viewer]   # [wiki, walston]
+
+branches:
+  order: [left_or_right, opposite_side_higher, back_higher_still]   # cành 1 một bên, cành 2 bên kia cao hơn, cành 3 phía sau [walston, empire]
+  back_branch_never_lowest: true          # [walston]
+  spread_angle_deg: 120                   # 3 cành đầu lệch nhau ~120°, cành sau không thẳng ra sau thân [walston]
+  first_two_forward_of_midline: true      # [walston]
+  from_outside_of_curves: true            # cành mọc ở lưng khúc uốn, không ở bụng [walston, vt, empire]
+  size: longest_thickest_at_bottom_decreasing_upward   # [vt, wiki, walston]
+  continuous_to_apex: true                # từ ~1/3 thân lên tới ngọn (trừ văn nhân) [wiki]
+  one_per_level: true                     # không mọc vòng, không đối xứng cùng độ cao [walston, wiki]
+  secondary: alternate_horizontal_forming_pad   # nhánh cấp 2 so le, nằm ngang, tạo tầng lá [walston]
+  old_tree_look: wire_downward            # cây già: cành hướng xuống; gần ngọn có thể ngang/lên [walston, wiki]
+  forbidden:
+    - bar_branches                        # cành ngang nhau hai bên cùng độ cao [walston, wiki]
+    - eye_poke_branches                   # cành chĩa thẳng vào người xem [walston]
+    - crossing_branches                   # cành bắt chéo nhau hoặc chéo qua thân [walston, wiki]
+    - inside_of_curve_branches            # [walston]
+    - whorled_or_wheel_spoke_branches     # [walston]
+    - parallel_branches                   # [walston]
+    - thin_branch_with_heavy_foliage      # [wiki]
+    - thick_branches_on_thin_trunk        # [wiki]
+    - reverse_taper
+
+apex:
+  single: true                            # một ngọn [walston]
+  over_base: [chokkan, moyogi]            # trực, trực uốn: ngọn thẳng trên gốc [walston, vt]
+  continues_trunk_flow: true              # ngọn tiếp hướng chuyển động của thân [walston]
+  lean_toward_viewer: slight
+
+silhouette:
+  shape: scalene_triangle                 # tam giác lệch: ngọn – giữa – dưới [walston]
+  balance: {chokkan: static_near_symmetric, default: dynamic_asymmetric}   # [wiki]
+  negative_space: required_see_through    # nhìn xuyên qua khoảng trống giữa các tầng [wiki, walston]
+  foliage_to_scale: true                  # lá nhỏ tương xứng với cây [wiki, vt]
+  look: mature_tree_in_nature             # mô phỏng cây già ngoài thiên nhiên: tán gọn, cành ngang/rủ [vt]
+
+pot:
+  placement: behind_midline_off_center_opposite_visual_weight   # gốc lệch nhẹ ngược phía tán nặng [vt, walston]
+  shape_by_style:                         # [walston, bsd, vt, empire]
+    chokkan: rectangle
+    vn_truc_quan_tu: rectangle
+    moyogi: oval_or_round
+    shakan: rectangle_or_oval
+    kengai: deep_round_or_hexagonal
+    han_kengai: medium_deep_round
+    bunjingi: small_round_shallow
+    massive_trunk: deep_rectangle
+  color: {flowering_or_fruiting: glazed_complementing_flowers, conifer_or_evergreen: unglazed_earth}   # [walston, vt]
+  pot_subdued_not_competing: true         # chậu không lấn át cây [vt, judging_swindon]
+  in_pot_only: [tree, soil, moss, natural_rock]   # [wiki]
+
+style_specifics:                          # góc, cành, ngọn riêng từng thế [empire, vt, vn_dang]
+  chokkan: {trunk_angle_deg: 0, first_branch_ratio: 0.25, note: straight trunk, apex directly over base}
+  moyogi: {trunk: s_curves_tightening_upward, branches: at_each_bend_outside, apex: over_base}
+  shakan: {trunk_angle_deg: [60, 80], roots: stronger_on_side_opposite_lean, first_branch: opposite_to_lean}
+  kengai: {trunk: falls_below_pot_bottom, crown: above_pot_rim, pot: tall}
+  han_kengai: {trunk: drops_to_pot_rim_never_below_pot_bottom, pot: medium_deep}
+  bunjingi: {trunk: tall_slender_crooked, branches: none_on_lower_trunk, foliage: top_only, deadwood: optional_jin_shari}
+  fukinagashi: {trunk: leaning, branches: all_swept_one_side}
+  sokan: {trunks: two_from_same_base, secondary_max_diameter_ratio: 0.67, secondary_max_height_ratio: 0.5, crown: single_shared}   # tỉ lệ thân con [vn_the]
+  sekijoju: {roots: over_rock_into_pot}
+
+display_faults:                           # lỗi làm ảnh "không đúng" khi trưng bày [wiki, vt]
+  - visible_wire_marks
+  - fresh_large_scars_on_front
+  - unrelated_objects_in_pot

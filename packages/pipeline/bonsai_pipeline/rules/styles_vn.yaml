@@ -1,0 +1,104 @@
+# Dáng và thế cây cảnh Việt Nam — dữ liệu tham chiếu (seed). Nguồn: [vn_the] [vn_dang] — xem rules/SOURCES.md.
+# "Dáng" = hình thái tổng quát (trực, xiêu, hoành, huyền); "thế" = bố cục chi tiết + ý nghĩa (tam đa, ngũ phúc…).
+# Trên 100 thế cây cổ Việt Nam hầu hết là dáng trực [vn_dang] → ưu tiên các thế dáng trực khi gợi ý cho phôi thẳng.
+# Chưa nối vào rule engine (cần duyệt); dùng làm mô tả cho P2 và cho người dùng.
+version: 1
+
+dang:                                    # α = góc giữa trục thân và phương thẳng đứng
+  truc:  {name_vi: Trực,  angle_deg: 0,         maps_to: [chokkan, moyogi, vn_truc_quan_tu], meaning: ngay thẳng, kiên định}
+  xieu:  {name_vi: Xiêu,  angle_deg: [20, 70],  maps_to: [shakan],             meaning: mềm mại, vượt khó}
+  hoanh: {name_vi: Hoành, angle_deg: [70, 90],  maps_to: [],                   meaning: vượt sóng gió}
+  huyen: {name_vi: Huyền, angle_deg: ">90",     maps_to: [kengai, han_kengai], meaning: bền bỉ; thân đổ qua mép chậu, ngọn ngóc lên}
+
+the:
+  truong_phu:
+    name_vi: Trượng phu
+    dang: truc
+    trunks: 1
+    structure: thân thẳng, thon mảnh; rễ to khỏe; 2 hoặc 4 cành + 1 ngọn
+    numbers: {branches: [2, 4], first_branch_length_to_height: 0.67}
+  nhat_tru_kinh_thien:
+    name_vi: Nhất trụ kình thiên
+    dang: truc
+    trunks: 1
+    structure: thân thẳng cứng cáp, cành nhánh dồn ở phần trên
+  tam_da:
+    name_vi: Tam đa
+    dang: truc
+    trunks: [1, 3]
+    structure: 1 thân với 2 cành + 1 ngọn (3 tầng), hoặc 3 thân chung gốc; tán xưa tỉa tròn, nay tỉa tự nhiên
+    numbers: {tiers: 3}
+    meaning: Phúc – Lộc – Thọ
+  ngu_phuc:
+    name_vi: Ngũ phúc
+    dang: truc
+    trunks: [1, 5]
+    structure: 1 thân với 4 cành + 1 ngọn (5 tầng), hoặc 5 thân; kết hợp lớn – nhỏ
+    numbers: {tiers: 5}
+    meaning: Phúc – Lộc – Thọ – An – Khang
+  bat_phong:
+    name_vi: Bạt phong
+    dang: xieu
+    trunks: 1
+    structure: cành nhánh bám sát thân, kéo về phía sau, ngược chiều nghiêng của thân (như bị gió thổi)
+    maps_to: [fukinagashi]
+  bat_phong_hoi_dau:
+    name_vi: Bạt phong hồi đầu
+    dang: xieu
+    trunks: 1
+    structure: thân xiêu như bạt phong, phần ngọn quặt trở lại (trở lại trực)
+  long_thang:
+    name_vi: Long thăng
+    dang: xieu
+    trunks: 1
+    structure: thân uốn khúc như rồng; đầu rồng uốn lên đỉnh, hoặc rồng vươn từ gốc với đầu to, tán cân đối
+    maps_to: [vn_long]
+  phuong_vu:
+    name_vi: Phượng vũ
+    dang: xieu
+    trunks: 1
+    structure: thân ngắn; 2 rễ nổi làm chân; có đầu phượng; cành uốn như cánh đang múa, cành phụ bao quanh thân
+  hac_lap:
+    name_vi: Hạc lập
+    dang: xieu
+    trunks: 1
+    structure: như phượng vũ nhưng đầu hạc nghiêng cao hơn, đuôi không xòe, cành ôm sát thân
+  thac_do:
+    name_vi: Thác đổ
+    dang: huyen
+    trunks: 1
+    structure: cành uốn cong qua miệng chậu đổ xuống như thác
+    maps_to: [kengai, han_kengai]
+  huyen_chi_lac_dia:
+    name_vi: Huyền chi lạc địa
+    dang: truc
+    trunks: 1
+    structure: thân trực, chỉ có cành buông huyền xuống
+  phu_tu:
+    name_vi: Phụ tử
+    dang: truc
+    trunks: 2
+    structure: 2 thân chung gốc; thân con đặt giữa cành 1 và cành 2 của thân cha; tổng số cành hai thân là số lẻ
+    numbers: {child_max_diameter_ratio: 0.67, child_max_height_ratio: 0.5, parent_branches: [2, 4]}
+    maps_to: [sokan]
+  mau_tu:
+    name_vi: Mẫu tử
+    dang: xieu
+    trunks: 2
+    structure: như phụ tử nhưng dáng xiêu, mềm mại
+    numbers: {child_max_diameter_ratio: 0.67, child_max_height_ratio: 0.5}
+    maps_to: [sokan]
+  huynh_de:
+    name_vi: Huynh đệ
+    dang: truc
+    trunks: 2
+    structure: 2 thân chung gốc đặt gần nhau, chênh lệch nhỏ (nguồn ghi tỉ lệ khoảng 10/8)
+    numbers: {size_ratio: 0.8}
+    maps_to: [sokan]
+
+evaluation_vn:                           # tiêu chí truyền thống của giới nghệ nhân [vn_cokymyvan]
+  co: Cổ — tuổi cây, công chăm sóc lâu năm (vỏ sần, gốc to, rễ nổi)
+  ky: Kỳ — kỳ công, kỳ lạ, dáng khác thường so với cây bình thường
+  my: Mỹ — đẹp về bố cục, tỉ lệ, thế
+  van: Văn — ý nghĩa, tên thế, nội dung văn hóa gửi gắm
+  note: tác phẩm không cần đủ cả 4; có thể hoàn thiện dần theo thời gian

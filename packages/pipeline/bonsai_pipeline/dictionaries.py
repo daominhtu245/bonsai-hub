@@ -59,3 +59,25 @@ def rule_set_yaml() -> str:
 @lru_cache
 def rule_set() -> dict:
     return yaml.safe_load(rule_set_yaml())
+
+
+def _rules_yaml(name: str) -> dict:
+    return yaml.safe_load(resources.files("bonsai_pipeline").joinpath(f"rules/{name}").read_text(encoding="utf-8"))
+
+
+@lru_cache
+def species_rules() -> dict:
+    """Đặc điểm loài có nguồn (rules/species.yaml): cắt tỉa, tuốt lá, dây, thay chậu, gợi ý vẽ."""
+    return _rules_yaml("species.yaml")
+
+
+@lru_cache
+def styles_vn() -> dict:
+    """Dáng và thế cây cảnh Việt Nam (rules/styles_vn.yaml)."""
+    return _rules_yaml("styles_vn.yaml")
+
+
+@lru_cache
+def judging() -> dict:
+    """Bảng chấm ảnh kết quả: lỗi loại thẳng + tiêu chí có trọng số (rules/judging.yaml)."""
+    return _rules_yaml("judging.yaml")
