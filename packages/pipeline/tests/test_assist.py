@@ -67,3 +67,8 @@ def test_q1_answer():
     out, rec = qa.run_q1(LLMClient(fake), PromptTemplate("Q1", "v1", "s", "{{question}} {{species_json}} {{tree_json}}"), "Tưới sao?", "si", {"years": 4})
     assert out == {"answer_vi": "Bạn tưới khi mặt đất se khô.", "topics": [], "method": "ai", "suggest_expert": True}
     assert "Ficus" in fake.calls[0]["messages"][0]["content"] and rec.step_code == "Q1"
+
+
+def test_offline_answer_without_species():
+    a = qa.offline_answer("Khi nào tuốt lá?", None)
+    assert a["topics"] == ["defoliation"] and not a["suggest_expert"] and "mai chiếu thủy" in a["answer_vi"]

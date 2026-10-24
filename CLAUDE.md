@@ -21,6 +21,7 @@ Giao diện và nội dung hiển thị: **tiếng Việt**. Prompt gửi cho mo
 | `docs/deploy.md` | Deploy lên VPS Ubuntu có Nginx (domain, cổng trong `.env`) |
 | `docs/ideas.md` | Danh sách ý tưởng phát triển đã chốt + thứ tự |
 | `docs/quality-plan.md` | Kế hoạch sửa chất lượng ảnh kết quả (phản hồi beta) |
+| `docs/huong-dan-test.md` | Hướng dẫn test từng chức năng theo đúng thứ tự tạo dữ liệu |
 
 Khi tài liệu và mockup lệch nhau: **tài liệu kỹ thuật** quyết định hành vi; giao diện theo **hệ thiết kế v2** (tokens + thư viện component), không theo màu/chữ của mockup v1.
 

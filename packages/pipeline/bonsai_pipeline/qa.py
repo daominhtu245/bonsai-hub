@@ -36,6 +36,14 @@ GENERIC_VI = {
     "water": "Tưới khi mặt đất se khô (ấn ngón tay 1–2 cm thấy khô), tưới đẫm tới khi nước chảy ra lỗ chậu; mùa nóng có thể 1–2 lần/ngày, mùa mưa giảm.",
     "fertilize": "Bón ít mà đều trong mùa cây lớn (xuân – thu), giảm khi cây nghỉ hoặc vừa thay chậu, cắt rễ; không bón lúc cây yếu, héo.",
 }
+TOPIC_GENERIC = {  # chưa chọn cây / loài chưa có dữ kiện: lời khuyên chung, kèm gợi ý chọn cây để trả lời đúng loài
+    "defoliation": "Chỉ tuốt lá khi cây khỏe, vào mùa sinh trưởng; mỗi loài khác nhau (mai chiếu thủy 2–4 lần/năm, si tối đa ~2 lần/năm).",
+    "wiring": "Quấn dây nghiêng khoảng 45°, cỡ dây bằng khoảng 1/3 cành; kiểm tra thường xuyên, tháo trước khi dây hằn vào vỏ.",
+    "pruning": "Để cành ra vài cặp lá rồi cắt về 1–2 cặp; cắt cành lớn vào đầu mùa sinh trưởng.",
+    "repot": "Cây non thay chậu 1–3 năm/lần, cây già thưa hơn; thay vào đầu mùa sinh trưởng, không cắt quá nhiều rễ một lần.",
+    "light": "Phần lớn cây bonsai ưa nắng sáng, che bớt nắng gắt buổi chiều mùa hè.",
+    "graft": "Ghép khi cây đang sung, thường đầu mùa mưa hoặc mùa xuân.",
+}
 _SRC = re.compile(r"\s*\[[^\]]+\]")
 
 
@@ -65,7 +73,9 @@ def offline_answer(question: str, species_key: str | None) -> dict:
                 text = f"thay chậu {yrs[0]}–{yrs[1]} năm/lần" + (f"; {text}" if text else "")
             if text:
                 parts.append(f"{label} ({name}): {_SRC.sub('', str(text))}.")
-                topics.append(key)
+            else:
+                parts.append(f"{label}: {TOPIC_GENERIC[key]}")
+            topics.append(key)
     for key, words in GENERIC.items():
         if _has(q, words, accented):
             parts.append(GENERIC_VI[key])
