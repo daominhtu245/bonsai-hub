@@ -28,12 +28,20 @@ POT_SPRITE = {  # (dáng, màu) chậu thiết kế → ảnh chậu trong thư 
 }
 _BRANCH_W = {"thick": 0.35, "medium": 0.22, "thin": 0.12}  # độ rộng hành lang cành cắt, theo đường kính gốc
 
-# ngưỡng kiểm tra
-PAD_COVER_MIN = 0.25  # tỉ lệ lá tối thiểu trong mỗi tầng thiết kế
-PADS_MISSING_MAX = 0.34  # quá 1/3 số tầng thiếu lá → lỗi
-OUTSIDE_FOLIAGE_MAX = 1.0  # lá ngoài thiết kế / diện tích các tầng (lá thật luôn xòe hơn tầng ghép, nên nới rộng)
-REMOVED_SAME_MAX = 0.06  # sai khác trung bình dọc cành cắt (0–1) dưới mức này = cành vẫn còn nguyên
-APEX_OFF_MAX = 0.15  # lệch ngọn theo chiều cao ảnh
+# ngưỡng kiểm tra: mặc định; bản đang dùng đọc từ judging.checks (nghệ nhân chỉnh ở trang Bộ luật)
+CHECK_DEFAULTS = {
+    "pad_cover_min": 0.25,  # tỉ lệ lá tối thiểu trong mỗi tầng thiết kế
+    "pads_missing_max": 0.34,  # quá 1/3 số tầng thiếu lá → lỗi
+    "outside_foliage_max": 1.0,  # lá ngoài thiết kế / diện tích các tầng (lá thật luôn xòe hơn tầng ghép)
+    "removed_same_max": 0.06,  # sai khác trung bình dọc cành cắt (0–1) dưới mức này = cành vẫn còn nguyên
+    "apex_off_max": 0.15,  # lệch ngọn theo chiều cao ảnh
+}
+
+
+def _param(key: str) -> float:
+    from .dictionaries import check_param
+
+    return check_param(key, CHECK_DEFAULTS[key])
 
 
 @dataclass
@@ -349,10 +357,12 @@ def lock_regions(original: bytes, generated: bytes, editable: np.ndarray) -> tup
 
 
 def foliage(rgb: np.ndarray) -> np.ndarray:
-    """Điểm ảnh màu lá (vàng-xanh → xanh lam-lục, đủ bão hòa, không quá tối)."""
+    """Điểm ảnh màu lá: xanh lục rõ (kênh G trội hơn R), đủ bão hòa, không quá tối.
+    Không lấy vàng-be (cát, đất, vỏ cây) — bản đầu lấy hue từ 35° nên đếm nhầm cả thân và nền cát là lá."""
     hsv = np.asarray(Image.fromarray(rgb).convert("HSV"), np.float32)
     hue, sat, val = hsv[..., 0] * 360 / 255, hsv[..., 1] / 255, hsv[..., 2] / 255
-    return (hue >= 35) & (hue <= 165) & (sat >= 0.18) & (val >= 0.12)
+    r, g, b = (rgb[..., i].astype(np.int16) for i in range(3))
+    return (hue >= 65) & (hue <= 170) & (sat >= 0.2) & (val >= 0.12) & (g > r + 6) & (g >= b)
 
 
 def fidelity_checks(original: bytes, output: bytes, analysis: Analysis, option: DesignOption, reg: Regions) -> dict:
@@ -369,16 +379,16 @@ def fidelity_checks(original: bytes, output: bytes, analysis: Analysis, option: 
     for p in reg.pads:
         m = _ellipse_mask(reg.size, [p])
         covers.append(round(float(tree_leaf[m].mean()) if m.any() else 0.0, 3))
-    missing = sum(c < PAD_COVER_MIN for c in covers)
+    missing = sum(c < _param("pad_cover_min") for c in covers)
     res["pad_cover"] = covers
-    if covers and missing / len(covers) > PADS_MISSING_MAX:
+    if covers and missing / len(covers) > _param("pads_missing_max"):
         fails.append("pads_missing")
 
     allowed = _dilate(_ellipse_mask(reg.size, reg.pads, 1.5), max(3, round(min(reg.size) * 0.01)))
     pads_area = max(1, int(_ellipse_mask(reg.size, reg.pads).sum()))
     outside = int((tree_leaf & reg.editable() & ~allowed).sum())
     res["outside_foliage"] = round(outside / pads_area, 3)
-    if res["outside_foliage"] > OUTSIDE_FOLIAGE_MAX:
+    if res["outside_foliage"] > _param("outside_foliage_max"):
         fails.append("foliage_outside_design")
 
     t = analysis.trunk
@@ -397,7 +407,7 @@ def fidelity_checks(original: bytes, output: bytes, analysis: Analysis, option: 
         if core.sum() < 30:
             continue
         diff = float(np.abs(gray_o[core] - gray_n[core]).mean())
-        if diff < REMOVED_SAME_MAX:
+        if diff < _param("removed_same_max"):
             still.append(b.id)
     res["removed_still_present"] = still
     if still:
@@ -407,7 +417,7 @@ def fidelity_checks(original: bytes, output: bytes, analysis: Analysis, option: 
     if rows.size:
         off = abs(int(rows.min()) - option.apex.point_px[1]) / h
         res["apex_offset"] = round(off, 3)
-        if off > APEX_OFF_MAX:
+        if off > _param("apex_off_max"):
             fails.append("apex_off")
     res["fails"] = fails
     return res

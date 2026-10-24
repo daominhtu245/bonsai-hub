@@ -6,7 +6,7 @@ export interface User {
   name: string | null;
   email: string | null;
   avatar_url: string | null;
-  role: 'player' | 'nursery' | 'admin';
+  role: 'player' | 'nursery' | 'artisan' | 'admin';
   credits: number;
   garden_name?: string | null;
   phone?: string | null;

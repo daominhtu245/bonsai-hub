@@ -9,6 +9,7 @@ import {
   Button, ButtonLink, GuideCard, Notice, Skeleton, StageTimeline, StepList, StyleName, type StageGuide, type StepState,
 } from '@/components/ui';
 import { ApiError } from '@/lib/api';
+import { FEEDBACK_REASONS } from '@/lib/ruleLabels';
 import { useAuth } from '@/lib/auth';
 import { cx } from '@/lib/cx';
 import { accountApi } from '@/lib/account';
@@ -91,12 +92,15 @@ function StageImage({ result, stage }: { result: ResultView; stage: StageView })
 
 function Feedback({ jobId, initial }: { jobId: string; initial: 1 | -1 | null }) {
   const [rating, setRating] = useState(initial);
+  const [reasons, setReasons] = useState<string[]>([]);
+  const [comment, setComment] = useState('');
+  const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const send = (r: 1 | -1) => {
+  const send = (r: 1 | -1, tags: string[] = [], note?: string) => {
     const prev = rating;
     setRating(r);
     setError(null);
-    resultApi.feedback(jobId, r).catch((e: ApiError) => {
+    return resultApi.feedback(jobId, r, tags, note).then(() => setSent(tags.length > 0 || Boolean(note))).catch((e: ApiError) => {
       setRating(prev);
       setError(e.message);
     });
@@ -110,7 +114,7 @@ function Feedback({ jobId, initial }: { jobId: string; initial: 1 | -1 | null })
       <span id="fb-title" className="min-w-[10rem] flex-1 text-caption font-medium">Bản thiết kế này có hợp lý không?</span>
       <div className="flex flex-wrap gap-2">
         {opts.map(([value, label, Icon]) => (
-          <button key={value} type="button" aria-pressed={rating === value} onClick={() => send(value)}
+          <button key={value} type="button" aria-pressed={rating === value} onClick={() => { setSent(false); void send(value); }}
             className={cx('inline-flex min-h-touch items-center gap-1.5 rounded-btn border px-3 text-caption font-medium',
               rating === value ? 'border-ink bg-ink text-bg' : 'border-line bg-surface text-ink-muted hover:text-ink')}>
             <Icon size={16} strokeWidth={1.75} aria-hidden="true" />
@@ -118,6 +122,24 @@ function Feedback({ jobId, initial }: { jobId: string; initial: 1 | -1 | null })
           </button>
         ))}
       </div>
+      {rating === -1 && !sent ? (
+        <div className="flex w-full flex-col gap-2 pt-1">
+          <span className="text-label text-ink-muted">Sai ở đâu?</span>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Sai ở đâu">
+            {FEEDBACK_REASONS.map(([k, label]) => (
+              <button key={k} type="button" aria-pressed={reasons.includes(k)}
+                onClick={() => setReasons((r) => (r.includes(k) ? r.filter((x) => x !== k) : [...r, k]))}
+                className={cx('min-h-touch rounded-chip border px-3 text-label', reasons.includes(k) ? 'border-ink bg-surface-2 font-semibold text-ink' : 'border-line text-ink-muted')}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <input value={comment} onChange={(e) => setComment(e.target.value)} maxLength={300} placeholder="Ghi thêm (không bắt buộc)" aria-label="Ghi thêm"
+            className="min-h-touch rounded-btn border border-line-strong bg-surface px-3 text-caption" />
+          <Button size="touch" block={false} disabled={!reasons.length && !comment.trim()} onClick={() => send(-1, reasons, comment.trim() || undefined)}>Gửi góp ý</Button>
+        </div>
+      ) : null}
+      {sent ? <span className="w-full text-label text-ink-muted">Cảm ơn bạn — góp ý giúp ảnh lần sau đúng hơn.</span> : null}
       {error ? <span className="w-full text-label text-danger">{error}</span> : null}
     </section>
   );

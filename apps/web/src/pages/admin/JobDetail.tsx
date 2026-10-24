@@ -5,6 +5,7 @@ import { Button } from '@/components/ui';
 import { consoleApi, type JobDetail as Detail, type RenderRow, type StepRow } from '@/lib/adminConsole';
 import { SPECIES_NAME } from '@/lib/copy';
 import { cx } from '@/lib/cx';
+import { termLabel } from '@/lib/ruleLabels';
 import {
   Badge, DataTable, JsonBlock, KeyValue, PageHeader, Panel, StatusBadge, Tabs, TableView, dt, dur, secs, shortId, usd, useAction, useConfirm, useLoad,
 } from './kit';
@@ -79,7 +80,7 @@ function Overview({ d }: { d: Detail }) {
           {d.feedback.map((f, i) => (
             <div key={i} className="rounded-btn border border-line p-2">
               <Badge tone={f.rating === 1 ? 'success' : 'danger'}>{f.rating === 1 ? 'Hợp lý' : 'Chưa đúng'}</Badge>
-              {f.reason_tags.length ? <span className="ml-2 text-ink-muted">{f.reason_tags.join(', ')}</span> : null}
+              {f.reason_tags.length ? <span className="ml-2 text-ink-muted">{f.reason_tags.map(termLabel).join(', ')}</span> : null}
               {f.comment ? <p className="m-0 mt-1">{f.comment}</p> : null}
             </div>
           ))}

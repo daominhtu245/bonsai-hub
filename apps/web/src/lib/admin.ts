@@ -49,6 +49,7 @@ export type AiSettings = {
   analysis_mode: 'api' | 'hybrid';
   design_mode: 'api' | 'rules';
   cutout_mode: 'on' | 'off';
+  stage_mode: 'ai' | 'derive';
   cutout_model: string | null;
   seg_model_ready: boolean;
   app_env: string;

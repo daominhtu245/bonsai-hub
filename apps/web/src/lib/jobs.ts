@@ -141,5 +141,6 @@ export const resultApi = {
   get: (id: string) => api<ResultView>(`/jobs/${id}/result`),
   toggleTask: (id: string, stage_code: string, task_index: number, done: boolean) =>
     api<void>(`/jobs/${id}/tasks`, { method: 'PUT', json: { stage_code, task_index, done } }),
-  feedback: (id: string, rating: 1 | -1) => api<void>(`/jobs/${id}/feedback`, { method: 'POST', json: { rating } }),
+  feedback: (id: string, rating: 1 | -1, reason_tags: string[] = [], comment?: string) =>
+    api<void>(`/jobs/${id}/feedback`, { method: 'POST', json: { rating, reason_tags, comment } }),
 };

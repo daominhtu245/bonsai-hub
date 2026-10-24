@@ -14,12 +14,12 @@ Phản hồi beta (25/10/2026): ảnh kết quả đẹp nhưng không đúng ph
 |---|---|---|---|
 | 0a | ✅ Bộ luật + bảng chấm nháp từ nguồn công khai (`rules/*.yaml`, `rules/SOURCES.md`) + 380 ảnh tham chiếu có giấy phép (`data/seed/`) | Không | xong 25/10 |
 | 0 | Gom 5–10 phiên bị chê + bảng chấm "đúng chuẩn" (~10 tiêu chí) cùng nghệ nhân | Không | 1–2 buổi |
-| 1 | Nghệ nhân chấm thiết kế P2 trên bản vẽ (Cổng 1) trước khi bàn tới ảnh | Không | công cụ chấm: 1–2 ngày |
+| 1 | ✅ công cụ (25/10): vai trò Nghệ nhân, `/admin/cham-diem` (ảnh + thiết kế), `/admin/thong-ke-cham`; còn: mời nghệ nhân chấm | Không | — |
 | 2 | ✅ (25/10) **Khóa phần không được đổi**: dùng mặt nạ (tách nền + thân) giữ nguyên pixel thân, gốc, chậu, nền; model chỉ được vẽ vùng tán (inpaint có mask) | Không | 3–4 ngày |
 | 3 | ✅ (25/10) **Dựng bố cục trước, AI chỉ làm thật**: ghép tầng lá đúng vị trí thiết kế + xóa cành cắt (dùng lại `studio_compose`) → AI chỉ tinh chỉnh cho giống ảnh thật trong vùng tán | Không | 3–4 ngày |
 | 4 | ✅ (25/10) **Tự kiểm tra trước khi giao**: đo thân có bị đổi, số / vị trí tầng lá, tỉ lệ tán theo luật, cành cắt có mọc lại, ngọn đúng chỗ + AI chấm theo bảng chấm; không đạt → sửa / vẽ lại; vẫn không đạt → báo độ tin cậy thấp hoặc hoàn lượt | Không | 3–5 ngày |
-| 5 | ◐ S1–S3 đã khóa thân + nền theo ảnh gốc; còn: suy ra từ S4 thay vì vẽ độc lập. S1–S3 suy ra từ S4 (gỡ dần tán theo mặt nạ) thay vì vẽ độc lập | Không | 2–3 ngày |
-| 6 | Nút "Sai ở đâu" (thân bị đổi / sai số tầng / cành cắt còn / sai loài lá / quá già…) → dữ liệu chỉnh prompt, luật, model | Không | 1–2 ngày |
+| 5 | ✅ (25/10) S1–S3 khóa thân + nền; thêm chế độ dựng S1–S3 từ S4 (admin chọn, `stage_derive.py`). S1–S3 suy ra từ S4 (gỡ dần tán theo mặt nạ) thay vì vẽ độc lập | Không | 2–3 ngày |
+| 6 | ✅ (25/10) Nút "Sai ở đâu" (thân bị đổi / sai số tầng / cành cắt còn / sai loài lá / quá già…) → dữ liệu chỉnh prompt, luật, model | Không | 1–2 ngày |
 | 7 | Train YOLO-seg thân / cành / rễ (300–500 ảnh) → đo và kiểm tra chính xác hơn | Có | khi đủ ảnh |
 | 8 | Train model chấm dáng từ điểm nghệ nhân + quẹt chọn (B6) → lọc ảnh xấu tự động | Có | ~1–2 nghìn lượt chấm |
 | 9 | Tự huấn luyện model tạo ảnh mã nguồn mở (Flux / SDXL + ControlNet + LoRA theo loài), chạy GPU thuê | Có | cần 1–5 nghìn cặp ảnh trước/sau thật |

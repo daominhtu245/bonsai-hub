@@ -182,3 +182,26 @@ def test_cutout_off_by_admin(db, login, bucket, llm, monkeypatch):
     llm.responses.extend([json.dumps(analysis()), json.dumps(design())])
     run_phase_a(db, job.id)
     assert not called and llm.calls[0]["images"] == 2 and "Pre-processing: none" in llm.calls[0]["messages"][0]["content"].replace("On-device pre-processing", "Pre-processing")
+
+
+def test_phase_a_uses_rules_edited_by_artisan(db, login, bucket, llm):
+    import copy
+
+    from bonsai_api.db.models import RuleDoc
+    from bonsai_pipeline.dictionaries import default_rule_doc
+
+    rs = copy.deepcopy(default_rule_doc("rule_set"))
+    rs["proportions"]["first_branch_height_ratio"] = [0.3, 0.38]
+    db.query(RuleDoc).filter(RuleDoc.doc == "rule_set").update({"active": False})
+    db.add(RuleDoc(doc="rule_set", version=2, content=rs, active=True, created_by="nghenhan@example.com"))
+    db.commit()
+    user, tree, job = _job(db, login, bucket)
+    llm.responses.extend([json.dumps(analysis()), json.dumps(design())])
+    run_phase_a(db, job.id)
+    db.expire_all()
+    job = db.get(DesignJob, job.id)
+    assert job.progress["rules"]["rule_set"] == 2
+    assert "0.38" in llm.calls[1]["messages"][0]["content"]  # P2 nhận bộ luật đã chỉnh
+    from bonsai_pipeline.dictionaries import rule_set
+
+    assert rule_set() == default_rule_doc("rule_set")  # hết phiên → về bản gốc

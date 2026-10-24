@@ -59,6 +59,7 @@ class RoadmapContext:
     style_key: str = ""
     style_desc_en: str = ""
     regions: object | None = None  # bonsai_pipeline.fidelity.Regions — khóa thân + nền theo ảnh gốc
+    stage_mode: str = "ai"  # ai: vẽ S1–S3 bằng model ảnh; derive: dựng từ ảnh gốc + S4 (bonsai_pipeline/stage_derive.py)
 
     def lock(self, *, pot: bool):
         if self.regions is None:
@@ -107,11 +108,41 @@ def run_roadmap(db: Session, job: DesignJob, ctx: RoadmapContext) -> None:
                                            output=plan.model_dump(mode="json")))
     set_progress(db, job, "plan", "done")
 
+    stage_image_ids: dict[str, uuid.UUID | None] = {}
+
+    if ctx.stage_mode == "derive" and ctx.regions is not None:
+        _derive_stages(db, job, ctx, stage_image_ids)
+    else:
+        _render_stages(db, job, ctx, plan, stage_image_ids)
+    _write_guide(db, job, ctx, plan, stage_image_ids)
+
+
+def _derive_stages(db: Session, job: DesignJob, ctx: RoadmapContext, stage_image_ids: dict) -> None:
+    """S1–S3 dựng trên máy từ ảnh gốc + ảnh kết quả: miễn phí, khớp nhau, tán lớn dần."""
+    from bonsai_pipeline.stage_derive import derive_stages
+
+    started = time.monotonic()
+    images = derive_stages(ctx.original, ctx.final_image, ctx.regions)
+    for code in ("S1", "S2", "S3"):
+        set_progress(db, job, code, "running")
+        attempt = (ctx.attempt_base or {}).get(code, 0)
+        key = storage.job_image_key(ctx.tree_id, job.id, code, attempt)
+        storage.put_bytes(key, images[code], "image/webp")
+        row = RenderImage(job_id=job.id, stage_code=code, attempt=attempt, storage_key=key, model="stage-derive",
+                          prompt_hash=None, cv_checks={"derived": True}, selected=True)
+        db.add(row)
+        db.flush()
+        stage_image_ids[code] = row.id
+        set_progress(db, job, code, "done", fallback=False)
+    record_step(db, job.id, StepRecord("P3d", "code", "stage-derive", None, 0, 0, 0, 0.0,
+                                       int((time.monotonic() - started) * 1000), ok=True, output={"stages": 3}))
+
+
+def _render_stages(db: Session, job: DesignJob, ctx: RoadmapContext, plan, stage_image_ids: dict) -> None:
     s1_tpl, chain_tpl = load_active_prompt(db, "P3d_S1"), load_active_prompt(db, "P3d_chain")
     refs = [ImageInput(r, "image/webp") for r in ctx.species_refs[:1]]
     final = ImageInput(ctx.final_image, "image/webp")
     images_by_stage: dict[str, bytes] = {}
-    stage_image_ids: dict[str, uuid.UUID | None] = {}
 
     # B4 — S1: sửa có kiểm soát trên ảnh gốc (xóa cành đỏ, uốn dây cành xanh).
     set_progress(db, job, "S1", "running")
@@ -147,6 +178,8 @@ def run_roadmap(db: Session, job: DesignJob, ctx: RoadmapContext) -> None:
             prev_img, prev_mask = res.candidate.image, mask if mask is not None else prev_mask
         set_progress(db, job, code, "done", fallback=res.candidate is None)
 
+
+def _write_guide(db: Session, job: DesignJob, ctx: RoadmapContext, plan, stage_image_ids: dict) -> None:
     # B6 — P6 (hướng dẫn từng giai đoạn) song song P5 (tổng quan).
     set_status(db, job, JobStatus.writing_guide)
     set_progress(db, job, "guide", "running")

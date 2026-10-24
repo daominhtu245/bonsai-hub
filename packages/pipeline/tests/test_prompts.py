@@ -66,3 +66,50 @@ def test_every_rule_source_is_listed():
                    "truc", "xieu", "hoanh", "huyen"}
     missing = {u for u in used if u not in listed and u not in known_words and not u.replace("_", "").isdigit()}
     assert not missing, missing
+
+
+def test_rule_docs_validate_and_override():
+    import copy
+
+    from bonsai_pipeline.dictionaries import (
+        RULE_DOCS, default_rule_doc, judging, max_thicken_pct, rule_set, rule_set_yaml, use_rules, years_to_final,
+    )
+    from bonsai_pipeline.rules_validate import validate_rule_doc
+
+    for name in RULE_DOCS:
+        assert validate_rule_doc(name, default_rule_doc(name)) == [], name
+    bad = copy.deepcopy(default_rule_doc("judging"))
+    bad["criteria"]["trunk_nebari"]["weight"] = 30
+    assert any("100" in e for e in validate_rule_doc("judging", bad))
+    rs = copy.deepcopy(default_rule_doc("rule_set"))
+    rs["proportions"]["first_branch_height_ratio"] = [0.5, 0.3]
+    assert validate_rule_doc("rule_set", rs)
+    sp = copy.deepcopy(default_rule_doc("species"))
+    del sp["si"]
+    assert validate_rule_doc("species", sp) == ["Thiếu loài «si»."]
+
+    edited = copy.deepcopy(default_rule_doc("rule_set"))
+    edited["growth"]["years_to_final"]["fast"] = 3
+    edited["growth"]["max_thicken_pct_per_year"]["fast"] = 20
+    try:
+        use_rules({"rule_set": edited})
+        assert years_to_final("fast") == 3 and max_thicken_pct("fast") == 20 and rule_set() is edited
+        assert "years_to_final" in rule_set_yaml() and judging() == default_rule_doc("judging")
+    finally:
+        use_rules(None)
+    assert years_to_final("fast") == 4 and rule_set() == default_rule_doc("rule_set")
+
+
+def test_rule_doc_key_order_restored_after_jsonb():
+    import json
+
+    from bonsai_pipeline.dictionaries import default_rule_doc, ordered_rule_doc
+
+    base = default_rule_doc("rule_set")
+    shuffled = json.loads(json.dumps(dict(sorted(base.items(), key=lambda kv: (len(kv[0]), kv[0])))))  # như JSONB
+    shuffled["new_section"] = {"x": 1}
+    out = ordered_rule_doc("rule_set", shuffled)
+    assert list(out)[:3] == list(base)[:3] and list(out)[-1] == "new_section"
+    j = default_rule_doc("judging")
+    crit = dict(reversed(list(j["criteria"].items())))
+    assert list(ordered_rule_doc("judging", {**j, "criteria": crit})["criteria"]) == list(j["criteria"])

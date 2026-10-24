@@ -48,6 +48,7 @@ docs/                # tài liệu (đã có)
 - Mỗi bước ghi 1 dòng `pipeline_steps`: provider, model, prompt_version, tokens, số ảnh, `cost_usd`, latency, ok.
 - Lưu **cả ảnh bị loại** (`render_images.selected=false`) — đây là dataset về sau.
 - Prompt lưu trong DB (`prompt_versions`), seed từ `packages/prompts/`; không hardcode trong code.
+- Bộ luật + thông số (`rule_set`, `styles_vn`, `species`, `judging`) lưu trong DB (`rule_docs`, có phiên bản), seed từ `packages/pipeline/bonsai_pipeline/rules/*.yaml`; nghệ nhân sửa ở `/admin/bo-luat`. Thông số mới cho nghệ nhân chỉnh → thêm vào YAML, code đọc qua `dictionaries` (không hằng số trong code).
 - Không bao giờ để model ảnh tự quyết thẩm mỹ: thiết kế quyết định ở P2 + rule engine; P3 chỉ thực thi.
 - Ảnh tải lên: xóa EXIF/GPS, chuẩn hóa cạnh dài 1536 px, lưu R2 private, truy cập bằng URL ký sẵn 1 giờ.
 - Lỗi sau khi đã trừ lượt → tự hoàn lượt (ghi `credit_ledger` reason `refund`).

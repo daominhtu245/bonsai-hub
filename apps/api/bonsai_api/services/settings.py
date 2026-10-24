@@ -4,6 +4,7 @@
 - analysis_mode: api | hybrid — hybrid: model riêng (YOLO-seg) trước, chưa tin được thì gọi P1
 - design_mode: api | rules — rules: bộ thiết kế bằng luật (bonsai_pipeline/rule_designer.py) thay P2
 - cutout_mode: on | off — tách nền + phác họa nét trên máy trước P1 (bonsai_pipeline/cutout.py)
+- stage_mode: ai | derive — ảnh giai đoạn S1–S3 vẽ bằng AI, hoặc dựng từ ảnh gốc + ảnh kết quả (bonsai_pipeline/stage_derive.py)
 """
 
 from sqlalchemy.orm import Session
@@ -17,6 +18,7 @@ SETTINGS: dict[str, tuple[tuple[str, ...], str]] = {
     "analysis_mode": (("api", "hybrid"), "hybrid"),  # chưa có trọng số YOLO → hybrid tự gọi P1
     "design_mode": (("api", "rules"), "api"),  # bộ luật cần nghệ nhân duyệt (Cổng 1) trước khi làm mặc định
     "cutout_mode": (("on", "off"), "on"),  # worker chưa có model tách nền → tự bỏ qua
+    "stage_mode": (("ai", "derive"), "ai"),  # derive: miễn phí, khớp ảnh kết quả; chất lượng nháp hơn
 }
 COST_MODE = "cost_mode"
 

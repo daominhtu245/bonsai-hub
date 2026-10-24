@@ -45,7 +45,7 @@ export default function Users() {
       {notice}
       <Toolbar>
         <SearchBox value={f.q} onChange={(q) => setF({ q })} placeholder="Email, tên, SĐT, tên vườn" />
-        <Select label="Vai trò" value={f.role} onChange={(role) => setF({ role })} options={[['', 'Tất cả'], ['player', 'Người chơi'], ['nursery', 'Nhà vườn'], ['admin', 'Quản trị']]} />
+        <Select label="Vai trò" value={f.role} onChange={(role) => setF({ role })} options={[['', 'Tất cả'], ['player', 'Người chơi'], ['nursery', 'Nhà vườn'], ['artisan', 'Nghệ nhân'], ['admin', 'Quản trị']]} />
         <Select label="Tài khoản" value={f.state} onChange={(s) => setF({ state: s })} options={[['active', 'Đang dùng'], ['deleted', 'Đã khóa / xóa'], ['all', 'Tất cả']]} />
         <Select label="Đã trả tiền" value={f.paying} onChange={(paying) => setF({ paying })} options={[['', 'Tất cả'], ['true', 'Có'], ['false', 'Chưa']]} />
         <Select label="Đồng ý ảnh" value={f.consent} onChange={(consent) => setF({ consent })} options={[['', 'Tất cả'], ['true', 'Có'], ['false', 'Không']]} />

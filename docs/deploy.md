@@ -230,6 +230,9 @@ sudo certbot --nginx -d bonsai.tenban.vn --redirect
    Tài khoản → Nhập mã quà tặng.
 5. Thử một vòng: chụp phôi → chọn thế / Tự thiết kế → tạo ảnh. Theo dõi ở Phiên thiết kế và Chi phí AI.
 
+**Tài khoản nghệ nhân:** nghệ nhân đăng nhập Google một lần → `/admin` → Người dùng → mở tài khoản đó → Vai trò
+**Nghệ nhân**. Họ vào Tài khoản → **Khu nghệ nhân** để chấm ảnh và chỉnh bộ luật (không thấy người dùng, thanh toán).
+
 Thanh toán VietQR, Web Push, Zalo, Sentry, Telegram là **tùy chọn**: chưa đặt khóa thì tính năng tự tắt. Bật dần
 theo `docs/beta-checklist.md`.
 

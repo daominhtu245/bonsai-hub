@@ -20,7 +20,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from .adapters.base import AIError, ImageInput
 from .adapters.image_client import ImageClient
 from .adapters.llm_client import LLMClient
-from .dictionaries import MAX_THICKEN_PCT_PER_YEAR, judging, rule_set_yaml
+from .dictionaries import judging, max_thicken_pct, rule_set_yaml
+from .dictionaries import years_to_final as _years_to_final
 from .fidelity import FIX_HINTS, Regions, layout_collage, lock_regions, regions
 from .phase_a import PromptTemplate
 from .prompts import render
@@ -32,7 +33,7 @@ from .steps import StepRecord
 
 N_CANDIDATES = 3
 MAX_REPAIR_ROUNDS = 2
-PASS_SCORE = 6.5
+PASS_SCORE = 6.5  # mặc định; bản đang dùng: judging.pass_score / 10 (nghệ nhân chỉnh)
 TRUNK_IOU_MIN = 0.75
 # lỗi CV "cứng": ảnh hỏng rõ → không tốn tiền chấm VLM. Lỗi trung thực (fidelity) vẫn được chấm để có hướng dẫn sửa.
 CV_HARD_FAILS = {"aspect_changed", "background_changed", "trunk_changed", "base_moved"}
@@ -49,7 +50,6 @@ WEIGHTS = {
     "timeline_plausibility": 1.5,
     "photo_realism": 1.0,
 }
-YEARS_TO_FINAL = {"fast": 4, "medium": 5, "slow": 6}
 
 _APEX_LEAN = {"slightly_left": "slightly to the left", "slightly_right": "slightly to the right", "forward": "slightly toward the viewer"}
 _POT_SHAPE = {"rectangle": "rectangular", "oval": "oval", "round": "round", "cascade_deep": "deep cascade"}
@@ -86,7 +86,7 @@ class JudgeResult(BaseModel):
 
 
 def years_to_final(growth_speed: str) -> int:
-    return YEARS_TO_FINAL.get(growth_speed, 5)
+    return _years_to_final(growth_speed)
 
 
 def p3a_variables(
@@ -113,7 +113,7 @@ def p3a_variables(
         pot_desc += ", a small grey accent rock on the soil"
     return {
         "years": years,
-        "max_thicken_pct": MAX_THICKEN_PCT_PER_YEAR.get(growth_speed, 10) * years,
+        "max_thicken_pct": max_thicken_pct(growth_speed) * years,
         "scar_note": "show a small healed scar where each was cut" if years >= 2 else "show fresh pruning cuts",
         "style_description": style_desc,
         "apex_lean": _APEX_LEAN.get(option.apex.lean, option.apex.lean),
@@ -166,7 +166,7 @@ class Candidate:
 
     @property
     def passed(self) -> bool:
-        return not self.hard_fails and self.total is not None and self.total >= PASS_SCORE
+        return not self.hard_fails and self.total is not None and self.total >= pass_score()
 
 
 def to_webp(data: bytes, size: tuple[int, int]) -> tuple[bytes, tuple[int, int]]:
@@ -367,6 +367,11 @@ def judging_text() -> str:
     return yaml.safe_dump(judging(), allow_unicode=True, sort_keys=False)
 
 
+def pass_score() -> float:
+    """Ngưỡng đạt trên thang 10 của P4 (judging.pass_score trên thang 100)."""
+    return float(judging().get("pass_score", PASS_SCORE * 10)) / 10
+
+
 # ---------- luật chọn ----------
 
 
@@ -392,7 +397,7 @@ def select(cands: list[Candidate], *, judged: bool = True) -> Selection:
     clean = [c for c in cands if not c.hard_fails and c.total is not None]
     if clean:
         best = max(clean, key=lambda c: c.total)
-        ok = best.total >= PASS_SCORE
+        ok = best.total >= pass_score()
         return Selection(best, ok, not ok)
     judged = [c for c in cands if c.total is not None]
     pool = judged or cands

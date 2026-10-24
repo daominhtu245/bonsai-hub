@@ -86,7 +86,7 @@ export interface JobDetail {
 }
 
 // ---------- người dùng ----------
-export type Role = 'player' | 'nursery' | 'admin';
+export type Role = 'player' | 'nursery' | 'artisan' | 'admin';
 export interface UserRow {
   id: string; email: string | null; name: string | null; phone: string | null; garden_name: string | null;
   auth_provider: string; role: Role; credits: number; consent_training: boolean; deleted: boolean; created_at: string;

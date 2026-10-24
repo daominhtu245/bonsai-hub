@@ -60,7 +60,7 @@ export default function UserDetail() {
                   <label className="flex min-h-touch items-center gap-2 rounded-btn border border-line-strong bg-surface pl-3 text-caption">
                     <span className="text-ink-muted">Vai trò</span>
                     <select value={u.role} onChange={(e) => role(d, e.target.value as Role)} disabled={busy} className="min-h-[42px] bg-transparent pr-2 font-medium">
-                      <option value="player">Người chơi</option><option value="nursery">Nhà vườn</option><option value="admin">Quản trị</option>
+                      <option value="player">Người chơi</option><option value="nursery">Nhà vườn</option><option value="artisan">Nghệ nhân</option><option value="admin">Quản trị</option>
                     </select>
                   </label>
                   <Button size="touch" block={false} variant={u.deleted ? 'secondary' : 'danger'} disabled={busy} onClick={() => lock(d)}>{u.deleted ? 'Mở khóa' : 'Khóa'}</Button>

@@ -52,5 +52,12 @@ def require_admin(user: Annotated[User, Depends(get_current_user)]) -> User:
     return user
 
 
+def require_artisan(user: Annotated[User, Depends(get_current_user)]) -> User:
+    """Nghệ nhân (chấm ảnh, chỉnh bộ luật) — quản trị viên cũng vào được."""
+    if user.role not in (UserRole.artisan, UserRole.admin):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Chỉ nghệ nhân hoặc quản trị viên.")
+    return user
+
+
 CurrentUser = Annotated[User, Depends(get_current_user)]
 DB = Annotated[Session, Depends(get_db)]

@@ -42,6 +42,9 @@ const AdminOps = lazy(() => opsPages().then((m) => ({ default: m.OpsPage })));
 const AdminGiftCodes = lazy(() => opsPages().then((m) => ({ default: m.GiftCodesPage })));
 const AdminBroadcast = lazy(() => opsPages().then((m) => ({ default: m.BroadcastPage })));
 const Terms = lazy(() => import('@/pages/Terms'));
+const ArtisanReview = lazy(() => import('@/pages/artisan/Review'));
+const ArtisanRules = lazy(() => import('@/pages/artisan/Rules'));
+const ArtisanStats = lazy(() => import('@/pages/artisan/Stats'));
 
 const guard = (el: JSX.Element) => <RequireAuth>{el}</RequireAuth>;
 
@@ -71,6 +74,9 @@ export default function App() {
               <Route path="/admin" element={guard(<AdminLayout />)}>
                 <Route index element={<AdminDashboard />} />
                 <Route path="phien" element={<AdminJobs />} />
+                <Route path="cham-diem" element={<ArtisanReview />} />
+                <Route path="bo-luat" element={<ArtisanRules />} />
+                <Route path="thong-ke-cham" element={<ArtisanStats />} />
                 <Route path="phien/:jobId" element={<AdminJobDetail />} />
                 <Route path="nguoi-dung" element={<AdminUsers />} />
                 <Route path="nguoi-dung/:userId" element={<AdminUserDetail />} />

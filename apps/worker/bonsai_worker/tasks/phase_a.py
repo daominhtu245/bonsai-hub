@@ -29,6 +29,7 @@ from bonsai_pipeline.steps import StepRecord
 from ..celery_app import app
 from ..prompts_repo import load_active_prompt
 from ..recording import JobFailure, job_guard, record_step, set_progress, set_status
+from ..rules_repo import active_rules
 from ..seg_status import report as report_seg_status
 from .preprocess import normalize_photo
 
@@ -59,7 +60,9 @@ def _record_ai_failure(db: Session, job_id: uuid.UUID, step: str, version: str, 
 
 
 def run_phase_a(db: Session, job_id: uuid.UUID) -> None:
-    with job_guard(db, job_id) as job:
+    with active_rules(db) as versions, job_guard(db, job_id) as job:
+        if job.status in _ACTIVE:
+            job.progress = {**(job.progress or {}), "rules": versions}  # phiên bản bộ luật dùng cho phiên này
         if job.status not in _ACTIVE:
             log.info("job %s already %s; skipping", job_id, job.status)
             return

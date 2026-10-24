@@ -23,7 +23,15 @@ criteria:
   pot_harmony:   {weight: 10, check: [pot_size_ratio, shape_matches_style, color_subdued, placement_off_center]}
   realism_age:   {weight: 10, check: [ramification_believable_for_years, no_masterpiece_look_too_early]}
   overall:       {weight: 10, check: [style_reads_clearly, balance, natural_mature_tree_impression]}
-pass_score: 70             # trên 100, và không dính lỗi phần A
+pass_score: 65             # trên 100 (điểm AI chấm quy về thang 100), và không dính lỗi phần A
+
+# Ngưỡng đo trên máy (bonsai_pipeline/fidelity.py) — tỉ lệ 0–1
+checks:
+  pad_cover_min: 0.25        # tối thiểu phần lá trong mỗi tầng thiết kế
+  pads_missing_max: 0.34     # quá tỉ lệ này số tầng thiếu lá → lỗi "thiếu tầng lá"
+  outside_foliage_max: 1.0   # lá ngoài thiết kế / tổng diện tích tầng (lá thật xòe hơn tầng ghép)
+  removed_same_max: 0.06     # dọc cành phải cắt mà ảnh gần như không đổi → cành vẫn còn
+  apex_off_max: 0.15         # ngọn lệch so với thiết kế (theo chiều cao ảnh)
 
 # Phần C — cảm nhận theo truyền thống Việt (không chấm điểm, ghi nhận xét) [vn_cokymyvan]
 vn_notes: [co, ky, my, van]

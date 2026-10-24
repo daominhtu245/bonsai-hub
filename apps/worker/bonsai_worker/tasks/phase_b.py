@@ -20,7 +20,7 @@ from bonsai_api.db.models import (
     DesignJob, DesignOption as OptionRow, JobStatus, RenderImage, Species, Stage, Style, Tree, TreePhoto,
 )
 from bonsai_api.db.session import get_sessionmaker
-from bonsai_api.services.settings import get_cost_mode
+from bonsai_api.services.settings import get_cost_mode, get_setting
 from bonsai_pipeline.adapters import AIError, ImageInput, get_image_client, get_llm_client
 from bonsai_pipeline.cost_mode import get_profile
 from bonsai_pipeline.fidelity import fidelity_checks
@@ -28,7 +28,7 @@ from bonsai_pipeline.phase_b import (
     CV_HARD_FAILS, Candidate, cv_checks, generate, judge, p3a_variables, prepare_s4, prompt_hash, repair_inputs,
     select, years_to_final,
 )
-from bonsai_pipeline.dictionaries import MAX_THICKEN_PCT_PER_YEAR
+from bonsai_pipeline.dictionaries import max_thicken_pct
 from bonsai_pipeline.prompts import render
 from bonsai_pipeline.schemas import Analysis, DesignOption
 from bonsai_pipeline.segmentation import get_segmenter
@@ -37,6 +37,7 @@ from bonsai_pipeline.steps import StepRecord
 from ..celery_app import app
 from ..prompts_repo import load_active_prompt
 from ..recording import JobFailure, job_guard, record_step, set_progress, set_status
+from ..rules_repo import active_rules
 from .roadmap import RoadmapContext, run_roadmap
 
 log = logging.getLogger(__name__)
@@ -92,7 +93,9 @@ def _reset_previous_run(db: Session, job: DesignJob) -> dict[str, int]:
 
 
 def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
-    with job_guard(db, job_id) as job:
+    with active_rules(db) as versions, job_guard(db, job_id) as job:
+        if job.status in _ACTIVE:
+            job.progress = {**(job.progress or {}), "rules_b": versions}
         if job.status not in _ACTIVE:
             log.info("job %s already %s; skipping", job_id, job.status)
             return
@@ -224,12 +227,13 @@ def run_phase_b(db: Session, job_id: uuid.UUID) -> None:
         run_roadmap(db, job, RoadmapContext(
             tree_id=tree.id, analysis=analysis, option=option, growth_speed=growth,
             region=(job.inputs or {}).get("region", DEFAULT_REGION),
-            max_thicken_pct=MAX_THICKEN_PCT_PER_YEAR.get(growth, 10) * years,
+            max_thicken_pct=max_thicken_pct(growth) * years,
             size=size, original=original, original_mask=original_mask, sketch_png=sketch_png, species_refs=refs,
             final_image=sel.best.image, final_render_id=chosen.id, final_summary=summary, final_judge=sel.best.judge_raw,
             segmenter=segmenter, image_client=image_client, llm=llm, attempt_base=attempt_base,
             profile=profile, years=years, species_key=tree.species_key, style_key=option.style_key,
             style_desc_en=style.prompt_desc_en if style else option.style_key, regions=s4.regions,
+            stage_mode=get_setting(db, "stage_mode"),
         ))
         set_status(db, job, JobStatus.done)
 

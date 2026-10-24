@@ -5,6 +5,7 @@ import { Button, FilterChip, Notice, Skeleton, StateView } from '@/components/ui
 import { adminApi, type AiSettings, type CostMode, type FeedbackRow, type PromptRow, type SpeciesRefs } from '@/lib/admin';
 import { ApiError } from '@/lib/api';
 import { labelsApi, type LabelList, type LabelStatus } from '@/lib/labels';
+import { termLabel } from '@/lib/ruleLabels';
 import { useLoad } from './kit';
 
 export function PromptsTab() {
@@ -87,7 +88,7 @@ export function FeedbackTab() {
                   <span className={r.rating === 1 ? 'font-semibold text-primary-ink' : 'font-semibold text-danger'}>{r.rating === 1 ? 'Hợp lý' : 'Chưa đúng'}</span>
                   <span className="text-ink-muted">{new Date(r.created_at).toLocaleString('vi-VN')}</span>
                 </div>
-                <div className="text-ink-muted">{r.user_email} · {r.style_key ?? '—'} · <Link to={`/admin/phien/${r.job_id}`} className="font-mono">{r.job_id.slice(0, 8)}</Link>{r.reason_tags.length ? ` · ${r.reason_tags.join(', ')}` : ''}</div>
+                <div className="text-ink-muted">{r.user_email} · {r.style_key ?? '—'} · <Link to={`/admin/phien/${r.job_id}`} className="font-mono">{r.job_id.slice(0, 8)}</Link>{r.reason_tags.length ? ` · ${r.reason_tags.map(termLabel).join(', ')}` : ''}</div>
                 {r.comment ? <p className="m-0 mt-1">{r.comment}</p> : null}
               </li>
             ))}
@@ -111,6 +112,10 @@ const ANALYSIS: Choice<AiSettings['analysis_mode']>[] = [
 const CUTOUT: Choice<AiSettings['cutout_mode']>[] = [
   { key: 'on', title: 'Bật', detail: 'Tách nền, chỉ giữ phôi + phác họa nét trên máy, rồi mới gửi AI phân tích · không tốn API' },
   { key: 'off', title: 'Tắt', detail: 'Gửi ảnh gốc cho AI' },
+];
+const STAGES: Choice<AiSettings['stage_mode']>[] = [
+  { key: 'ai', title: 'Vẽ bằng AI', detail: '3 ảnh giai đoạn vẽ riêng, đẹp hơn · tốn 3 lần tạo ảnh' },
+  { key: 'derive', title: 'Dựng từ ảnh kết quả', detail: 'Cắt cành trên ảnh gốc + tầng lá ảnh kết quả lớn dần · miễn phí, luôn khớp nhau, chất lượng nháp' },
 ];
 const DESIGN: Choice<AiSettings['design_mode']>[] = [
   { key: 'api', title: 'API', detail: 'AI thiết kế trong khuôn khổ bộ luật tỉ lệ' },
@@ -167,6 +172,7 @@ export function AiModeTab() {
             <ChoiceGroup legend="Tách nền trước khi phân tích" name="cutout" choices={CUTOUT} value={s.cutout_mode} disabled={saving} onChange={(k) => save({ cutout_mode: k })} />
             {s.cutout_mode === 'on' && !s.cutout_model ? <Notice tone="info">Worker chưa có model tách nền — đang gửi ảnh gốc.</Notice> : null}
           </div>
+          <ChoiceGroup legend="Ảnh giai đoạn" name="stages" choices={STAGES} value={s.stage_mode} disabled={saving} onChange={(k) => save({ stage_mode: k })} />
           <ChoiceGroup legend="Thiết kế dáng" name="design" choices={DESIGN} value={s.design_mode} disabled={saving} onChange={(k) => save({ design_mode: k })} />
           {error ? <Notice tone="danger">{error}</Notice> : null}
         </div>

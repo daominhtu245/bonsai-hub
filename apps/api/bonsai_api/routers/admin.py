@@ -236,6 +236,7 @@ class SettingsOut(BaseModel):
     analysis_mode: Literal["api", "hybrid"]
     design_mode: Literal["api", "rules"]
     cutout_mode: Literal["on", "off"] = "on"
+    stage_mode: Literal["ai", "derive"] = "ai"
     cutout_model: str | None = None  # model tách nền trên worker (báo qua Redis)
     seg_model_ready: bool = False  # worker có trọng số YOLO-seg (báo cáo qua Redis heartbeat; xem worker monitoring)
     app_env: str = "dev"  # nhãn môi trường ở thanh trên trang quản trị
@@ -246,6 +247,7 @@ class SettingsIn(BaseModel):
     analysis_mode: Literal["api", "hybrid"] | None = None
     design_mode: Literal["api", "rules"] | None = None
     cutout_mode: Literal["on", "off"] | None = None
+    stage_mode: Literal["ai", "derive"] | None = None
 
 
 def _settings_out(db) -> SettingsOut:

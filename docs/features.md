@@ -13,7 +13,8 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | **Xem thử nhanh bằng AI** | Tự thiết kế | Miễn phí 2 lần / phiên, ảnh nháp |
 | **Nhờ góp ý** (link ảnh thiết kế gửi Zalo / Facebook) | Tự thiết kế | Trang công khai `/tk/…` |
 | Giao diện Sáng (mặc định) / Tối / Theo máy | Tài khoản → Giao diện | |
-| Ảnh tương lai + 3 ảnh giai đoạn + hướng dẫn từng giai đoạn | Màn Kết quả | Trả 1 lượt; lỗi tự hoàn lượt |
+| Ảnh tương lai + 3 ảnh giai đoạn + hướng dẫn từng giai đoạn | Màn Kết quả | Trả 1 lượt; lỗi tự hoàn lượt. Thân + nền giữ đúng ảnh gốc, tầng lá theo bố cục thiết kế, tự kiểm tra trước khi giao |
+| **Đánh giá "Chưa đúng" kèm lý do** (thân khác, tầng lá sai, cành cắt còn, sai lá, già quá, chậu, trông giả) | Màn Kết quả | Lý do dùng chung mã với bảng chấm nghệ nhân |
 | Đánh dấu việc đã làm theo giai đoạn | Màn Kết quả | |
 | **Thêm nhắc việc vào lịch điện thoại** (.ics) | Kết quả → Lưu & nhắc việc | Mốc từng giai đoạn + nhắc kiểm tra dây uốn 3/6/10 tuần, báo trước 1 ngày |
 | **Tải lịch chăm sóc (Excel)** | Kết quả → Lưu & nhắc việc | Mỗi việc một dòng, cột "Đã làm" để in ra đánh dấu |
@@ -29,6 +30,14 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | Thông báo khi xong (Web Push, Zalo) | Tài khoản → Thông báo | |
 | Quyền riêng tư: đồng ý dùng ảnh, xóa tài khoản (xóa mềm) | Tài khoản | |
 
+## Nghệ nhân (`/admin`, vai trò `artisan` — admin gán ở Người dùng)
+
+| Trang | Chức năng |
+|---|---|
+| Chấm điểm | Ảnh kết quả (ảnh gốc · bố cục thiết kế · ảnh AI) và phương án thiết kế (bản vẽ): chấm 1–10 từng tiêu chí, lỗi loại thẳng, nhận xét, Đạt / Không đạt / Bỏ qua; điểm AI hiện sau khi chấm |
+| Bộ luật & thông số | 4 bộ: luật tạo dáng & tỉ lệ, dáng & thế Việt, loài cây, bảng chấm & ngưỡng — sửa bằng form tiếng Việt, kiểm hợp lệ ngay, lưu bản mới kèm ghi chú, áp dụng / quay lại bản cũ |
+| Thống kê chấm | Tỉ lệ đạt ảnh (Cổng 2 ≥ 70%) và thiết kế (Cổng 1), điểm theo tiêu chí, lỗi hay gặp, độ khớp với AI chấm |
+
 ## Quản trị (`/admin`, tối ưu máy tính, co về điện thoại)
 
 | Nhóm | Trang | Chức năng |
@@ -40,7 +49,7 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | | Thanh toán | Đối soát, xác nhận tay theo mã sao kê, hủy đơn, **xuất Excel** |
 | | **Mã quà tặng** | Tạo mã (tự sinh hoặc đặt tên), số lượt, giới hạn người dùng, hạn dùng, bật/tắt, xem ai đã dùng |
 | | **Gửi thông báo** | Web Push theo nhóm: tất cả, nhà vườn, đã mua, chưa mua, không dùng 30 ngày, hết lượt; xem trước, lịch sử gửi |
-| AI | Chế độ AI | Chi phí (Tiêu chuẩn / Tiết kiệm), phân tích (model riêng / API), **tách nền trước khi phân tích (bật / tắt)**, thiết kế (API / bộ luật); chi tiết phiên có ảnh đã tách + phác họa |
+| AI | Chế độ AI | Chi phí (Tiêu chuẩn / Tiết kiệm), phân tích (model riêng / API), **tách nền trước khi phân tích (bật / tắt)**, **ảnh giai đoạn (AI / dựng từ ảnh kết quả)**, thiết kế (API / bộ luật); chi tiết phiên có ảnh đã tách + phác họa + ảnh ghép S4 |
 | | Chi phí AI | Theo ngày, theo bước, tỉ trọng |
 | | Prompt | Phiên bản, kích hoạt, hiệu quả từng phiên bản |
 | | Gán nhãn | Bộ dữ liệu YOLO-seg 3 lớp, cọ / tẩy / khoanh vùng |

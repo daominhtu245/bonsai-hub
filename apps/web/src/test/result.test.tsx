@@ -76,7 +76,14 @@ describe('Result (màn 06)', () => {
     const fb = screen.getByRole('region', { name: /có hợp lý không/ });
     await userEvent.click(within(fb).getByRole('button', { name: 'Chưa đúng' }));
     expect(within(fb).getByRole('button', { name: 'Chưa đúng' })).toHaveAttribute('aria-pressed', 'true');
-    await waitFor(() => expect(calls.find((c) => c.url.endsWith('/feedback'))?.body).toEqual({ rating: -1 }));
+    await waitFor(() => expect(calls.find((c) => c.url.endsWith('/feedback'))?.body).toEqual({ rating: -1, reason_tags: [] }));
+    // chọn lý do "Sai ở đâu" rồi gửi
+    await userEvent.click(within(fb).getByRole('button', { name: 'Thân khác cây của tôi' }));
+    await userEvent.type(within(fb).getByLabelText('Ghi thêm'), 'Gốc bị vẽ to');
+    await userEvent.click(within(fb).getByRole('button', { name: 'Gửi góp ý' }));
+    await waitFor(() => expect(calls.filter((c) => c.url.endsWith('/feedback')).at(-1)?.body)
+      .toEqual({ rating: -1, reason_tags: ['trunk_changed'], comment: 'Gốc bị vẽ to' }));
+    expect(await within(fb).findByText(/Cảm ơn bạn/)).toBeInTheDocument();
   });
 
   it('tells the user the credit was refunded on failure', async () => {

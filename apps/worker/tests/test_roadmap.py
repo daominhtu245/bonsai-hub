@@ -90,3 +90,22 @@ def test_guide_failure_refunds(db, chosen_job, images, llm, routed, monkeypatch)
     from bonsai_api.db.models import User
 
     assert db.get(User, user.id).credits == 1
+
+
+@pytest.mark.fidelity
+def test_derive_mode_builds_stages_without_image_calls(db, chosen_job, images, llm, monkeypatch):  # noqa: F811
+    from bonsai_api.services.settings import set_setting
+
+    _, job = chosen_job
+    llm.responses.extend([verdict(8)] * 3)
+    set_setting(db, "stage_mode", "derive", by="t")
+    provider = images["provider"]
+    run_phase_b(db, job.id)
+    db.expire_all()
+    assert db.get(DesignJob, job.id).status == JobStatus.done
+    st = _stages(db, job.id)
+    rows = db.execute(select(RenderImage).where(RenderImage.job_id == job.id, RenderImage.stage_code.in_(["S1", "S2", "S3"]))).scalars().all()
+    assert {r.stage_code for r in rows} == {"S1", "S2", "S3"} and all(r.model == "stage-derive" and r.selected for r in rows)
+    assert all(st[c].image_id is not None and not st[c].plan.get("fallback") for c in ("S1", "S2", "S3"))
+    s4 = db.execute(select(RenderImage).where(RenderImage.job_id == job.id, RenderImage.stage_code == "S4")).scalars().all()
+    assert provider.calls == len(s4)  # mọi lời gọi model ảnh đều là ảnh kết quả; giai đoạn không tốn lời gọi nào

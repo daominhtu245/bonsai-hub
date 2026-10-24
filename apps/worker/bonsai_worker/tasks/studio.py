@@ -24,6 +24,7 @@ from bonsai_pipeline.steps import StepRecord
 from ..celery_app import app
 from ..prompts_repo import load_active_prompt
 from ..recording import record_step
+from ..rules_repo import active_rules
 from .phase_b import cutout_mask
 
 log = logging.getLogger(__name__)
@@ -36,6 +37,11 @@ def _set(db, job: DesignJob, **kw) -> None:
 
 
 def run_preview(db, job_id: uuid.UUID) -> None:
+    with active_rules(db):
+        _run_preview(db, job_id)
+
+
+def _run_preview(db, job_id: uuid.UUID) -> None:
     job = db.get(DesignJob, job_id)
     row = db.execute(select(DesignOption).where(DesignOption.job_id == job_id, DesignOption.rank == USER_RANK)).scalar_one_or_none()
     if job is None or row is None:

@@ -39,11 +39,12 @@ def _database():
     subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], cwd=API_DIR, check=True,
                    capture_output=True)
     from bonsai_api.db.session import get_sessionmaker
-    from bonsai_api.scripts.seed import default_prompts_dir, seed_dictionaries, seed_prompts
+    from bonsai_api.scripts.seed import default_prompts_dir, seed_dictionaries, seed_prompts, seed_rules
 
     with get_sessionmaker()() as db:
         seed_dictionaries(db)
         seed_prompts(db, default_prompts_dir())
+        seed_rules(db)
         db.commit()
         for step, version, active in db.execute(text("SELECT step_code, version, active FROM prompt_versions")):
             _SEEDED.add(f"{step}.{version}")
@@ -58,11 +59,14 @@ def _clean():
     from bonsai_api.db.session import get_engine
 
     with get_engine().begin() as c:
-        c.execute(text("TRUNCATE push_subscriptions, users, trees, tree_photos, design_jobs, credit_ledger, payments, pipeline_steps, feedback, app_settings, seg_labels, admin_audit, gift_codes, gift_redemptions CASCADE"))
+        c.execute(text("TRUNCATE artisan_reviews, push_subscriptions, users, trees, tree_photos, design_jobs, credit_ledger, payments, pipeline_steps, feedback, app_settings, seg_labels, admin_audit, gift_codes, gift_redemptions CASCADE"))
         # về đúng trạng thái seed: bỏ phiên bản do test tạo, bật lại phiên bản active của seed
         c.execute(text("DELETE FROM prompt_versions WHERE NOT (step_code || '.' || version = ANY(:seeded))"), {"seeded": list(_SEEDED)})
         c.execute(text("UPDATE prompt_versions SET active = (step_code || '.' || version = ANY(:active))"), {"active": list(_SEEDED_ACTIVE)})
         c.execute(text("UPDATE species SET ref_image_keys = '[]'::jsonb"))
+        # bộ luật về đúng bản seed
+        c.execute(text("DELETE FROM rule_docs WHERE created_by IS DISTINCT FROM 'seed'"))
+        c.execute(text("UPDATE rule_docs SET active = true"))
 
 
 @pytest.fixture

@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 
 from bonsai_pipeline.dictionaries import SPECIES, STYLES
 
-from ..db.models import PipelineStep, PromptVersion, Species, Style
+from ..db.models import PipelineStep, PromptVersion, RuleDoc, Species, Style
 from ..db.session import get_sessionmaker
 from ..settings import get_settings
 
@@ -46,6 +46,37 @@ def seed_dictionaries(db: Session) -> None:
             set_={k: stmt.excluded[k] for k in ("name_vi", "name_jp", "prompt_desc_en")},
             where=Style.admin_edited_at.is_(None),
         ))
+
+
+SEED_AUTHOR = "seed"
+
+
+def seed_rules(db: Session) -> list[str]:
+    """Bộ luật từ rules/*.yaml vào bảng rule_docs (có phiên bản).
+
+    Chưa có → bản 1, áp dụng ngay. File đổi so với bản seed gần nhất → thêm bản mới; chỉ tự áp dụng khi bản đang
+    dùng cũng là bản seed (nghệ nhân đã chỉnh thì giữ bản của nghệ nhân, bản seed mới để họ so sánh / chọn).
+    """
+    from bonsai_pipeline.dictionaries import RULE_DOCS, default_rule_doc
+
+    added = []
+    for name in RULE_DOCS:
+        content = default_rule_doc(name)
+        rows = db.execute(select(RuleDoc).where(RuleDoc.doc == name).order_by(RuleDoc.version)).scalars().all()
+        last_seed = next((r for r in reversed(rows) if r.created_by == SEED_AUTHOR), None)
+        if last_seed is not None and last_seed.content == content:
+            continue
+        active = next((r for r in rows if r.active), None)
+        take_over = active is None or active.created_by == SEED_AUTHOR
+        if take_over and active is not None:
+            active.active = False
+            db.flush()
+        db.add(RuleDoc(doc=name, version=(rows[-1].version + 1) if rows else 1, content=content, active=take_over,
+                       note="Từ file rules/" + RULE_DOCS[name]["file"], created_by=SEED_AUTHOR,
+                       activated_by=SEED_AUTHOR if take_over else None, activated_at=func.now() if take_over else None))
+        db.flush()
+        added.append(f"{name}{'' if take_over else ' (chưa áp dụng — đang dùng bản nghệ nhân)'}")
+    return added
 
 
 def seed_prompts(db: Session, prompts_dir: Path, *, warnings: list[str] | None = None) -> list[str]:
@@ -99,8 +130,9 @@ def main() -> None:
         seed_dictionaries(db)
         warnings: list[str] = []
         added = seed_prompts(db, args.prompts_dir, warnings=warnings)
+        rules = seed_rules(db)
         db.commit()
-    print(f"seeded species={len(SPECIES)} styles={len(STYLES)} prompts={added or 'none'}")
+    print(f"seeded species={len(SPECIES)} styles={len(STYLES)} prompts={added or 'none'} rules={rules or 'none'}")
     for w in warnings:
         print(f"WARNING {w}")
 

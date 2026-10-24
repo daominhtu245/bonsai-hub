@@ -125,3 +125,10 @@ def test_alignment_undoes_model_shift_and_skips_when_already_aligned():
     assert info["aligned"] and info["diff_after"] < info["diff_before"] * 0.5  # cảnh ít chi tiết: chỉ xét độ khớp
     _, info = lock_regions(_bytes(img), _bytes(img), reg.editable())
     assert not info["aligned"]
+
+
+def test_foliage_ignores_sand_bark_and_soil():
+    from bonsai_pipeline.fidelity import foliage
+
+    px = np.array([[[60, 140, 50], [90, 150, 60], [205, 190, 160], [150, 120, 85], [110, 80, 55], [120, 95, 70]]], np.uint8)
+    assert foliage(px).tolist() == [[True, True, False, False, False, False]]  # lá, lá non | cát, vỏ, thân, đất

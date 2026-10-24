@@ -120,7 +120,7 @@ export default function Account() {
           <div className="flex flex-wrap items-center gap-3 rounded-card border border-line bg-surface p-4 shadow-card">
             <div className="min-w-[10rem] flex-1 [overflow-wrap:anywhere]">
               <div className="font-semibold">{me.name || me.email}</div>
-              <div className="tabular text-label text-ink-muted">{me.role === 'nursery' ? 'Nhà vườn' : me.role === 'admin' ? 'Quản trị' : 'Người chơi'} · {me.credits} lượt</div>
+              <div className="tabular text-label text-ink-muted">{me.role === 'nursery' ? 'Nhà vườn' : me.role === 'admin' ? 'Quản trị' : me.role === 'artisan' ? 'Nghệ nhân' : 'Người chơi'} · {me.credits} lượt</div>
             </div>
             <ButtonLink to="/mua-luot" size="touch" block={false}>Mua lượt</ButtonLink>
           </div>
@@ -186,6 +186,11 @@ export default function Account() {
             <ButtonLink to="/admin" variant="ghost" size="touch">
               <Shield size={16} strokeWidth={1.75} aria-hidden="true" />
               Trang quản trị
+            </ButtonLink>
+          ) : me?.role === 'artisan' ? (
+            <ButtonLink to="/admin/cham-diem" variant="ghost" size="touch">
+              <Shield size={16} strokeWidth={1.75} aria-hidden="true" />
+              Khu nghệ nhân
             </ButtonLink>
           ) : null}
           <Button variant="ghost" size="touch" onClick={() => { signOut(); navigate('/'); }}>

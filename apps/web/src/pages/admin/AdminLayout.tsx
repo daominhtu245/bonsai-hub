@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import {
-  Activity, Bell, BookOpen, Brush, CreditCard, FileCode2, Gift, LayoutDashboard, ListChecks, Menu, MessageSquare, Receipt,
-  ScrollText, Search, Settings2, SlidersHorizontal, Users, X,
+  Activity, BarChart3, Bell, BookOpen, Brush, ClipboardCheck, CreditCard, FileCode2, Gift, LayoutDashboard, ListChecks, Menu,
+  MessageSquare, Receipt, Scale, ScrollText, Search, Settings2, SlidersHorizontal, Users, X,
 } from 'lucide-react';
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { BrandMark } from '@/components/BrandMark';
@@ -9,8 +9,20 @@ import { adminApi } from '@/lib/admin';
 import { useAuth } from '@/lib/auth';
 import { cx } from '@/lib/cx';
 
-const NAV: Array<{ group: string; items: Array<{ to: string; label: string; Icon: typeof Users; end?: boolean }> }> = [
+type NavGroup = { group: string; artisan?: boolean; items: Array<{ to: string; label: string; Icon: typeof Users; end?: boolean }> };
+
+/** Nhóm có `artisan: true` thì nghệ nhân cũng thấy; các nhóm khác chỉ quản trị viên. */
+const NAV: NavGroup[] = [
   { group: 'Tổng quan', items: [{ to: '/admin', label: 'Bảng điều khiển', Icon: LayoutDashboard, end: true }] },
+  {
+    group: 'Nghệ nhân',
+    artisan: true,
+    items: [
+      { to: '/admin/cham-diem', label: 'Chấm điểm', Icon: ClipboardCheck },
+      { to: '/admin/bo-luat', label: 'Bộ luật & thông số', Icon: Scale },
+      { to: '/admin/thong-ke-cham', label: 'Thống kê chấm', Icon: BarChart3 },
+    ],
+  },
   {
     group: 'Vận hành',
     items: [
@@ -70,10 +82,12 @@ function QuickSearch({ onDone }: { onDone?: () => void }) {
   );
 }
 
-function SideNav({ onNavigate }: { onNavigate?: () => void }) {
+export const ARTISAN_PATHS = NAV.filter((g) => g.artisan).flatMap((g) => g.items.map((i) => i.to));
+
+function SideNav({ onNavigate, artisanOnly }: { onNavigate?: () => void; artisanOnly?: boolean }) {
   return (
     <nav aria-label="Quản trị" className="flex flex-col gap-5 px-3 py-4">
-      {NAV.map((g) => (
+      {NAV.filter((g) => !artisanOnly || g.artisan).map((g) => (
         <div key={g.group}>
           <div className="px-3 pb-1 text-label font-medium uppercase tracking-[0.04em] text-ink-subtle">{g.group}</div>
           <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
@@ -105,16 +119,19 @@ export default function AdminLayout() {
     if (user.status === 'ready' && user.data.role === 'admin') adminApi.settings().then((s) => setEnv(s.app_env)).catch(() => setEnv(null));
   }, [user.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (user.status === 'ready' && user.data.role !== 'admin') return <Navigate to="/" replace />;
+  const role = user.status === 'ready' ? user.data.role : null;
+  if (role && role !== 'admin' && role !== 'artisan') return <Navigate to="/" replace />;
+  const artisanOnly = role === 'artisan';
+  if (artisanOnly && !ARTISAN_PATHS.some((p) => location.pathname.startsWith(p))) return <Navigate to="/admin/cham-diem" replace />;
 
   return (
     <div className="min-h-dvh bg-bg lg:grid lg:grid-cols-[248px_1fr] 3xl:grid-cols-[272px_1fr]">
       <aside className="sticky top-0 hidden h-dvh overflow-y-auto border-r border-line bg-surface lg:block">
         <Link to="/admin" className="flex h-[60px] items-center gap-2 border-b border-line px-5 no-underline">
           <BrandMark size={28} />
-          <span className="text-caption font-semibold text-ink">Bonsai AI · Quản trị</span>
+          <span className="text-caption font-semibold text-ink">Bonsai AI · {artisanOnly ? 'Nghệ nhân' : 'Quản trị'}</span>
         </Link>
-        <SideNav />
+        <SideNav artisanOnly={artisanOnly} />
       </aside>
 
       {open ? (
@@ -125,7 +142,7 @@ export default function AdminLayout() {
               <span className="text-caption font-semibold">Quản trị</span>
               <button type="button" aria-label="Đóng menu" onClick={() => setOpen(false)} className="flex h-touch w-touch items-center justify-center"><X size={20} /></button>
             </div>
-            <SideNav onNavigate={() => setOpen(false)} />
+            <SideNav onNavigate={() => setOpen(false)} artisanOnly={artisanOnly} />
           </div>
         </div>
       ) : null}
@@ -133,7 +150,7 @@ export default function AdminLayout() {
       <div className="min-w-0">
         <header className="sticky top-0 z-30 flex h-[60px] items-center gap-3 border-b border-line bg-surface px-4 lg:px-8">
           <button type="button" aria-label="Mở menu" onClick={() => setOpen(true)} className="flex h-touch w-touch items-center justify-center lg:hidden"><Menu size={20} /></button>
-          <QuickSearch />
+          {artisanOnly ? <span className="text-caption font-semibold">Khu nghệ nhân</span> : <QuickSearch />}
           <div className="ml-auto flex items-center gap-3 text-label">
             {env ? (
               <span className={cx('hidden rounded-chip px-2 py-0.5 font-medium uppercase sm:inline', env === 'prod' ? 'bg-primary-soft text-primary-ink' : 'bg-warn-soft text-warn-ink')}>{env}</span>

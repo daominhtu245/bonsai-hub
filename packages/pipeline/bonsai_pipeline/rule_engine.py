@@ -8,7 +8,7 @@ from __future__ import annotations
 import math
 from dataclasses import asdict, dataclass, field
 
-from .dictionaries import MAX_THICKEN_PCT_PER_YEAR, STYLES, rule_set
+from .dictionaries import STYLES, max_thicken_pct, rule_set
 from .schemas import Analysis, DesignResult
 
 STYLE_KEYS = [s["key"] for s in STYLES]
@@ -148,7 +148,7 @@ def compute_targets(
         real_height_cm=real_height_cm,
         base_diameter_cm=base_cm,
         growth_speed=growth_speed,
-        max_thicken_pct_per_year=MAX_THICKEN_PCT_PER_YEAR.get(growth_speed, 10),
+        max_thicken_pct_per_year=max_thicken_pct(growth_speed),
         allowed_styles=allowed_styles(analysis),
         notes_en=notes,
     )

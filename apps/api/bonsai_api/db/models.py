@@ -63,6 +63,7 @@ def _created() -> Mapped[datetime]:
 class UserRole(str, enum.Enum):
     player = "player"
     nursery = "nursery"
+    artisan = "artisan"  # nghệ nhân: chấm ảnh / thiết kế, chỉnh bộ luật (không thấy người dùng, tiền)
     admin = "admin"
 
 
@@ -490,3 +491,51 @@ class GiftRedemption(Base):
     created_at: Mapped[datetime] = _created()
 
     __table_args__ = (UniqueConstraint("code", "user_id", name="uq_gift_redemptions_code_user"),)
+
+
+class RuleDoc(Base):
+    """Một phiên bản bộ luật (rule_set / styles_vn / species / judging). Seed từ rules/*.yaml; nghệ nhân sửa trên
+    giao diện tạo phiên bản mới; mỗi bộ chỉ một bản `active` (worker đọc ở đầu mỗi phiên)."""
+
+    __tablename__ = "rule_docs"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    doc: Mapped[str] = mapped_column(String(32), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    content: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    note: Mapped[str | None] = mapped_column(String(300))
+    active: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    created_by: Mapped[str | None] = mapped_column(String(320))
+    created_at: Mapped[datetime] = _created()
+    activated_by: Mapped[str | None] = mapped_column(String(320))
+    activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (UniqueConstraint("doc", "version", name="uq_rule_docs_doc_version"),)
+
+
+class ArtisanReview(Base):
+    """Nghệ nhân chấm một ảnh kết quả (S4) hoặc một phương án thiết kế (bản vẽ) theo bảng chấm (judging)."""
+
+    __tablename__ = "artisan_reviews"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(16))  # image | design
+    job_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("design_jobs.id", ondelete="CASCADE"), index=True)
+    render_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("render_images.id", ondelete="CASCADE"))
+    option_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("design_options.id", ondelete="CASCADE"))
+    reviewer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    scores: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)  # tiêu chí → 1..10
+    hard_fails: Mapped[list[Any]] = mapped_column(JSONB, default=list)
+    total: Mapped[float | None] = mapped_column(Numeric(5, 2))  # thang 100 theo trọng số bảng chấm
+    passed: Mapped[bool] = mapped_column(Boolean)
+    comment: Mapped[str | None] = mapped_column(Text)
+    rules_version: Mapped[int | None] = mapped_column(Integer)  # phiên bản bảng chấm lúc chấm
+    created_at: Mapped[datetime] = _created()
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), onupdate=func.now())
+
+    __table_args__ = (
+        CheckConstraint("kind IN ('image', 'design')", name="kind_valid"),
+        CheckConstraint("(render_id IS NOT NULL) OR (option_id IS NOT NULL)", name="has_target"),
+        UniqueConstraint("reviewer_id", "render_id", name="uq_artisan_reviews_reviewer_render"),
+        UniqueConstraint("reviewer_id", "option_id", name="uq_artisan_reviews_reviewer_option"),
+    )

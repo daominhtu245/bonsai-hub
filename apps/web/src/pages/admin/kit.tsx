@@ -168,7 +168,7 @@ export function StatusBadge({ status, stuck }: { status: string; stuck?: boolean
   return <Badge tone={tone}>{label}</Badge>;
 }
 
-export const ROLE_LABEL: Record<string, string> = { player: 'Người chơi', nursery: 'Nhà vườn', admin: 'Quản trị' };
+export const ROLE_LABEL: Record<string, string> = { player: 'Người chơi', nursery: 'Nhà vườn', artisan: 'Nghệ nhân', admin: 'Quản trị' };
 
 export function StatCard({ label, value, previous, format, goodWhen = 'up', hint }: {
   label: string; value: number; previous?: number; format: (n: number) => string; goodWhen?: 'up' | 'down'; hint?: string;
