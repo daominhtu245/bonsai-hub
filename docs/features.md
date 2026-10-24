@@ -9,7 +9,7 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 |---|---|---|
 | Chụp / chọn ảnh phôi, nhập loài và chiều cao | Trang chủ → Phân tích phôi mới | Ảnh mờ / tối bị báo chụp lại ngay, không tốn API |
 | Phân tích phôi + 2–3 thế kèm bản vẽ cắt / giữ / nuôi cành | Màn Chọn thế | Miễn phí |
-| **Tự thiết kế**: chạm cành để Giữ / Cắt; ghép từ **thư viện chi tiết cây thật** (tầng lá, ngọn theo 4 kiểu lá, 5 chậu, rêu, đá) — kéo, to / nhỏ, nghiêng, lật, đổi kiểu; cành mới, điểm ngọn; "Xem như thật"; bắt đầu từ mẫu AI; hoàn tác; gợi ý theo luật (không bắt buộc) | Chọn thế → Tự thiết kế | Lưu miễn phí; "Tạo ảnh tương lai" dùng 1 lượt, model ảnh đặt tầng lá đúng các vị trí người dùng ghép |
+| **Tự thiết kế**: chạm cành để Giữ / Cắt; màn chỉnh ảnh không cuộn, 5 chế độ (Cành / Tầng lá / Chậu / Rêu, đá / Hoàn tất), núm đổi cỡ + xoay, hai ngón phóng to; ghép từ **thư viện chi tiết cây thật** (tầng lá, ngọn theo 4 kiểu lá, 5 chậu, rêu, đá) — kéo, to / nhỏ, nghiêng, lật, đổi kiểu; cành mới, điểm ngọn; "Xem như thật"; bắt đầu từ mẫu AI; hoàn tác; gợi ý theo luật (không bắt buộc) | Chọn thế → Tự thiết kế | Lưu miễn phí; "Tạo ảnh tương lai" dùng 1 lượt, model ảnh đặt tầng lá đúng các vị trí người dùng ghép |
 | **Xem thử nhanh bằng AI** | Tự thiết kế | Miễn phí 2 lần / phiên, ảnh nháp |
 | **Nhờ góp ý** (link ảnh thiết kế gửi Zalo / Facebook) | Tự thiết kế | Trang công khai `/tk/…` |
 | Giao diện Sáng (mặc định) / Tối / Theo máy | Tài khoản → Giao diện | |

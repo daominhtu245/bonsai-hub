@@ -45,24 +45,29 @@ describe('Studio', () => {
       ['POST /api/v1/jobs/j1/my-design', () => json({ option_id: 'o9', hints: [], sketch_svg_url: 'x' })],
     ]);
     renderStudio();
-    // mẫu AI: cành 2 cắt, 3 tầng lá
+    // mẫu AI: cành 2 cắt, 3 tầng lá; mở màn ở chế độ Cành
     expect(await screen.findByRole('button', { name: 'Cành 2: cắt' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Cành 1: giữ' })).toBeInTheDocument();
-    // giữ lại cành 2 → cặp cành chống → gợi ý
+    // chạm (không kéo) → giữ lại cành 2 → cặp cành chống → gợi ý ở tab Hoàn tất
     await userEvent.pointer({ keys: '[MouseLeft]', target: screen.getByRole('button', { name: 'Cành 2: cắt' }) });
-    expect(await screen.findByText(/Cành 1 và 2 mọc ngang nhau/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cành 2: giữ' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Hoàn tất' }));
+    expect(screen.getByText(/Cành 1 và 2 mọc ngang nhau/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Hoàn tác' }));
     expect(screen.getByRole('button', { name: 'Cành 2: cắt' })).toBeInTheDocument();
-    // loại lá mặc định theo loài (si → lá si, sanh); thêm một tầng từ thư viện
+    // tab Tầng lá: loại lá mặc định theo loài (si → lá si, sanh); thêm một tầng
+    await userEvent.click(screen.getByRole('button', { name: 'Tầng lá' }));
     expect(screen.getByRole('button', { name: 'Lá si, sanh' })).toHaveAttribute('aria-pressed', 'true');
     await userEvent.click(screen.getByRole('button', { name: 'Thêm Tầng dẹt · Lá si / sanh' }));
-    expect(screen.getByText('Tầng lá D')).toBeInTheDocument(); // đang chọn tầng mới → hiện thanh chỉnh
+    expect(screen.getByText('Tầng lá D')).toBeInTheDocument(); // tầng mới đang chọn → bảng chỉnh hiện ngay dưới ảnh
     await userEvent.click(screen.getByRole('button', { name: 'Lật' }));
-    await userEvent.selectOptions(screen.getByLabelText('Thế cây'), 'chokkan');
+    await userEvent.click(screen.getByRole('button', { name: 'Xong' }));
     await userEvent.click(screen.getByRole('button', { name: 'Chậu' }));
     await userEvent.click(screen.getByRole('button', { name: 'Thêm Chậu chữ nhật nâu' }));
     await userEvent.click(screen.getByRole('button', { name: 'Rêu, đá' }));
     await userEvent.click(screen.getByRole('button', { name: 'Thêm Rêu' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Hoàn tất' }));
+    await userEvent.selectOptions(screen.getByLabelText('Thế cây'), 'chokkan');
     await userEvent.click(screen.getByRole('button', { name: /Lưu thiết kế/ }));
     expect(await screen.findByText('màn chọn thế')).toBeInTheDocument();
     const body = calls.find((c) => c.method === 'POST')?.body as {
