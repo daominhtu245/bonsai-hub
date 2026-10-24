@@ -74,7 +74,7 @@ def vietqr_url(amount: int, transfer_code: str) -> str:
 
 def create_payment(db: Session, user: User, package: Package) -> Payment:
     for _ in range(5):
-        p = Payment(user_id=user.id, amount_vnd=package.amount_vnd, package_code=package.code,
+        p = Payment(user_id=user.id, amount_vnd=package.amount_vnd, package_code=package.code, credits=package.credits,
                     transfer_code=normalize_code(new_transfer_code()), status=PaymentStatus.pending)
         db.add(p)
         try:
@@ -140,12 +140,13 @@ def apply_bank_txn(db: Session, txn: BankTxn) -> str:
         log.warning("payment %s underpaid: %s < %s", payment.id, txn.amount, payment.amount_vnd)
         return "underpaid"
     package = PACKAGE_BY_CODE[payment.package_code]
+    credits = payment.credits or package.credits  # số lượt chốt lúc tạo đơn (đơn cũ: theo gói)
     payment.status = PaymentStatus.paid
     payment.paid_at = datetime.now(UTC)
     payment.provider = txn.provider
     payment.provider_txn_id = f"{txn.provider}:{txn.txn_id}"
     payment.raw = txn.raw
-    apply_credit(db, payment.user_id, package.credits, CreditReason.purchase, str(payment.id))
+    apply_credit(db, payment.user_id, credits, CreditReason.purchase, str(payment.id))
     if package.nursery:
         user = db.get(User, payment.user_id)
         if user.role == UserRole.player:

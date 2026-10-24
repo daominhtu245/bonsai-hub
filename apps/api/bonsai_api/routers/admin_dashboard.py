@@ -13,7 +13,7 @@ from sqlalchemy import Integer, cast, func, literal_column, select
 
 from ..db.models import DesignJob, Feedback, JobStatus, Payment, PaymentStatus, PipelineStep, User
 from ..security import DB, require_admin
-from ..settings import get_settings
+from ..services.ops import get_ops
 
 router = APIRouter(prefix="/admin/dashboard", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -112,7 +112,7 @@ def _durations(db, start: datetime) -> tuple[float | None, float | None]:
 @router.get("", response_model=DashboardOut)
 def dashboard(db: DB, days: int = 30):
     days = max(1, min(days, 365))
-    rate = get_settings().usd_vnd_rate
+    rate = int(get_ops(db)["usd_vnd_rate"])
     now = datetime.now(UTC)
     start, prev_start = now - timedelta(days=days), now - timedelta(days=2 * days)
     cur, prev = _period(db, start, None, rate), _period(db, prev_start, start, rate)

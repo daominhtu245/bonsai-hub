@@ -17,6 +17,7 @@ Giao diện và nội dung hiển thị: **tiếng Việt**. Prompt gửi cho mo
 | `design/tokens.json`, `design/tailwind.tokens.cjs` | Hệ thiết kế **v2** (kiểu công cụ chuyên nghiệp: trung tính, một màu nhấn, Be Vietnam Pro), sáng/tối |
 | `design/mockups/*.dc.html` | Mockup 9 màn hình v1 — chỉ còn dùng để tham chiếu **luồng và chức năng**; giao diện đã thay bằng hệ v2 |
 | `/he-thong-thiet-ke` (web) | Thư viện component v2 đang dùng |
+| `docs/features.md` | Danh sách chức năng hiện có (người dùng / quản trị) |
 
 Khi tài liệu và mockup lệch nhau: **tài liệu kỹ thuật** quyết định hành vi; giao diện theo **hệ thiết kế v2** (tokens + thư viện component), không theo màu/chữ của mockup v1.
 

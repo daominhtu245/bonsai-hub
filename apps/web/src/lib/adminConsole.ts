@@ -1,5 +1,5 @@
 // Client cho bảng điều khiển quản trị (apps/api/bonsai_api/routers/admin_*.py).
-import { api } from './api';
+import { ApiError, api, tokenStore } from './api';
 
 export interface Page<T> {
   items: T[];
@@ -150,6 +150,44 @@ export interface CatalogStyle { key: string; name_vi: string; name_jp: string | 
 export interface Catalog { species: CatalogSpecies[]; styles: CatalogStyle[] }
 export interface PromptStat { prompt_version: string; calls: number; fail_rate: number; avg_cost_usd: number; avg_latency_ms: number; avg_tokens_out: number; first_used: string; last_used: string }
 
+// ---------- vận hành ----------
+export interface Ops {
+  trial_credits: number;
+  phase_a_daily_limit: number;
+  usd_vnd_rate: number;
+  pause_analysis: boolean;
+  pause_render: boolean;
+  pause_message: string;
+  announcement: { active: boolean; text: string; tone: 'info' | 'success' | 'warn' };
+}
+export interface PackageAdmin {
+  code: string; name_vi: string; credits: number; amount_vnd: number; note_vi: string; popular: boolean; nursery: boolean;
+  active: boolean; sold_30d: number;
+}
+export interface GiftCodeRow {
+  code: string; credits: number; max_uses: number | null; used: number; expires_at: string | null; active: boolean;
+  note: string | null; created_by: string | null; created_at: string; status: 'active' | 'expired' | 'used_up' | 'disabled';
+}
+export interface SegmentRow { key: string; label: string; recipients: number }
+
+const BASE = import.meta.env.VITE_API_BASE ?? '/api/v1';
+
+/** Tải file Excel quản trị (cần header đăng nhập → fetch rồi lưu blob). */
+export async function downloadExport(kind: 'jobs' | 'users' | 'payments', params: Params): Promise<void> {
+  const token = tokenStore.get();
+  const res = await fetch(`${BASE}/admin/export/${kind}.xlsx${qs(params)}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!res.ok) throw new ApiError(res.status, 'Chưa xuất được file, thử lại sau.');
+  const name = /filename="([^"]+)"/.exec(res.headers.get('content-disposition') ?? '')?.[1] ?? `bonsai-${kind}.xlsx`;
+  const href = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = href;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(href), 1000);
+}
+
 export const consoleApi = {
   dashboard: (days: number) => api<Dashboard>(`/admin/dashboard${qs({ days })}`),
 
@@ -182,4 +220,18 @@ export const consoleApi = {
   saveStyle: (key: string, body: Pick<CatalogStyle, 'name_vi' | 'name_jp' | 'prompt_desc_en'>) =>
     api<Catalog>(`/admin/catalog/styles/${key}`, { method: 'PUT', json: body }),
   promptStats: (days = 90) => api<PromptStat[]>(`/admin/prompts/stats${qs({ days })}`),
+
+  ops: () => api<Ops>('/admin/ops'),
+  saveOps: (patch: Partial<Ops>) => api<Ops>('/admin/ops', { method: 'PUT', json: patch }),
+  packages: () => api<PackageAdmin[]>('/admin/packages'),
+  savePackage: (code: string, patch: Partial<Pick<PackageAdmin, 'name_vi' | 'credits' | 'amount_vnd' | 'note_vi' | 'popular' | 'active'>>) =>
+    api<PackageAdmin[]>(`/admin/packages/${code}`, { method: 'PUT', json: patch }),
+  giftCodes: () => api<GiftCodeRow[]>('/admin/gift-codes'),
+  createGiftCode: (body: { code?: string; credits: number; max_uses?: number | null; expires_at?: string | null; note?: string }) =>
+    api<GiftCodeRow>('/admin/gift-codes', { method: 'POST', json: body }),
+  updateGiftCode: (code: string, patch: { active?: boolean }) => api<GiftCodeRow>(`/admin/gift-codes/${code}`, { method: 'PUT', json: patch }),
+  redemptions: (code: string) => api<{ user_id: string; email: string | null; at: string }[]>(`/admin/gift-codes/${code}/redemptions`),
+  segments: () => api<SegmentRow[]>('/admin/broadcast/segments'),
+  broadcast: (body: { segment: string; title: string; body: string; path: string }) =>
+    api<{ recipients: number }>('/admin/broadcast', { method: 'POST', json: body }),
 };

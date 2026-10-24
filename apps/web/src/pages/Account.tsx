@@ -2,6 +2,7 @@ import React, { useEffect, useState, type FormEvent } from 'react';
 import { ChevronRight, LogOut, Shield } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BottomNav } from '@/components/BottomNav';
+import { GiftCodeBox } from '@/components/GiftCodeBox';
 import { Button, ButtonLink, Notice, Skeleton } from '@/components/ui';
 import { accountApi, vnd, type Payment } from '@/lib/account';
 import { ApiError } from '@/lib/api';
@@ -122,6 +123,14 @@ export default function Account() {
             <ButtonLink to="/mua-luot" size="touch" block={false}>Mua lượt</ButtonLink>
           </div>
         )}
+
+        <div className="rounded-card border border-line bg-surface p-4 shadow-card">
+          <GiftCodeBox />
+          <Link to="/tai-khoan/luot" className="mt-3 flex min-h-touch items-center justify-between text-caption font-medium text-ink no-underline">
+            Lịch sử lượt
+            <ChevronRight size={16} className="text-ink-subtle" aria-hidden="true" />
+          </Link>
+        </div>
 
         <form onSubmit={save} className="flex flex-col gap-2">
           <Group title="Hồ sơ">

@@ -56,7 +56,8 @@ def _row(p: Payment, email: str | None) -> PaymentRow:
     under = (p.raw or {}).get("received") if p.status != PaymentStatus.paid else None
     return PaymentRow(
         id=p.id, created_at=p.created_at, paid_at=p.paid_at, user_id=p.user_id, user_email=email,
-        package_code=p.package_code, package_name=pkg.name_vi if pkg else p.package_code, credits=pkg.credits if pkg else 0,
+        package_code=p.package_code, package_name=pkg.name_vi if pkg else p.package_code,
+        credits=p.credits or (pkg.credits if pkg else 0),
         amount_vnd=p.amount_vnd, transfer_code=p.transfer_code, status=p.status, provider=p.provider,
         provider_txn_id=p.provider_txn_id, underpaid_vnd=int(under) if under is not None else None,
     )
@@ -127,14 +128,15 @@ def confirm(payment_id: uuid.UUID, body: ConfirmIn, db: DB, admin: Admin):
     if db.execute(select(Payment.id).where(Payment.provider_txn_id == txn)).first():
         raise HTTPException(status.HTTP_409_CONFLICT, "Mã giao dịch ngân hàng này đã dùng cho thanh toán khác.")
     pkg = PACKAGE_BY_CODE[p.package_code]
+    credits = p.credits or pkg.credits
     p.status, p.paid_at, p.provider, p.provider_txn_id = PaymentStatus.paid, datetime.now(UTC), "manual", txn
     p.raw = {**(p.raw or {}), "manual": {"by": admin.email, "bank_ref": body.bank_ref, "note": body.note}}
-    apply_credit(db, p.user_id, pkg.credits, CreditReason.purchase, str(p.id))
+    apply_credit(db, p.user_id, credits, CreditReason.purchase, str(p.id))
     if pkg.nursery:
         user = db.get(User, p.user_id)
         if user.role == UserRole.player:
             user.role = UserRole.nursery
-    audit(db, admin, "payment.confirm", "payment", p.id, bank_ref=body.bank_ref, credits=pkg.credits, note=body.note)
+    audit(db, admin, "payment.confirm", "payment", p.id, bank_ref=body.bank_ref, credits=credits, note=body.note)
     db.commit()
     return payment_detail(payment_id, db)
 

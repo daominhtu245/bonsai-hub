@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Camera, CalendarCheck, ChevronRight, PenTool, ScanSearch } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { AnnouncementBar } from '@/components/AnnouncementBar';
 import { AppHeader } from '@/components/AppHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { HeroShot } from '@/components/HeroShot';
@@ -19,6 +20,7 @@ const STYLES = ['Trực', 'Trực uốn', 'Xiêu', 'Huyền', 'Bán huyền', 'V
 function Landing() {
   return (
     <main className="flex flex-col gap-10 px-gutter pb-12 pt-6">
+      <AnnouncementBar className="-mb-6" />
       <section className="flex flex-col gap-4">
         <h1 className="text-display">Thiết kế dáng bonsai từ ảnh phôi</h1>
         <p className="m-0 text-ink-muted">Bản vẽ theo luật tạo dáng, ảnh minh họa từng giai đoạn và lộ trình chăm cho chính cây của bạn.</p>
@@ -79,6 +81,7 @@ function Dashboard({ name, credits }: { name: string | null; credits: number }) 
         <h1 className="text-h1">{name ? `Chào ${name.split(' ').slice(-1)[0]}` : 'Bảng điều khiển'}</h1>
         <p className="m-0 tabular text-caption text-ink-muted">Còn {credits} lượt tạo ảnh</p>
       </section>
+      <AnnouncementBar />
 
       <Link to="/chup" className="group flex items-center gap-4 rounded-card border border-line bg-surface p-4 text-ink no-underline shadow-card hover:border-line-strong hover:text-ink">
         <span className="flex h-11 w-11 flex-none items-center justify-center rounded-btn bg-primary text-primary-on">

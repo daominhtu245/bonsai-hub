@@ -50,7 +50,7 @@ def _clean():
     from bonsai_api.db.session import get_engine
 
     with get_engine().begin() as c:
-        c.execute(text("TRUNCATE push_subscriptions, users, trees, tree_photos, design_jobs, credit_ledger, payments, pipeline_steps, feedback, app_settings, seg_labels, admin_audit CASCADE"))
+        c.execute(text("TRUNCATE push_subscriptions, users, trees, tree_photos, design_jobs, credit_ledger, payments, pipeline_steps, feedback, app_settings, seg_labels, admin_audit, gift_codes, gift_redemptions CASCADE"))
         c.execute(text("DELETE FROM prompt_versions WHERE version <> 'v1'"))
         c.execute(text("UPDATE prompt_versions SET active = true"))
         c.execute(text("UPDATE species SET ref_image_keys = '[]'::jsonb"))

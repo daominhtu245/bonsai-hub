@@ -7,7 +7,9 @@ from pydantic import BaseModel
 from sqlalchemy import select
 
 from .. import storage
-from ..db.models import DesignJob, DesignOption, JobStatus, RenderImage, Stage, StageTaskCheck, Style, Tree, TreePhoto
+from ..db.models import (
+    DesignJob, DesignOption, JobStatus, PhotoSource, RenderImage, Stage, StageTaskCheck, Style, Tree, TreePhoto,
+)
 from ..security import DB, CurrentUser
 from ..services.results import NAME
 
@@ -55,7 +57,7 @@ def garden(user: CurrentUser, db: DB):
     for tree in trees:
         job = db.execute(select(DesignJob).where(DesignJob.tree_id == tree.id).order_by(DesignJob.created_at.desc())).scalars().first()
         thumb_key = None
-        front = db.execute(select(TreePhoto).where(TreePhoto.tree_id == tree.id)
+        front = db.execute(select(TreePhoto).where(TreePhoto.tree_id == tree.id, TreePhoto.source == PhotoSource.upload)
                            .order_by(TreePhoto.is_front.desc(), TreePhoto.view_index)).scalars().first()
         if front and not front.storage_key.startswith("uploads/"):
             thumb_key = front.storage_key

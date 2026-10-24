@@ -19,6 +19,7 @@ dependencies = [
   "pyyaml>=6.0",
   "celery[redis]>=5.4",
   "sentry-sdk[fastapi,celery]>=2.14",
+  "openpyxl>=3.1",  # xuất Excel (lịch chăm sóc cho người dùng, báo cáo quản trị)
 ]
 
 [project.optional-dependencies]

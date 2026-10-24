@@ -13,8 +13,8 @@ from sqlalchemy import String, cast, func, or_, select
 
 from .. import queue, storage
 from ..db.models import (
-    CreditLedger, CreditReason, DesignJob, DesignOption, Feedback, JobStatus, PipelineStep, RenderImage, Stage, Tree,
-    TreePhoto, User,
+    CreditLedger, CreditReason, DesignJob, DesignOption, Feedback, JobStatus, PhotoSource, PipelineStep, RenderImage,
+    Stage, Tree, TreePhoto, User,
 )
 from ..security import DB, require_admin
 from ..services.audit import audit
@@ -212,7 +212,8 @@ def job_detail(job_id: uuid.UUID, db: DB):
     user, tree = db.get(User, job.user_id), db.get(Tree, job.tree_id)
     cost = db.execute(select(func.sum(PipelineStep.cost_usd)).where(PipelineStep.job_id == job.id)).scalar_one()
     chosen = db.get(DesignOption, job.chosen_option_id) if job.chosen_option_id else None
-    photos = db.execute(select(TreePhoto).where(TreePhoto.tree_id == job.tree_id).order_by(TreePhoto.view_index)).scalars()
+    photos = db.execute(select(TreePhoto).where(TreePhoto.tree_id == job.tree_id, TreePhoto.source == PhotoSource.upload)
+                    .order_by(TreePhoto.view_index)).scalars()
     options = db.execute(select(DesignOption).where(DesignOption.job_id == job.id).order_by(DesignOption.rank)).scalars()
     renders = db.execute(select(RenderImage).where(RenderImage.job_id == job.id)
                          .order_by(RenderImage.stage_code.desc(), RenderImage.attempt)).scalars()

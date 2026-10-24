@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui';
 import { consoleApi, type PaymentRow } from '@/lib/adminConsole';
+import { ExportButton } from './ExportButton';
 import { DataTable, JsonBlock, KeyValue, PageHeader, Pagination, Panel, SearchBox, Select, StatCard, StatusBadge, TableView, Toolbar, dt, num, useAction, useConfirm, useLoad, useUrlState, vnd } from './kit';
 
 function Detail({ p, onChanged }: { p: PaymentRow; onChanged: () => void }) {
@@ -66,7 +67,8 @@ export default function Payments() {
   const [sel, setSel] = useState<PaymentRow | null>(null);
   return (
     <>
-      <PageHeader title="Thanh toán" sub="Đối soát chuyển khoản VietQR (SePay / Casso) và xác nhận tay" />
+      <PageHeader title="Thanh toán" sub="Đối soát chuyển khoản VietQR (SePay / Casso) và xác nhận tay"
+        actions={<ExportButton kind="payments" params={{ q: f.q, status: f.status, provider: f.provider, days: f.days }} />} />
       {state.status === 'ready' ? (
         <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4 3xl:grid-cols-6">
           <StatCard label={`Doanh thu ${f.days} ngày`} value={state.data.revenue_vnd} format={vnd} />

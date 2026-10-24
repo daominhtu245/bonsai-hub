@@ -43,7 +43,9 @@ def get_or_create_user(db: Session, ident: ExternalIdentity) -> tuple[User, bool
     db.add(user)
     try:
         db.flush()
-        trial = get_settings().trial_credits
+        from .ops import get_ops
+
+        trial = int(get_ops(db)["trial_credits"])
         if trial > 0:
             apply_credit(db, user.id, trial, CreditReason.gift, "trial")
         db.commit()

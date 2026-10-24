@@ -1,0 +1,51 @@
+# Danh sách chức năng (cập nhật 25/10/2026)
+
+Nguyên tắc: **người dùng** là người chơi cây, ít dùng công nghệ → mỗi chức năng là một nút bấm, chữ rõ, không cần
+cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và điều chỉnh hệ thống.
+
+## Người dùng (app điện thoại, PWA)
+
+| Chức năng | Ở đâu | Ghi chú |
+|---|---|---|
+| Chụp / chọn ảnh phôi, nhập loài và chiều cao | Trang chủ → Phân tích phôi mới | Ảnh mờ / tối bị báo chụp lại ngay, không tốn API |
+| Phân tích phôi + 2–3 thế kèm bản vẽ cắt / giữ / nuôi cành | Màn Chọn thế | Miễn phí |
+| Ảnh tương lai + 3 ảnh giai đoạn + hướng dẫn từng giai đoạn | Màn Kết quả | Trả 1 lượt; lỗi tự hoàn lượt |
+| Đánh dấu việc đã làm theo giai đoạn | Màn Kết quả | |
+| **Thêm nhắc việc vào lịch điện thoại** (.ics) | Kết quả → Lưu & nhắc việc | Mốc từng giai đoạn + nhắc kiểm tra dây uốn 3/6/10 tuần, báo trước 1 ngày |
+| **Tải lịch chăm sóc (Excel)** | Kết quả → Lưu & nhắc việc | Mỗi việc một dòng, cột "Đã làm" để in ra đánh dấu |
+| **In hướng dẫn / Lưu PDF** | Kết quả → Lưu & nhắc việc | Trang in chữ to, luôn nền sáng, không ngắt giữa giai đoạn |
+| **Nhật ký cây** (ảnh tiến độ theo ngày) | Kết quả → Nhật ký cây | Ảnh được xóa vị trí GPS, không dùng để phân tích lại |
+| **Tự nhắc khi đến giai đoạn mới** | Thông báo điện thoại (8 giờ sáng) | Cần bật thông báo ở Tài khoản; mỗi mốc nhắc 1 lần |
+| Chia sẻ ảnh 9:16 / 1:1, link công khai | Kết quả → Chia sẻ ảnh | Nhà vườn có logo + SĐT |
+| Vườn của tôi | Thanh dưới → Vườn | |
+| Mua lượt (VietQR) | Tài khoản → Mua lượt | Gói, giá do quản trị chỉnh |
+| **Nhập mã quà tặng** | Tài khoản, Mua lượt | |
+| **Lịch sử lượt** (mua / dùng / hoàn / tặng) | Tài khoản → Lịch sử lượt | |
+| **Thông báo chung** (khuyến mãi, bảo trì) | Trang chủ | Quản trị bật / tắt |
+| Thông báo khi xong (Web Push, Zalo) | Tài khoản → Thông báo | |
+| Quyền riêng tư: đồng ý dùng ảnh, xóa tài khoản (xóa mềm) | Tài khoản | |
+
+## Quản trị (`/admin`, tối ưu máy tính, co về điện thoại)
+
+| Nhóm | Trang | Chức năng |
+|---|---|---|
+| Tổng quan | Bảng điều khiển | 12 chỉ số so kỳ trước, biểu đồ phiên / doanh thu–chi phí, phễu, phiên lỗi |
+| Vận hành | Phiên thiết kế | Lọc, tìm (mã phiên, email, mã lỗi), chi tiết pipeline / ảnh / phương án, chạy lại miễn phí, hoàn lượt, dừng phiên treo, **xuất Excel** |
+| | Phản hồi | Đánh giá của người dùng, link tới phiên |
+| Khách hàng | Người dùng | Hồ sơ, sổ lượt, thanh toán, đổi vai trò, cộng/trừ lượt có lý do, khóa, tặng lượt hàng loạt, **xuất Excel** |
+| | Thanh toán | Đối soát, xác nhận tay theo mã sao kê, hủy đơn, **xuất Excel** |
+| | **Mã quà tặng** | Tạo mã (tự sinh hoặc đặt tên), số lượt, giới hạn người dùng, hạn dùng, bật/tắt, xem ai đã dùng |
+| | **Gửi thông báo** | Web Push theo nhóm: tất cả, nhà vườn, đã mua, chưa mua, không dùng 30 ngày, hết lượt; xem trước, lịch sử gửi |
+| AI | Chế độ AI | Chi phí (Tiêu chuẩn / Tiết kiệm), phân tích (model riêng / API), thiết kế (API / bộ luật) |
+| | Chi phí AI | Theo ngày, theo bước, tỉ trọng |
+| | Prompt | Phiên bản, kích hoạt, hiệu quả từng phiên bản |
+| | Gán nhãn | Bộ dữ liệu YOLO-seg 3 lớp, cọ / tẩy / khoanh vùng |
+| | Danh mục loài & thế | Sửa tên, tốc độ lớn, mô tả cho model; ảnh tham chiếu loài |
+| Hệ thống | **Cấu hình vận hành** | **Tạm dừng** phân tích / tạo ảnh + câu thông báo, **thông báo chung** trang chủ, lượt tặng khi đăng ký, giới hạn phân tích/ngày, tỉ giá; **gói bán** (giá, lượt, mô tả, bật/tắt) |
+| | Sức khỏe hệ thống | Worker, hàng đợi, phiên treo, lỗi & độ trễ 24 giờ, cấu hình AI thực tế |
+| | Nhật ký quản trị | Mọi thao tác thay đổi dữ liệu, không sửa / xóa được |
+
+## Chưa làm (cần quyết định hoặc dữ liệu)
+- Model riêng YOLO-seg: cần 300–500 ảnh phôi đã gán nhãn (`packages/pipeline/tools/seg/README.md`).
+- Thư viện hướng dẫn chăm (`rules/care_guide.yaml`) và bộ thiết kế bằng luật: cần nghệ nhân duyệt.
+- Zalo ZNS cho nhắc việc / thông báo hàng loạt: ZNS chỉ dùng mẫu tin giao dịch đã duyệt, cần đăng ký thêm mẫu.

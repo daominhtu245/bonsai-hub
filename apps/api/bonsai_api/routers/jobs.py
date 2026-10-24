@@ -16,9 +16,9 @@ from ..schemas import ChooseIn, FeedbackIn, JobCreate, JobOut, ResultFull, TaskT
 from ..security import DB, CurrentUser
 from ..services.credits import InsufficientCredits, next_charge_ref, spend_for_render
 from ..services.jobs import STREAM_END, can_retry, job_out, jobs_today
+from ..services.ops import get_ops
 from ..services.results import result_full
 from ..ratelimit import per_ip
-from ..settings import get_settings
 
 router = APIRouter(tags=["jobs"])
 
@@ -40,7 +40,10 @@ def create_job(tree_id: uuid.UUID, body: JobCreate, user: CurrentUser, db: DB):
     tree = db.get(Tree, tree_id)
     if tree is None or tree.user_id != user.id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy cây.")
-    if jobs_today(db, user) >= get_settings().phase_a_daily_limit:
+    ops = get_ops(db)
+    if ops["pause_analysis"]:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, ops["pause_message"])
+    if jobs_today(db, user) >= int(ops["phase_a_daily_limit"]):
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS,
                             "Hôm nay bạn đã phân tích đủ số lần cho phép. Ngày mai bạn thử tiếp nhé.")
     front_id = None
@@ -102,6 +105,9 @@ def choose(job_id: uuid.UUID, body: ChooseIn, user: CurrentUser, db: DB):
     if job is None or job.user_id != user.id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy phiên thiết kế.")
     retry = can_retry(job)
+    ops = get_ops(db)
+    if ops["pause_render"] and (job.status == JobStatus.awaiting_choice or retry):
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, ops["pause_message"])
     if job.chosen_option_id == body.option_id and job.status != JobStatus.awaiting_choice and not retry:
         return job_out(db, job, user)  # bấm lại: không trừ lượt lần nữa
     if job.status != JobStatus.awaiting_choice and not retry:

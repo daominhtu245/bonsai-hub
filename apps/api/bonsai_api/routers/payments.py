@@ -13,10 +13,11 @@ from ..db.models import Payment
 from ..db.session import get_sessionmaker
 from ..security import DB, CurrentUser
 from ..services.payments import (
-    PACKAGE_BY_CODE, PACKAGES, BankNotConfigured, apply_bank_txn, create_payment, expire_if_stale, parse_casso,
+    BankNotConfigured, apply_bank_txn, create_payment, expire_if_stale, parse_casso,
     parse_sepay, vietqr_url,
 )
 from ..ratelimit import per_ip
+from ..services.ops import get_packages, package_active, package_by_code
 from ..settings import get_settings
 
 router = APIRouter(tags=["payments"])
@@ -64,15 +65,15 @@ def _out(p: Payment, credits: int) -> PaymentOut:
 
 
 @router.get("/packages", response_model=list[PackageOut])
-def packages():
-    return [PackageOut(**p.__dict__) for p in PACKAGES]
+def packages(db: DB):
+    return [PackageOut(**p.__dict__) for p in get_packages(db)]
 
 
 @router.post("/payments", response_model=PaymentOut, status_code=status.HTTP_201_CREATED,
              dependencies=[Depends(per_ip("payments", 20, 3600))])
 def new_payment(body: PaymentIn, user: CurrentUser, db: DB):
-    package = PACKAGE_BY_CODE.get(body.package_code)
-    if package is None:
+    package = package_by_code(db, body.package_code)
+    if package is None or not package_active(db, package.code):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Gói không tồn tại.")
     if not (get_settings().bank_bin and get_settings().bank_account):
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Thanh toán chưa được cấu hình. Bạn quay lại sau nhé.")

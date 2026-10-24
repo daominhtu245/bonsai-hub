@@ -86,3 +86,17 @@
     @apply text-label font-semibold uppercase tracking-wider text-ink-subtle;
   }
 }
+
+/* Trang in lộ trình (/ket-qua/:id/in): ẩn nút, không ngắt trang giữa một giai đoạn, nền trắng. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-block {
+    break-inside: avoid;
+  }
+  .print-page {
+    max-width: none;
+    padding: 0;
+  }
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Download, Loader2 } from 'lucide-react';
 import { BackHeader } from '@/components/BackHeader';
+import { GiftCodeBox } from '@/components/GiftCodeBox';
 import { Button, ButtonLink, Notice, Skeleton } from '@/components/ui';
 import { accountApi, downloadImage, vnd, watchPayment, type Package, type Payment } from '@/lib/account';
 import { ApiError } from '@/lib/api';
@@ -117,6 +118,9 @@ export default function Buy() {
             ) : null}
           </section>
         )}
+        <div className="mt-2 rounded-card border border-line bg-surface p-4 shadow-card">
+          <GiftCodeBox />
+        </div>
       </main>
     </div>
   );

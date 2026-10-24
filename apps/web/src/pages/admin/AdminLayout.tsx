@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import {
-  Activity, BookOpen, Brush, CreditCard, FileCode2, LayoutDashboard, ListChecks, Menu, MessageSquare, Receipt,
-  ScrollText, Search, SlidersHorizontal, Users, X,
+  Activity, Bell, BookOpen, Brush, CreditCard, FileCode2, Gift, LayoutDashboard, ListChecks, Menu, MessageSquare, Receipt,
+  ScrollText, Search, Settings2, SlidersHorizontal, Users, X,
 } from 'lucide-react';
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { BrandMark } from '@/components/BrandMark';
@@ -23,6 +23,8 @@ const NAV: Array<{ group: string; items: Array<{ to: string; label: string; Icon
     items: [
       { to: '/admin/nguoi-dung', label: 'Người dùng', Icon: Users },
       { to: '/admin/thanh-toan', label: 'Thanh toán', Icon: CreditCard },
+      { to: '/admin/ma-qua-tang', label: 'Mã quà tặng', Icon: Gift },
+      { to: '/admin/thong-bao', label: 'Gửi thông báo', Icon: Bell },
     ],
   },
   {
@@ -38,6 +40,7 @@ const NAV: Array<{ group: string; items: Array<{ to: string; label: string; Icon
   {
     group: 'Hệ thống',
     items: [
+      { to: '/admin/van-hanh', label: 'Cấu hình vận hành', Icon: Settings2 },
       { to: '/admin/he-thong', label: 'Sức khỏe hệ thống', Icon: Activity },
       { to: '/admin/nhat-ky', label: 'Nhật ký quản trị', Icon: ScrollText },
     ],

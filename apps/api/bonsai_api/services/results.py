@@ -4,7 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import storage
-from ..db.models import DesignJob, DesignOption, Feedback, RenderImage, Stage, StageTaskCheck, Style, Tree, TreePhoto, User
+from ..db.models import (
+    DesignJob, DesignOption, Feedback, PhotoSource, RenderImage, Stage, StageTaskCheck, Style, Tree, TreePhoto, User,
+)
 from ..schemas import PhotoRef, ResultFull, StageGuideOut, StageOut
 
 SHORT = {"S0": "Hiện tại", "S1": "Tạo khung", "S2": "Nuôi cành", "S3": "Định tầng", "S4": "Hoàn thiện"}
@@ -28,7 +30,7 @@ def result_full(db: Session, job: DesignJob, user: User) -> ResultFull:
     style = db.get(Style, option.style_key) if option else None
     front = db.get(TreePhoto, job.front_photo_id) if job.front_photo_id else None
     if front is None:
-        front = db.execute(select(TreePhoto).where(TreePhoto.tree_id == job.tree_id)
+        front = db.execute(select(TreePhoto).where(TreePhoto.tree_id == job.tree_id, TreePhoto.source == PhotoSource.upload)
                            .order_by(TreePhoto.is_front.desc(), TreePhoto.view_index)).scalars().first()
     stages = {s.code: s for s in db.execute(select(Stage).where(Stage.job_id == job.id)).scalars()}
     images = {r.id: r for r in db.execute(select(RenderImage).where(RenderImage.job_id == job.id, RenderImage.selected)).scalars()}

@@ -3,6 +3,8 @@ import { ChevronDown, ChevronLeft, Share2, ThumbsDown, ThumbsUp, Trash2 } from '
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { NotifyPrompt } from '@/components/NotifyPrompt';
+import { SaveAndRemind } from '@/components/SaveAndRemind';
+import { TreeDiary } from '@/components/TreeDiary';
 import {
   Button, ButtonLink, GuideCard, Notice, Skeleton, StageTimeline, StepList, StyleName, type StageGuide, type StepState,
 } from '@/components/ui';
@@ -183,6 +185,9 @@ function Done({ result, onToggle }: { result: ResultView; onToggle: (code: strin
           </div>
         </details>
       ) : null}
+
+      <SaveAndRemind jobId={result.job_id} />
+      <TreeDiary treeId={result.tree_id} />
 
       <section className="mx-gutter mt-4 grid grid-cols-2 gap-2">
         <ButtonLink to={`/chia-se/${result.job_id}`}>

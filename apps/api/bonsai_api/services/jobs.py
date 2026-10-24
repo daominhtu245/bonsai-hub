@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .. import storage
-from ..db.models import DesignJob, JobStatus, RenderImage, Style, Tree, TreePhoto, User
+from ..db.models import DesignJob, JobStatus, PhotoSource, RenderImage, Style, Tree, TreePhoto, User
 from ..schemas import AnalysisSummary, JobOut, OptionOut, PhotoRef, ResultOut, TreePhotoRef
 
 VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
@@ -51,7 +51,7 @@ def job_out(db: Session, job: DesignJob, user: User) -> JobOut:
     front = db.get(TreePhoto, job.front_photo_id) if job.front_photo_id else None
     if front is None:
         front = db.execute(
-            select(TreePhoto).where(TreePhoto.tree_id == job.tree_id).order_by(TreePhoto.is_front.desc(), TreePhoto.view_index)
+            select(TreePhoto).where(TreePhoto.tree_id == job.tree_id, TreePhoto.source == PhotoSource.upload).order_by(TreePhoto.is_front.desc(), TreePhoto.view_index)
         ).scalars().first()
     options = []
     for o in job.options:
@@ -79,7 +79,7 @@ def job_out(db: Session, job: DesignJob, user: User) -> JobOut:
                                chosen_style_vi=chosen.name_vi if chosen else None)
     photos = [
         TreePhotoRef(id=p.id, url=storage.presign_get(p.storage_key), is_front=p.id == (front.id if front else None))
-        for p in db.execute(select(TreePhoto).where(TreePhoto.tree_id == job.tree_id).order_by(TreePhoto.view_index)).scalars()
+        for p in db.execute(select(TreePhoto).where(TreePhoto.tree_id == job.tree_id, TreePhoto.source == PhotoSource.upload).order_by(TreePhoto.view_index)).scalars()
         if not p.storage_key.startswith("uploads/")
     ]
     return JobOut(

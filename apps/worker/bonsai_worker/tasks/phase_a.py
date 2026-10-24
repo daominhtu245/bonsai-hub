@@ -11,7 +11,7 @@ import uuid
 from sqlalchemy.orm import Session
 
 from bonsai_api import storage
-from bonsai_api.db.models import DesignJob, DesignOption, JobStatus, Species, Tree, TreePhoto
+from bonsai_api.db.models import DesignJob, DesignOption, JobStatus, PhotoSource, Species, Tree, TreePhoto
 from bonsai_api.db.session import get_sessionmaker
 from bonsai_api.services.settings import get_all
 from bonsai_pipeline.adapters import AIError, ImageInput, get_llm_client
@@ -38,7 +38,7 @@ _ACTIVE = {JobStatus.queued, JobStatus.analyzing, JobStatus.designing}
 
 
 def _ordered_photos(db: Session, job: DesignJob) -> list[TreePhoto]:
-    photos = db.query(TreePhoto).filter(TreePhoto.tree_id == job.tree_id).order_by(TreePhoto.view_index).all()
+    photos = db.query(TreePhoto).filter(TreePhoto.tree_id == job.tree_id, TreePhoto.source == PhotoSource.upload).order_by(TreePhoto.view_index).all()
     if not photos:
         raise JobFailure("no_photos", "tree has no photos")
     front = next((p for p in photos if p.id == job.front_photo_id), None) or next(

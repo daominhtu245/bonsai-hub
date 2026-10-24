@@ -19,6 +19,8 @@ app.conf.update(
     task_routes={"bonsai_worker.tasks.phase_b.*": {"queue": "render"}},
     beat_schedule={
         "monitoring-check": {"task": "bonsai_worker.tasks.monitoring.check", "schedule": crontab(minute="*/10")},
+        # Nhắc việc theo lộ trình: 8 giờ sáng giờ Việt Nam (timezone ở trên).
+        "stage-reminders": {"task": "bonsai_worker.tasks.reminders.stage_due", "schedule": crontab(hour=8, minute=0)},
     },
 )
 

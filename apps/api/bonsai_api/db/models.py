@@ -356,6 +356,8 @@ class Payment(Base):
     provider: Mapped[str | None] = mapped_column(String(16))  # sepay | casso
     provider_txn_id: Mapped[str | None] = mapped_column(String(100), unique=True)
     raw: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    # Số lượt chốt lúc tạo đơn (admin đổi gói sau đó không ảnh hưởng đơn đã tạo). NULL ở đơn cũ → lấy theo gói.
+    credits: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = _created()
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
@@ -459,3 +461,32 @@ class AdminAudit(Base):
     target_id: Mapped[str | None] = mapped_column(String(64), index=True)
     detail: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = _created()
+
+
+class GiftCode(Base):
+    """Mã quà tặng: người dùng nhập ở trang Tài khoản / Mua lượt để nhận lượt (admin tạo ở /admin/ma-qua-tang)."""
+
+    __tablename__ = "gift_codes"
+
+    code: Mapped[str] = mapped_column(String(32), primary_key=True)  # chữ in hoa, không dấu
+    credits: Mapped[int] = mapped_column(Integer)
+    max_uses: Mapped[int | None] = mapped_column(Integer)  # NULL = không giới hạn
+    used: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+    note: Mapped[str | None] = mapped_column(String(200))
+    created_by: Mapped[str | None] = mapped_column(String(320))
+    created_at: Mapped[datetime] = _created()
+
+    __table_args__ = (CheckConstraint("credits > 0", name="credits_positive"),)
+
+
+class GiftRedemption(Base):
+    __tablename__ = "gift_redemptions"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    code: Mapped[str] = mapped_column(ForeignKey("gift_codes.code", ondelete="CASCADE"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = _created()
+
+    __table_args__ = (UniqueConstraint("code", "user_id", name="uq_gift_redemptions_code_user"),)

@@ -2,6 +2,7 @@ import { Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui';
 import { consoleApi } from '@/lib/adminConsole';
+import { ExportButton } from './ExportButton';
 import { Badge, DataTable, PageHeader, Pagination, Panel, ROLE_LABEL, SearchBox, Select, TableView, Toolbar, dt, num, useAction, useConfirm, useLoad, useUrlState, vnd } from './kit';
 
 export default function Users() {
@@ -37,7 +38,10 @@ export default function Users() {
   return (
     <>
       <PageHeader title="Người dùng" sub="Tìm theo email, tên, số điện thoại, tên vườn"
-        actions={<Button size="touch" block={false} variant="secondary" onClick={gift} disabled={busy}><Gift size={16} aria-hidden="true" />Tặng lượt</Button>} />
+        actions={<>
+          <ExportButton kind="users" params={{ q: f.q, role: f.role, state: f.state }} />
+          <Button size="touch" block={false} variant="secondary" onClick={gift} disabled={busy}><Gift size={16} aria-hidden="true" />Tặng lượt</Button>
+        </>} />
       {notice}
       <Toolbar>
         <SearchBox value={f.q} onChange={(q) => setF({ q })} placeholder="Email, tên, SĐT, tên vườn" />

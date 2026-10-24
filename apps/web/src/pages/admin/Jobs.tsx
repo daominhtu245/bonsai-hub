@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { consoleApi } from '@/lib/adminConsole';
 import { SPECIES_NAME } from '@/lib/copy';
+import { ExportButton } from './ExportButton';
 import { Badge, DataTable, PageHeader, Pagination, Panel, SearchBox, Select, StatusBadge, TableView, Toolbar, dt, dur, shortId, usd, useLoad, useUrlState } from './kit';
 
 const STATUS_OPTS: Array<[string, string]> = [
@@ -16,7 +17,8 @@ export default function Jobs() {
   );
   return (
     <>
-      <PageHeader title="Phiên thiết kế" sub="Tra cứu mọi phiên phân tích / tạo ảnh, chi phí và lỗi" />
+      <PageHeader title="Phiên thiết kế" sub="Tra cứu mọi phiên phân tích / tạo ảnh, chi phí và lỗi"
+        actions={<ExportButton kind="jobs" params={{ q: f.q, status: f.status, paid: f.paid, days: f.days }} />} />
       <Toolbar>
         <SearchBox value={f.q} onChange={(q) => setF({ q })} placeholder="Email, tên cây, mã phiên, mã lỗi" />
         <Select label="Trạng thái" value={f.status} onChange={(status) => setF({ status })} options={STATUS_OPTS} />

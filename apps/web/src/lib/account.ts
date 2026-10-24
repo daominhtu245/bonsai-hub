@@ -48,6 +48,25 @@ export interface Share {
 
 export const vnd = (n: number) => `${n.toLocaleString('vi-VN')} đ`;
 
+export interface CreditRow {
+  at: string;
+  delta: number;
+  label: string;
+  job_id: string | null;
+}
+
+export interface ProgressPhoto {
+  id: string;
+  url: string | null;
+  taken_at: string;
+  ready: boolean;
+}
+
+export interface Announcement {
+  text: string;
+  tone: 'info' | 'success' | 'warn';
+}
+
 export const accountApi = {
   garden: () => api<{ trees: GardenTree[]; credits: number }>('/garden'),
   deleteTree: (treeId: string) => api<void>(`/trees/${treeId}`, { method: 'DELETE' }),
@@ -59,6 +78,13 @@ export const accountApi = {
   updateProfile: (body: { name?: string | null; garden_name?: string | null; phone?: string | null; consent_training?: boolean; notify_zalo?: boolean }) =>
     api<User>('/me', { method: 'PATCH', json: body }),
   deleteAccount: () => api<void>('/me', { method: 'DELETE', json: { confirm: true } }),
+  redeemCode: (code: string) => api<{ credits_added: number; credits: number }>('/me/gift-code', { method: 'POST', json: { code } }),
+  credits: () => api<CreditRow[]>('/me/credits'),
+  announcement: () => api<Announcement | null>('/announcement'),
+  exportLinks: (jobId: string) => api<{ xlsx_url: string; ics_url: string }>(`/jobs/${jobId}/exports`, { method: 'POST' }),
+  progress: (treeId: string) => api<ProgressPhoto[]>(`/trees/${treeId}/progress`),
+  addProgress: (treeId: string, key: string) => api<ProgressPhoto>(`/trees/${treeId}/progress`, { method: 'POST', json: { key } }),
+  deleteProgress: (treeId: string, photoId: string) => api<void>(`/trees/${treeId}/progress/${photoId}`, { method: 'DELETE' }),
 };
 
 export function watchPayment(id: string, onStatus: (s: Payment['status']) => void, onError: (e: ApiError) => void) {

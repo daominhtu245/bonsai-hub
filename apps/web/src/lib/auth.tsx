@@ -21,7 +21,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser({ status: 'empty' });
       return;
     }
-    setUser({ status: 'loading' });
+    // Làm mới ngầm: đang có người dùng thì giữ nguyên trong lúc tải lại (không tháo trang đang mở → mất trạng thái).
+    setUser((prev) => (prev.status === 'ready' ? prev : { status: 'loading' }));
     auth
       .me()
       .then((u) => setUser({ status: 'ready', data: u }))

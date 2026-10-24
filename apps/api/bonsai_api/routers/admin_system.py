@@ -14,7 +14,7 @@ from ..db.models import AdminAudit, DesignJob, JobStatus, PipelineStep, Species,
 from ..queue import _celery
 from ..security import DB, require_admin
 from ..services.audit import audit
-from ..services.payments import PACKAGES
+from ..services.ops import get_ops, get_packages, package_active
 from ..services.settings import get_all
 from ..settings import get_settings
 from .admin_common import Page, paginate
@@ -98,8 +98,9 @@ def system(db: DB):
         config={
             "app_env": s.app_env,
             "modes": get_all(db),
-            "usd_vnd_rate": s.usd_vnd_rate,
-            "packages": [{"code": p.code, "name": p.name_vi, "credits": p.credits, "price_vnd": p.amount_vnd} for p in PACKAGES],
+            "usd_vnd_rate": int(get_ops(db)["usd_vnd_rate"]),
+            "packages": [{"code": p.code, "name": p.name_vi, "credits": p.credits, "price_vnd": p.amount_vnd,
+                          "active": package_active(db, p.code)} for p in get_packages(db, include_inactive=True)],
             "bank_configured": bool(s.bank_account),
             "webhooks": {"sepay": bool(s.sepay_api_key), "casso": bool(s.casso_secure_token)},
             "login": {"google": bool(s.google_client_id), "zalo": bool(s.zalo_app_id)},

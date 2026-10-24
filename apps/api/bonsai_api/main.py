@@ -4,8 +4,8 @@ from sqlalchemy import text
 
 from .db.session import get_engine
 from .routers import (
-    admin, admin_dashboard, admin_jobs, admin_payments, admin_system, admin_users, auth, catalog, garden, jobs, labels, me,
-    payments, push, share, trees, uploads,
+    account, admin, admin_dashboard, admin_jobs, admin_ops, admin_payments, admin_system, admin_users, auth, catalog, exports,
+    garden, jobs, labels, me, payments, push, share, trees, uploads,
 )
 from .settings import get_settings
 
@@ -35,7 +35,7 @@ def create_app() -> FastAPI:
     )
     for r in (auth.router, me.router, uploads.router, trees.router, jobs.router, share.router, payments.router, garden.router, push.router, admin.router,
               admin_dashboard.router, admin_jobs.router, admin_users.router, admin_payments.router, admin_system.router,
-              labels.router, catalog.router):
+              admin_ops.router, labels.router, catalog.router, account.router, exports.router):
         app.include_router(r, prefix=API_PREFIX)
 
     app.include_router(share.page_router)

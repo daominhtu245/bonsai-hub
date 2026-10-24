@@ -144,3 +144,24 @@ def job_event(job_id: str) -> dict:
                 except (httpx.HTTPError, redis.RedisError, ValueError):
                     log.exception("zalo notify failed")
     return {"event": msg.event, "web_push": pushed, "zalo": zalo}
+
+
+# ---------- gửi hàng loạt (admin → Gửi thông báo) ----------
+
+@app.task(name="bonsai_worker.tasks.notify.broadcast")
+def broadcast(segment: str, title: str, body: str, path: str = "/") -> dict:
+    """Chỉ Web Push (Zalo ZNS chỉ cho tin giao dịch theo mẫu đã duyệt, không dùng để quảng bá)."""
+    from bonsai_api.services.broadcast import segment_users
+
+    base_url = os.environ.get("PUBLIC_BASE_URL", "http://localhost:8080").rstrip("/")
+    msg = Message("broadcast", title, body, path)
+    users = sent = 0
+    with get_sessionmaker()() as db:
+        for (uid,) in db.execute(segment_users(segment)).all():
+            users += 1
+            try:
+                sent += send_web_push(db, uid, msg, base_url)
+            except Exception:  # một thiết bị lỗi không dừng cả đợt
+                log.exception("broadcast push failed for %s", uid)
+    log.info("broadcast %s: %d users, %d devices", segment, users, sent)
+    return {"users": users, "devices": sent}
