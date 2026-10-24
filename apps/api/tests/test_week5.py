@@ -240,12 +240,15 @@ def test_admin_species_refs(db, client, login, monkeypatch):
     assert client.get("/api/v1/admin/species", headers=admin).status_code == 200
 
 
-def test_admin_cost_mode(db, client, login, monkeypatch):
+def test_admin_ai_settings(db, client, login, monkeypatch):
     user, _ = login("user@example.com")
     assert client.get("/api/v1/admin/settings", headers=user).status_code == 403
     admin = _admin(client, login, monkeypatch)
-    assert client.get("/api/v1/admin/settings", headers=admin).json() == {"cost_mode": "standard"}
-    r = client.put("/api/v1/admin/settings", headers=admin, json={"cost_mode": "economy"})
-    assert r.status_code == 200 and r.json() == {"cost_mode": "economy"}
-    assert client.get("/api/v1/admin/settings", headers=admin).json() == {"cost_mode": "economy"}
+    defaults = {"cost_mode": "standard", "analysis_mode": "hybrid", "design_mode": "api", "seg_model_ready": False}
+    assert client.get("/api/v1/admin/settings", headers=admin).json() == defaults
+    r = client.put("/api/v1/admin/settings", headers=admin, json={"cost_mode": "economy", "design_mode": "rules"})
+    assert r.status_code == 200 and r.json() == defaults | {"cost_mode": "economy", "design_mode": "rules"}
+    r = client.put("/api/v1/admin/settings", headers=admin, json={"analysis_mode": "api"})
+    assert r.json() == defaults | {"cost_mode": "economy", "design_mode": "rules", "analysis_mode": "api"}
     assert client.put("/api/v1/admin/settings", headers=admin, json={"cost_mode": "full"}).status_code == 422
+    assert client.put("/api/v1/admin/settings", headers=admin, json={"design_mode": "magic"}).status_code == 422

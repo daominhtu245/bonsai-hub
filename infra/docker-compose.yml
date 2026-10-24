@@ -69,11 +69,16 @@ services:
     build:
       context: ..
       dockerfile: apps/worker/Dockerfile
+      args:
+        WITH_CV: ${WORKER_WITH_CV:-false}  # true khi đã có trọng số YOLO-seg (cài ultralytics + torch CPU)
+    volumes:
+      - ../models:/models:ro  # trọng số model riêng, vd. models/bonsai-seg.pt
     environment:
       <<: *common-env
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      TRUNK_SEG_WEIGHTS: ${TRUNK_SEG_WEIGHTS:-}
       LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
       LLM_MODEL: ${LLM_MODEL:-claude-sonnet-5-5}
       LLM_FALLBACK_PROVIDER: ${LLM_FALLBACK_PROVIDER:-gemini}

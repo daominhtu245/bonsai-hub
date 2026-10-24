@@ -22,6 +22,9 @@ from .schemas import Analysis
 log = logging.getLogger(__name__)
 
 TRUNK_CLASS_NAMES = {"trunk", "than"}
+BRANCH_CLASS_NAMES = {"branch", "canh"}
+ROOT_CLASS_NAMES = {"root", "roots", "nebari", "re"}
+SEG_CLASSES = ("trunk", "branch", "root")  # thứ tự lớp khi huấn luyện (tools/seg, seg_dataset.py)
 MIN_MASK_AREA_RATIO = 0.002  # mask nhỏ hơn 0,2% ảnh coi như rỗng
 
 
@@ -97,25 +100,43 @@ def mask_iou(a: np.ndarray, b: np.ndarray, *, up_to_ratio: float | None = None, 
     return float(inter / union) if union else 0.0
 
 
+@dataclass
+class Parts:
+    """Kết quả tách ảnh phôi: thân (mask lớn nhất), từng cành (mỗi cành 1 mask), rễ (gộp). Mask bool HxW."""
+
+    trunk: np.ndarray | None
+    branches: list[np.ndarray]
+    roots: np.ndarray | None
+    trunk_conf: float = 0.0
+    has_branch_class: bool = False  # model cũ chỉ có lớp thân → không suy ra được cành
+
+
 class YoloTrunkSegmenter:
     def __init__(self, weights: str):
         from ultralytics import YOLO  # phụ thuộc tùy chọn (extra "cv")
 
         self.model = YOLO(weights)
 
-    def segment(self, image: Image.Image) -> np.ndarray | None:
+    def segment_parts(self, image: Image.Image) -> Parts:
         res = self.model.predict(image, verbose=False, retina_masks=True)[0]
+        names = {int(k): str(v).lower() for k, v in res.names.items()}
+        parts = Parts(None, [], None, has_branch_class=bool(set(names.values()) & BRANCH_CLASS_NAMES))
         if res.masks is None or res.boxes is None:
-            return None
-        names = res.names
-        best, best_area = None, 0
-        for i, cls in enumerate(res.boxes.cls.tolist()):
-            if names.get(int(cls), "").lower() not in TRUNK_CLASS_NAMES:
-                continue
+            return parts
+        best_area = 0
+        for i, (cls, conf) in enumerate(zip(res.boxes.cls.tolist(), res.boxes.conf.tolist())):
+            name = names.get(int(cls), "")
             m = res.masks.data[i].cpu().numpy() > 0.5
-            if m.sum() > best_area:
-                best, best_area = m, int(m.sum())
-        return best
+            if name in TRUNK_CLASS_NAMES and m.sum() > best_area:
+                parts.trunk, parts.trunk_conf, best_area = m, float(conf), int(m.sum())
+            elif name in BRANCH_CLASS_NAMES:
+                parts.branches.append(m)
+            elif name in ROOT_CLASS_NAMES:
+                parts.roots = m if parts.roots is None else (parts.roots | m)
+        return parts
+
+    def segment(self, image: Image.Image) -> np.ndarray | None:
+        return self.segment_parts(image).trunk
 
 
 @lru_cache

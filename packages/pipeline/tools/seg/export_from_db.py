@@ -40,7 +40,14 @@ def main() -> None:
             name = f"{job.id}"
             path = args.out_dir / "images" / f"{name}.webp"
             path.write_bytes(storage.get_bytes(photo.storage_key))
-            manifest.append({"name": name, "image": str(path), **{k: trunk[k] for k in ("base_point_px", "apex_point_px", "base_diameter_px")}})
+            a = job.analysis
+            manifest.append({
+                "name": name, "image": str(path),
+                **{k: trunk[k] for k in ("base_point_px", "apex_point_px", "base_diameter_px")},
+                # điểm gợi ý cho SAM gán nhãn cành / rễ (lớp 1, 2)
+                "branches": [{"id": b["id"], "start_px": b["start_px"], "end_px": b.get("end_px")} for b in a.get("branches", [])],
+                "nebari": (a.get("nebari") or {}).get("quality"),
+            })
     (args.out_dir / "manifest.json").write_text(json.dumps(manifest, indent=1))
     print(f"exported {len(manifest)} images")
 

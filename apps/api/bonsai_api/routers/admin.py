@@ -14,7 +14,7 @@ from ..db.models import (
 )
 from ..security import DB, require_admin
 from ..services.credits import apply_credit
-from ..services.settings import get_cost_mode, set_cost_mode
+from ..services.settings import get_all, seg_model_ready, set_setting
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -200,17 +200,32 @@ def gift_credits(body: GiftIn, db: DB):
 
 class SettingsOut(BaseModel):
     cost_mode: Literal["standard", "economy"]
+    analysis_mode: Literal["api", "hybrid"]
+    design_mode: Literal["api", "rules"]
+    seg_model_ready: bool = False  # worker có trọng số YOLO-seg (báo cáo qua Redis heartbeat; xem worker monitoring)
+
+
+class SettingsIn(BaseModel):
+    cost_mode: Literal["standard", "economy"] | None = None
+    analysis_mode: Literal["api", "hybrid"] | None = None
+    design_mode: Literal["api", "rules"] | None = None
+
+
+def _settings_out(db) -> SettingsOut:
+    return SettingsOut(**get_all(db), seg_model_ready=seg_model_ready())
 
 
 @router.get("/settings", response_model=SettingsOut)
 def get_settings(db: DB):
-    return SettingsOut(cost_mode=get_cost_mode(db))
+    return _settings_out(db)
 
 
 @router.put("/settings", response_model=SettingsOut)
-def put_settings(body: SettingsOut, db: DB, admin: Annotated[User, Depends(require_admin)]):
+def put_settings(body: SettingsIn, db: DB, admin: Annotated[User, Depends(require_admin)]):
     """Áp dụng cho job bắt đầu sau khi đổi; job đang chạy giữ chế độ cũ."""
-    return SettingsOut(cost_mode=set_cost_mode(db, body.cost_mode, by=admin.email))
+    for key, value in body.model_dump(exclude_none=True).items():
+        set_setting(db, key, value, by=admin.email)
+    return _settings_out(db)
 
 
 # ---------- ảnh tham chiếu loài (đưa vào P3a/P3d) ----------

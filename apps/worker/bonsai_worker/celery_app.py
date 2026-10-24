@@ -28,3 +28,13 @@ if (dsn := os.environ.get("SENTRY_DSN", "")).startswith("http"):
 
     sentry_sdk.init(dsn=dsn, environment=os.environ.get("APP_ENV", "dev"), integrations=[CeleryIntegration()],
                     traces_sample_rate=0.05, send_default_pii=False)
+
+
+from celery.signals import worker_ready  # noqa: E402
+
+
+@worker_ready.connect
+def _report_seg_model(**_):
+    from .seg_status import report
+
+    report()

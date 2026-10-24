@@ -44,10 +44,16 @@ export interface SpeciesRefs {
 }
 
 export type CostMode = 'standard' | 'economy';
+export type AiSettings = {
+  cost_mode: CostMode;
+  analysis_mode: 'api' | 'hybrid';
+  design_mode: 'api' | 'rules';
+  seg_model_ready: boolean;
+};
 
 export const adminApi = {
-  settings: () => api<{ cost_mode: CostMode }>('/admin/settings'),
-  setCostMode: (cost_mode: CostMode) => api<{ cost_mode: CostMode }>('/admin/settings', { method: 'PUT', json: { cost_mode } }),
+  settings: () => api<AiSettings>('/admin/settings'),
+  saveSettings: (patch: Partial<Omit<AiSettings, 'seg_model_ready'>>) => api<AiSettings>('/admin/settings', { method: 'PUT', json: patch }),
   prompts: () => api<PromptRow[]>('/admin/prompts'),
   createPrompt: (body: { step_code: string; system: string | null; user: string; description?: string }) =>
     api<PromptRow>('/admin/prompts', { method: 'POST', json: body }),

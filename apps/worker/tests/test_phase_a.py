@@ -30,12 +30,22 @@ def bucket(monkeypatch):
 def llm(monkeypatch):
     fake = FakeLLM(model="claude-sonnet-5-5")
     monkeypatch.setattr("bonsai_worker.tasks.phase_a.get_llm_client", lambda **kw: LLMClient(fake))
+    monkeypatch.setattr("bonsai_worker.tasks.phase_a.report_seg_status", lambda ready: None)
     return fake
 
 
-def _jpeg(w=1000, h=1500):
+def _jpeg(w=1000, h=1500, *, flat=False):
+    """Ảnh thử có kết cấu (qua kiểm tra chất lượng); `flat=True`: một màu → bị loại là mờ / nhạt."""
+    img = Image.new("RGB", (w, h), (200, 190, 170))
+    if not flat:
+        from PIL import ImageDraw
+
+        d = ImageDraw.Draw(img)
+        for x in range(0, w, 24):
+            d.line([(x, 0), (x, h)], fill=(80, 70, 50), width=3)
+        d.rectangle([w * 0.45, h * 0.3, w * 0.55, h * 0.9], fill=(107, 79, 58))
     buf = io.BytesIO()
-    Image.new("RGB", (w, h), (200, 190, 170)).save(buf, format="JPEG")
+    img.save(buf, format="JPEG")
     return buf.getvalue()
 
 
@@ -79,12 +89,12 @@ def test_phase_a_happy_path(db, login, bucket, llm):
 
     steps = db.execute(select(PipelineStep.step_code, PipelineStep.ok).where(PipelineStep.job_id == job.id)
                        .order_by(PipelineStep.id)).all()
-    assert [s for s, _ in steps] == ["A0", "A0", "P1", "A2", "P2", "A5"] and all(ok for _, ok in steps)
+    assert [s for s, _ in steps] == ["A0", "A0", "A0q", "P1", "A2", "P2", "A5"] and all(ok for _, ok in steps)
     # P1 nhận ảnh mặt tiền trước
     assert llm.calls[0]["images"] == 2 and "1000x1500" in llm.calls[0]["messages"][0]["content"]
 
     run_phase_a(db, job.id)  # giao lại task: không chạy lại
-    assert db.execute(select(PipelineStep).where(PipelineStep.job_id == job.id)).scalars().all().__len__() == 6
+    assert db.execute(select(PipelineStep).where(PipelineStep.job_id == job.id)).scalars().all().__len__() == 7
 
 
 def test_unusable_photo_stops_without_charging(db, login, bucket, llm):

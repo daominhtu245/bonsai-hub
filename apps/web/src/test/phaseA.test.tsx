@@ -133,7 +133,7 @@ describe('Analyzing', () => {
       ['GET /api/v1/jobs/j1', () => json(job({ status: 'failed', error_code: 'unusable_photo', options: [], analysis: { ...job().analysis!, usable: false, issues: ['blurry', 'base_hidden'] } }))],
     ]);
     renderAt('/phan-tich/j1', <Route path="/phan-tich/:jobId" element={<Analyzing />} />);
-    expect(await screen.findByText(/ảnh bị mờ, không thấy rõ gốc/)).toBeInTheDocument();
+    expect(await screen.findByText(/Ảnh bị mờ, không thấy rõ gốc/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Chụp lại' })).toHaveAttribute('href', '/chup');
   });
 });

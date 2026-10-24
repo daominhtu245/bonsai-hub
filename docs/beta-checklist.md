@@ -25,7 +25,8 @@ Các bước cần người vận hành làm tay. Code đã sẵn; mục nào ch
 - [ ] Kiểm tra tên model và đơn giá trong `packages/pipeline/bonsai_pipeline/pricing.py`.
 - [ ] **Cổng 1**: chạy phiên A trên 20 ảnh phôi thật, nghệ nhân chấm thiết kế P2.
 - [ ] **Cổng 2**: ≥ 70% lượt qua P4 ngay vòng đầu (xem `/admin` → Chi phí → tỉ lệ P3c).
-- [ ] Huấn luyện YOLO-seg thân (`packages/pipeline/tools/seg/README.md`) → `TRUNK_SEG_WEIGHTS`.
+- [ ] Gom 300–500 ảnh phôi thật, gán nhãn 3 lớp (thân / cành / rễ) và huấn luyện YOLO-seg (`packages/pipeline/tools/seg/README.md`) → `models/bonsai-seg.pt`, `TRUNK_SEG_WEIGHTS`, `WORKER_WITH_CV=true`.
+- [ ] Nghệ nhân so sánh **bộ thiết kế bằng luật** với P2 trên ~20 phôi (`/admin` → Chế độ AI → Thiết kế: Bộ luật); chỉnh `rule_designer.py` rồi mới đặt làm mặc định.
 - [ ] Nạp ảnh tham chiếu loài vào `species.ref_image_keys`.
 - [ ] Nghệ nhân duyệt thư viện hướng dẫn chăm `packages/pipeline/bonsai_pipeline/rules/care_guide.yaml` (bản nháp; dùng ở chế độ AI Tiêu chuẩn/Tiết kiệm).
 - [ ] Chọn chế độ AI ở `/admin` → Chế độ AI; đối chiếu chi phí `/admin` → Chi phí với hóa đơn nhà cung cấp.

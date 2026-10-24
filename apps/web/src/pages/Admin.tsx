@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { Button, FilterChip, Notice, Skeleton, StateView, type ViewState } from '@/components/ui';
-import { adminApi, type CostMode, type Costs, type FailedJob, type FeedbackRow, type PromptRow, type SpeciesRefs } from '@/lib/admin';
+import { adminApi, type AiSettings, type CostMode, type Costs, type FailedJob, type FeedbackRow, type PromptRow, type SpeciesRefs } from '@/lib/admin';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -202,46 +202,70 @@ function GiftTab() {
   );
 }
 
-const MODES: { key: CostMode; title: string; detail: string; cost: string }[] = [
-  { key: 'standard', title: 'Tiêu chuẩn', detail: 'Ảnh kết quả chất lượng vừa · ảnh giai đoạn chất lượng thấp', cost: '≈ $0,40' },
-  { key: 'economy', title: 'Tiết kiệm', detail: 'Mọi ảnh chất lượng thấp · model chữ rẻ hơn', cost: '≈ $0,17' },
+type Choice<K extends string> = { key: K; title: string; detail: string; note?: string };
+
+const COST: Choice<CostMode>[] = [
+  { key: 'standard', title: 'Tiêu chuẩn', detail: 'Ảnh kết quả chất lượng vừa · ảnh giai đoạn chất lượng thấp', note: '≈ $0,40 / lượt' },
+  { key: 'economy', title: 'Tiết kiệm', detail: 'Mọi ảnh chất lượng thấp · model chữ rẻ hơn', note: '≈ $0,17 / lượt' },
+];
+const ANALYSIS: Choice<AiSettings['analysis_mode']>[] = [
+  { key: 'hybrid', title: 'Model riêng, API dự phòng', detail: 'YOLO-seg đọc thân, cành, rễ; chưa chắc thì gọi API' },
+  { key: 'api', title: 'Chỉ API', detail: 'Luôn gọi API đọc ảnh' },
+];
+const DESIGN: Choice<AiSettings['design_mode']>[] = [
+  { key: 'api', title: 'API', detail: 'AI thiết kế trong khuôn khổ bộ luật tỉ lệ' },
+  { key: 'rules', title: 'Bộ luật', detail: 'Không tốn API · cần nghệ nhân duyệt trước khi dùng thật' },
 ];
 
-/** Chế độ chi phí AI (bonsai_pipeline/cost_mode.py) — áp dụng cho job bắt đầu sau khi đổi. */
+function ChoiceGroup<K extends string>({ legend, name, choices, value, disabled, onChange }: {
+  legend: string; name: string; choices: Choice<K>[]; value: K; disabled: boolean; onChange: (k: K) => void;
+}) {
+  return (
+    <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
+      <legend className="mb-2 font-semibold">{legend}</legend>
+      {choices.map((c) => (
+        <label key={c.key} className={`flex min-h-[64px] cursor-pointer items-center gap-3 rounded-card border bg-surface px-4 py-3 ${value === c.key ? 'border-primary' : 'border-line'}`}>
+          <input type="radio" name={name} checked={value === c.key} disabled={disabled} onChange={() => onChange(c.key)} className="h-5 w-5 accent-[var(--primary)]" />
+          <span className="flex-1">
+            <span className="block text-body font-medium">{c.title}</span>
+            <span className="block text-ink-muted">{c.detail}</span>
+          </span>
+          {c.note ? <span className="tabular text-ink-muted">{c.note}</span> : null}
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
+/** Chế độ AI (apps/api/bonsai_api/services/settings.py) — áp dụng cho job bắt đầu sau khi đổi. */
 function AiModeTab() {
   const [state, reload] = useLoad(adminApi.settings);
-  const [saving, setSaving] = useState<CostMode | null>(null);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const choose = async (mode: CostMode) => {
-    setSaving(mode);
+  const save = async (patch: Parameters<typeof adminApi.saveSettings>[0]) => {
+    setSaving(true);
     setError(null);
     try {
-      await adminApi.setCostMode(mode);
+      await adminApi.saveSettings(patch);
       reload();
     } catch (e) {
       setError((e as ApiError).message);
     } finally {
-      setSaving(null);
+      setSaving(false);
     }
   };
   return (
-    <StateView state={state} skeleton={<Skeleton className="h-40 rounded-card" />} empty={null}>
+    <StateView state={state} skeleton={<Skeleton className="h-64 rounded-card" />} empty={null}>
       {(s) => (
-        <fieldset className="m-0 flex flex-col gap-2 border-0 p-0 text-caption">
-          <legend className="mb-2 font-semibold">Chế độ AI</legend>
-          {MODES.map((m) => (
-            <label key={m.key} className={`flex min-h-[64px] cursor-pointer items-center gap-3 rounded-card border bg-surface px-4 py-3 ${s.cost_mode === m.key ? 'border-primary' : 'border-line'}`}>
-              <input type="radio" name="cost-mode" checked={s.cost_mode === m.key} disabled={saving !== null}
-                onChange={() => choose(m.key)} className="h-5 w-5 accent-[var(--primary)]" />
-              <span className="flex-1">
-                <span className="block font-medium text-body">{m.title}</span>
-                <span className="block text-ink-muted">{m.detail}</span>
-              </span>
-              <span className="tabular text-ink-muted">{saving === m.key ? 'Đang lưu…' : `${m.cost} / lượt`}</span>
-            </label>
-          ))}
+        <div className="flex flex-col gap-6 text-caption">
+          <ChoiceGroup legend="Chi phí ảnh" name="cost" choices={COST} value={s.cost_mode} disabled={saving} onChange={(k) => save({ cost_mode: k })} />
+          <div className="flex flex-col gap-2">
+            <ChoiceGroup legend="Phân tích phôi" name="analysis" choices={ANALYSIS} value={s.analysis_mode} disabled={saving} onChange={(k) => save({ analysis_mode: k })} />
+            {s.analysis_mode === 'hybrid' && !s.seg_model_ready ? <Notice tone="info">Chưa có model YOLO-seg trên worker — đang dùng API.</Notice> : null}
+          </div>
+          <ChoiceGroup legend="Thiết kế dáng" name="design" choices={DESIGN} value={s.design_mode} disabled={saving} onChange={(k) => save({ design_mode: k })} />
           {error ? <Notice tone="danger">{error}</Notice> : null}
-        </fieldset>
+        </div>
       )}
     </StateView>
   );

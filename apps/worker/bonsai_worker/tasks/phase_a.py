@@ -1,7 +1,9 @@
-"""Phiên A (miễn phí): A0 chuẩn hóa ảnh → A1 P1 → A2 segment thân → A3 rule engine → A4 P2 → A5 sketch."""
+"""Phiên A (miễn phí): A0 chuẩn hóa + kiểm tra ảnh → A1 model riêng hoặc P1 → A2 segment thân → A3 rule engine
+→ A4 bộ luật hoặc P2 → A5 sketch. Chế độ do admin chọn (bonsai_api.services.settings)."""
 
 from __future__ import annotations
 
+import io
 import logging
 import time
 import uuid
@@ -11,18 +13,22 @@ from sqlalchemy.orm import Session
 from bonsai_api import storage
 from bonsai_api.db.models import DesignJob, DesignOption, JobStatus, Species, Tree, TreePhoto
 from bonsai_api.db.session import get_sessionmaker
-from bonsai_api.services.settings import get_cost_mode
+from bonsai_api.services.settings import get_all
 from bonsai_pipeline.adapters import AIError, ImageInput, get_llm_client
 from bonsai_pipeline.cost_mode import get_profile
 from bonsai_pipeline.phase_a import run_p1, run_p2
 from bonsai_pipeline.rule_engine import compute_targets
-from bonsai_pipeline.segmentation import segment_trunk
+from bonsai_pipeline.local_analysis import LocalAnalysis, analyze_parts
+from bonsai_pipeline.photo_quality import check_photo
+from bonsai_pipeline.rule_designer import design_by_rules
+from bonsai_pipeline.segmentation import SegmentationResult, get_segmenter, measure_mask, segment_trunk
 from bonsai_pipeline.sketch import build_scene, to_png, to_svg
 from bonsai_pipeline.steps import StepRecord
 
 from ..celery_app import app
 from ..prompts_repo import load_active_prompt
 from ..recording import JobFailure, job_guard, record_step, set_progress, set_status
+from ..seg_status import report as report_seg_status
 from .preprocess import normalize_photo
 
 log = logging.getLogger(__name__)
@@ -71,18 +77,54 @@ def run_phase_a(db: Session, job_id: uuid.UUID) -> None:
         images = [ImageInput(storage.get_bytes(p.storage_key), "image/webp") for p in photos]
         size = (front.width, front.height)
 
-        # A1 — P1 (model + mức suy nghĩ theo chế độ chi phí admin chọn)
-        profile = get_profile(get_cost_mode(db))
-        job.progress = {**(job.progress or {}), "cost_mode_a": profile.key}
+        # A0b — chất lượng ảnh (trên máy): ảnh hỏng rõ ràng thì báo chụp lại, không tốn API.
+        started = time.monotonic()
+        quality = check_photo(images[0].data)
+        record_step(db, job.id, _code_step("A0q", "photo-quality", started, ok=quality.usable,
+                                           output={"issues": quality.issues, **quality.metrics}))
+        if not quality.usable:
+            job.analysis = {"image_quality": {"usable": False, "issues": quality.issues}}
+            job.error_code, job.error = "unusable_photo", ", ".join(quality.issues)
+            set_status(db, job, JobStatus.failed)
+            return
+
+        modes = get_all(db)
+        profile = get_profile(modes["cost_mode"])
+        job.progress = {**(job.progress or {}), "cost_mode_a": profile.key, "analysis_mode": modes["analysis_mode"],
+                        "design_mode": modes["design_mode"]}
         llm = get_llm_client(economy=profile.llm_economy, effort=profile.llm_effort)
-        p1 = load_active_prompt(db, "P1")
-        try:
-            analysis, rec = run_p1(llm, p1, images, image_size=size, species_key=tree.species_key,
-                                   real_height_cm=tree.real_height_cm)
-        except AIError as e:
-            _record_ai_failure(db, job.id, "P1", p1.version_tag, e)
-            raise JobFailure("ai_unavailable", str(e)) from e
-        record_step(db, job.id, rec, input_ref={"photo_ids": [str(p.id) for p in photos]})
+        prompt_tags: list[str] = []
+
+        # A1 — model riêng (YOLO-seg thân/cành/rễ) nếu bật và tin được; không thì P1 (API).
+        analysis, local_seg = None, None
+        segmenter = get_segmenter()
+        report_seg_status(segmenter is not None)
+        if modes["analysis_mode"] == "hybrid" and segmenter is not None:
+            started = time.monotonic()
+            try:
+                from PIL import Image
+
+                parts = segmenter.segment_parts(Image.open(io.BytesIO(images[0].data)).convert("RGB"))
+                local = analyze_parts(parts, size, species_key=tree.species_key, quality_issues=quality.issues)
+            except Exception:  # model lỗi không được làm hỏng phiên A
+                log.exception("local analysis failed; falling back to P1")
+                local = LocalAnalysis(None, False, ["local_error"])
+            record_step(db, job.id, _code_step("A1", "yolo-seg", started, ok=local.confident,
+                                               output={"confident": local.confident, "reasons": local.reasons, **local.metrics}))
+            if local.confident:
+                analysis = local.analysis
+                local_seg = SegmentationResult(measure_mask(parts.trunk), parts.trunk)
+                prompt_tags.append("A1.local")
+        if analysis is None:
+            p1 = load_active_prompt(db, "P1")
+            try:
+                analysis, rec = run_p1(llm, p1, images, image_size=size, species_key=tree.species_key,
+                                       real_height_cm=tree.real_height_cm)
+            except AIError as e:
+                _record_ai_failure(db, job.id, "P1", p1.version_tag, e)
+                raise JobFailure("ai_unavailable", str(e)) from e
+            record_step(db, job.id, rec, input_ref={"photo_ids": [str(p.id) for p in photos]})
+            prompt_tags.append(p1.version_tag)
         job.analysis = analysis.model_dump(mode="json")
         if not analysis.image_quality.usable:
             # Không trừ lượt ở phiên A nên không có gì để hoàn; người dùng chụp lại.
@@ -100,9 +142,9 @@ def run_phase_a(db: Session, job_id: uuid.UUID) -> None:
         suggested = analysis.best_front_view_index if 0 <= analysis.best_front_view_index < len(photos) else 0
         set_progress(db, job, "front", "done", suggested_photo_id=str(photos[suggested].id), is_current=suggested == 0)
 
-        # A2 — segment thân
+        # A2 — segment thân (dùng lại mask của A1 nếu đã có)
         started = time.monotonic()
-        seg = segment_trunk(images[0].data, analysis)
+        seg = local_seg or segment_trunk(images[0].data, analysis, segmenter)
         mask_key = None
         if (mask_png := seg.mask_png()) is not None:
             mask_key = f"trees/{tree.id}/jobs/{job.id}/trunk_mask.png"
@@ -123,18 +165,30 @@ def run_phase_a(db: Session, job_id: uuid.UUID) -> None:
         )
         job.targets = {**targets.as_dict(), "cv": seg.measure.as_dict(), "mask_key": mask_key}
 
-        # A4 — P2
+        # A4 — thiết kế: bộ luật (không API) hoặc P2
         set_status(db, job, JobStatus.designing)
         set_progress(db, job, "design", "running")
-        p2 = load_active_prompt(db, "P2")
         inputs = job.inputs or {}
-        try:
-            design, rec = run_p2(llm, p2, analysis, targets, user_style=inputs.get("style"), goal=inputs.get("goal"))
-        except AIError as e:
-            _record_ai_failure(db, job.id, "P2", p2.version_tag, e)
-            raise JobFailure("ai_unavailable", str(e)) from e
-        record_step(db, job.id, rec)
-        job.prompt_version = f"{p1.version_tag}+{p2.version_tag}"
+        design = None
+        if modes["design_mode"] == "rules":
+            started = time.monotonic()
+            try:
+                design = design_by_rules(analysis, targets, user_style=inputs.get("style"))
+                record_step(db, job.id, _code_step("P2", "rule-designer", started, output=design.model_dump(mode="json")))
+                prompt_tags.append("P2.rules")
+            except ValueError as e:  # luật cứng không qua (bug bộ luật) → P2 thay, không để người dùng chờ
+                log.exception("rule designer failed; falling back to P2")
+                record_step(db, job.id, _code_step("P2", "rule-designer", started, ok=False, error=str(e)))
+        if design is None:
+            p2 = load_active_prompt(db, "P2")
+            try:
+                design, rec = run_p2(llm, p2, analysis, targets, user_style=inputs.get("style"), goal=inputs.get("goal"))
+            except AIError as e:
+                _record_ai_failure(db, job.id, "P2", p2.version_tag, e)
+                raise JobFailure("ai_unavailable", str(e)) from e
+            record_step(db, job.id, rec)
+            prompt_tags.append(p2.version_tag)
+        job.prompt_version = "+".join(prompt_tags)
 
         # A5 — sketch SVG (cho người dùng) + PNG (điều kiện cho P3)
         started = time.monotonic()

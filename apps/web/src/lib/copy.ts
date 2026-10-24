@@ -17,6 +17,9 @@ export const PHOTO_ISSUE: Record<string, string> = {
   not_a_tree: 'không thấy cây trong ảnh',
   too_dark: 'ảnh tối',
   dark: 'ảnh tối',
+  too_small: 'ảnh quá nhỏ',
+  overexposed: 'ảnh bị cháy sáng',
+  low_contrast: 'ảnh quá mờ nhạt',
 };
 
 
@@ -26,7 +29,7 @@ export function phaseAError(code: string | null, issues: string[] = []): { title
       const reasons = issues.map((i) => PHOTO_ISSUE[i]).filter(Boolean);
       return {
         title: 'Ảnh chưa đủ rõ để phân tích',
-        body: reasons.length ? `AI thấy ${reasons.join(', ')}. Bạn chụp lại theo khung hướng dẫn nhé.` : 'Bạn chụp lại theo khung hướng dẫn nhé.',
+        body: reasons.length ? `Ảnh ${reasons.map((r) => r.replace(/^ảnh /, '')).join(', ')}. Bạn chụp lại theo khung hướng dẫn nhé.` : 'Bạn chụp lại theo khung hướng dẫn nhé.',
         recapture: true,
       };
     }
