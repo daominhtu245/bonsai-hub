@@ -41,6 +41,11 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | **Hỏi nghệ nhân**: chọn cây, hỏi đích danh hoặc ai rảnh, trả 2 lượt; nhận đánh giá (ổn / sửa / làm lại) + lời khuyên; chấm 1–5 sao | Kết quả → Hỏi nghệ nhân; Tiện ích | Quá 72 giờ chưa trả lời: tự hoàn lượt (worker, mỗi giờ) |
 | **Trang công khai** nhà vườn / nghệ nhân `/nguoi/{tên}`: giới thiệu, chuyên môn, tin đang bán, Zalo, số lần góp ý + điểm | Tài khoản → Trang công khai | Chỉ nhà vườn, nghệ nhân |
 | **Chăm hộ / nuôi hộ**: gửi cây cho một nhà vườn; nhà vườn nhận, gửi ảnh + ghi chú; ảnh vào nhật ký cây | Trang nhà vườn → Gửi chăm hộ; Tiện ích → Chăm hộ, nuôi hộ | Số điện thoại hai bên chỉ hiện sau khi nhà vườn nhận. Tiền công tự thỏa thuận |
+| **Lá có bệnh?** chụp gần lá + chọn dấu hiệu → sâu bệnh có thể gặp, xử lý ngay, phòng lần sau | Tiện ích → Lá có bệnh? | Kết quả tra bảng có ngay; AI xem ảnh rồi cập nhật nhưng chỉ được chọn trong bảng sâu bệnh (cách xử lý lấy từ bảng). 5 lần / ngày |
+| **Hỏi cách chăm** bằng giọng nói hoặc gõ; nghe đọc to câu trả lời | Tiện ích → Hỏi cách chăm | Trả lời ngay từ bảng loài; AI (model rẻ) trả lời theo cây, 20 câu / ngày. Nhận giọng nói + đọc to dùng sẵn của trình duyệt (miễn phí) |
+| **Đọc to hướng dẫn** giai đoạn | Kết quả, dưới thẻ hướng dẫn | Ẩn nếu máy không hỗ trợ |
+| **Thời tiết & việc cần làm** 3 ngày theo tỉnh; **thông báo 6:30** khi sắp mưa to / nắng nóng / rét / gió mạnh | Tiện ích → Thời tiết | Dự báo Open-Meteo (miễn phí); mỗi tỉnh, ngày, loại chỉ báo một lần; ngưỡng ở bộ luật "Sâu bệnh, thời tiết" |
+| **Tờ hồ sơ cây** in làm quà (ảnh, lịch sử, mã QR) | Trang sổ cây → In tờ hồ sơ | |
 | Vườn của tôi | Thanh dưới → Vườn | |
 | Mua lượt (VietQR) | Tài khoản → Mua lượt | Gói, giá do quản trị chỉnh |
 | **Nhập mã quà tặng** | Tài khoản, Mua lượt | |
@@ -63,6 +68,7 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 |---|---|---|
 | **Thử thách phôi** (tạo, xóa) · **Chậu đối tác** (thêm, bật / tắt, xóa) | Quản trị → Khách hàng | Thao tác ghi nhật ký quản trị |
 | **Hỏi đáp** (nghệ nhân): nhận câu hỏi, xem ảnh phôi + bản vẽ, trả lời | Quản trị → nhóm Nghệ nhân | Nghệ nhân chỉ thấy câu chưa ai nhận hoặc đã nhận |
+| **Bộ luật Sâu bệnh, thời tiết** (sửa trên giao diện) · **Trợ lý chăm cây: AI / Tra bảng** | Bộ luật & thông số; Chế độ AI | Tra bảng: không tốn API |
 | Tổng quan | Bảng điều khiển | 12 chỉ số so kỳ trước, biểu đồ phiên / doanh thu–chi phí, phễu, phiên lỗi |
 | Vận hành | Phiên thiết kế | Lọc, tìm (mã phiên, email, mã lỗi), chi tiết pipeline / ảnh (kể cả ảnh xem thử) / phương án, chạy lại miễn phí, hoàn lượt, dừng phiên treo, **xuất Excel** |
 | | Phản hồi | Đánh giá của người dùng, link tới phiên |
@@ -83,3 +89,8 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 - Model riêng YOLO-seg: cần 300–500 ảnh phôi đã gán nhãn (`packages/pipeline/tools/seg/README.md`).
 - Thư viện hướng dẫn chăm (`rules/care_guide.yaml`) và bộ thiết kế bằng luật: cần nghệ nhân duyệt.
 - Zalo ZNS cho nhắc việc / thông báo hàng loạt: ZNS chỉ dùng mẫu tin giao dịch đã duyệt, cần đăng ký thêm mẫu.
+- Đấu giá (C8): cần tìm hiểu pháp lý đấu giá trực tuyến trước.
+- Zalo Mini App (F2): cần đăng ký và duyệt trên Zalo.
+- Phiếu tập vẽ (A3): phần AI đọc nét vẽ tay đang chờ (đã có phần in).
+- Dịch vụ in đặt hàng (F4): cần đối tác in; hiện có trang in tờ hồ sơ, tranh, bản vẽ.
+- Bảng sâu bệnh: đốm lá, cháy nắng chưa có nguồn đã kiểm — nghệ nhân duyệt (xem `rules/SOURCES.md`).

@@ -1,5 +1,5 @@
 import { ChevronRight, type LucideIcon } from 'lucide-react';
-import { CalendarHeart, GraduationCap, HandHeart, HeartPulse, LineChart, Sparkles, Store, Swords, ThumbsUp } from 'lucide-react';
+import { CalendarHeart, CloudSun, GraduationCap, Leaf, MessageCircleQuestion, HandHeart, HeartPulse, LineChart, Sparkles, Store, Swords, ThumbsUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { BottomNav } from '@/components/BottomNav';
@@ -12,6 +12,9 @@ export const HUB: Array<{ group: string; items: HubItem[] }> = [
     group: 'Chăm cây',
     items: [
       { to: '/tien-ich/mai-tet', title: 'Mai kịp Tết', sub: 'Ngày tuốt lá theo tỉnh', Icon: CalendarHeart },
+      { to: '/tien-ich/hoi-dap', title: 'Hỏi cách chăm', sub: 'Nói hoặc gõ câu hỏi, nghe đọc to', Icon: MessageCircleQuestion },
+      { to: '/tien-ich/benh-la', title: 'Lá có bệnh?', sub: 'Chụp lá, xem sâu bệnh và cách xử lý', Icon: Leaf },
+      { to: '/tien-ich/thoi-tiet', title: 'Thời tiết', sub: 'Mưa to, nắng nóng: việc cần làm', Icon: CloudSun },
       { to: '/tien-ich/cap-cuu', title: 'Cấp cứu cây', sub: 'Cây héo, vàng lá, thối rễ', Icon: HeartPulse },
       { to: '/nghe-nhan', title: 'Hỏi nghệ nhân', sub: 'Góp ý thiết kế, trả bằng lượt', Icon: GraduationCap },
       { to: '/cham-ho', title: 'Chăm hộ, nuôi hộ', sub: 'Gửi cây cho nhà vườn', Icon: HandHeart },

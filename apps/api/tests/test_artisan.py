@@ -28,7 +28,7 @@ def test_only_artisan_or_admin(db, client, login):
 def test_edit_rules_with_versions_validation_and_rollback(db, client, login):
     art = _artisan(db, login)
     docs = {d["doc"]: d for d in client.get("/api/v1/artisan/rules", headers=art).json()}
-    assert set(docs) == {"rule_set", "styles_vn", "species", "judging"} and docs["rule_set"]["active_version"] == 1
+    assert set(docs) == {"rule_set", "styles_vn", "species", "judging", "pests"} and docs["rule_set"]["active_version"] == 1
     cur = client.get("/api/v1/artisan/rules/rule_set", headers=art).json()
     assert cur["content"] == default_rule_doc("rule_set")
 

@@ -5,6 +5,7 @@
 - design_mode: api | rules — rules: bộ thiết kế bằng luật (bonsai_pipeline/rule_designer.py) thay P2
 - cutout_mode: on | off — tách nền + phác họa nét trên máy trước P1 (bonsai_pipeline/cutout.py)
 - stage_mode: ai | derive — ảnh giai đoạn S1–S3 vẽ bằng AI, hoặc dựng từ ảnh gốc + ảnh kết quả (bonsai_pipeline/stage_derive.py)
+- assist_mode: ai | offline — trợ lý chăm cây (đoán bệnh qua ảnh lá, hỏi đáp): AI, hoặc chỉ tra bảng (không tốn API)
 """
 
 from sqlalchemy.orm import Session
@@ -19,6 +20,7 @@ SETTINGS: dict[str, tuple[tuple[str, ...], str]] = {
     "design_mode": (("api", "rules"), "api"),  # bộ luật cần nghệ nhân duyệt (Cổng 1) trước khi làm mặc định
     "cutout_mode": (("on", "off"), "on"),  # worker chưa có model tách nền → tự bỏ qua
     "stage_mode": (("ai", "derive"), "ai"),  # derive: miễn phí, khớp ảnh kết quả; chất lượng nháp hơn
+    "assist_mode": (("ai", "offline"), "ai"),  # offline: tra bảng sâu bệnh / bảng loài, trả lời ngay
 }
 COST_MODE = "cost_mode"
 

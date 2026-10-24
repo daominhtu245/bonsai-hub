@@ -30,6 +30,10 @@ const ListingTagPage = lazy(() => import('@/pages/market/ListingTag'));
 const MyListingsPage = lazy(() => import('@/pages/market/MyListings'));
 const PriceIndexPage = lazy(() => import('@/pages/market/PriceIndex'));
 const AdminPots = lazy(() => import('@/pages/admin/PartnerPots'));
+const HealthPage = lazy(() => import('@/pages/utilities/Health'));
+const AssistantPage = lazy(() => import('@/pages/utilities/Assistant'));
+const WeatherPage = lazy(() => import('@/pages/utilities/Weather'));
+const PassportPrintPage = lazy(() => import('@/pages/community/PassportPrint'));
 const ArtisanConsults = lazy(() => import('@/pages/artisan/Consults'));
 const ArtisansPage = lazy(() => import('@/pages/expert/Artisans'));
 const PersonPage = lazy(() => import('@/pages/expert/Person'));
@@ -111,6 +115,10 @@ export default function App() {
               <Route path="/thu-thach/:challengeId" element={guard(<ChallengeDetailPage />)} />
               <Route path="/thu-thach/:challengeId/thiet-ke" element={guard(<ChallengeStudio />)} />
               <Route path="/so-cay/:code" element={<PassportPublicPage />} />
+              <Route path="/so-cay/:code/in" element={<PassportPrintPage />} />
+              <Route path="/tien-ich/benh-la" element={guard(<HealthPage />)} />
+              <Route path="/tien-ich/hoi-dap" element={<AssistantPage />} />
+              <Route path="/tien-ich/thoi-tiet" element={<WeatherPage />} />
               <Route path="/cho" element={<MarketPage />} />
               <Route path="/tin/:code" element={<ListingPublicPage />} />
               <Route path="/tin/:code/the" element={<ListingTagPage />} />

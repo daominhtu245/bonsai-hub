@@ -1,0 +1,150 @@
+# Sâu bệnh thường gặp trên bonsai — dùng cho "Chụp lá đoán bệnh" (docs/ideas.md E3); cuối tệp: nhắc theo thời tiết (E2).
+# AI chỉ được CHỌN mục trong bảng này (kèm mức khả năng + lý do); cách xử lý lấy nguyên văn từ đây, không để AI tự viết thuốc.
+# Nguồn: xem rules/SOURCES.md. Không ghi tên thương mại thuốc; nghệ nhân duyệt lại cho phù hợp khí hậu Việt Nam.
+version: 1
+
+symptoms:
+  yellow_leaves: Lá vàng, rụng nhiều
+  white_cotton: Có đốm bông trắng / vảy nhỏ bám cành, nách lá
+  sticky_leaves: Lá dính nhớt hoặc phủ muội đen
+  fine_webs: Có tơ mảnh dưới lá, đầu cành
+  speckled_leaves: Lá lấm tấm chấm nhạt, bạc màu
+  chewed_leaves: Lá bị ăn khuyết, thủng lỗ
+  small_insects_shoots: Côn trùng nhỏ bám dày đọt non
+  white_powder: Lớp phấn trắng trên mặt lá
+  brown_spots: Đốm nâu / đen trên lá, có quầng
+  burnt_edges: Mép lá khô cháy nâu
+  wilting_wet_soil: Héo dù đất vẫn ẩm
+  soft_dark_roots: Rễ đen, mềm, có mùi hôi
+  pale_new_leaves: Lá non nhỏ, nhợt, cây chậm lớn
+
+items:
+  rep_sap:
+    name_vi: Rệp sáp, rệp vảy
+    kind: pest
+    symptoms: [white_cotton, sticky_leaves, yellow_leaves]
+    signs_vi: Đốm bông trắng hoặc vảy nâu bám chặt ở nách lá, mặt dưới lá, kẽ vỏ; lá dính nhớt, sau phủ muội đen.
+    treat_now_vi:
+      - Cách ly cây khỏi chậu khác.
+      - Lau sạch bằng tăm bông nhúng cồn pha loãng hoặc bàn chải mềm.
+      - Phun xà phòng diệt côn trùng hoặc dầu khoáng làm vườn, ướt đều mặt dưới lá; lặp lại sau 7–10 ngày.
+    prevent_vi:
+      - Kiểm tra nách lá, kẽ vỏ mỗi tuần.
+      - Không bón thừa đạm (đọt non mềm dễ bị rệp).
+    see_expert_if_vi: Rệp phủ dày cả cành lớn hoặc quay lại sau 3 lần xử lý.
+    sources: [ucipm_scale, ucipm_mealybug, empire_pests]
+
+  nhen_do:
+    name_vi: Nhện đỏ
+    kind: pest
+    symptoms: [speckled_leaves, fine_webs, yellow_leaves]
+    signs_vi: Lá lấm tấm chấm nhạt rồi bạc, có tơ mảnh; giũ lá lên giấy trắng thấy chấm nhỏ bò. Hay bùng khi nắng nóng, khô.
+    treat_now_vi:
+      - Xịt nước mạnh vào mặt dưới lá vài ngày liền.
+      - Phun xà phòng diệt côn trùng hoặc dầu khoáng làm vườn; lặp lại sau 5–7 ngày.
+    prevent_vi:
+      - Giữ ẩm không khí (phun sương sáng sớm) mùa nắng nóng.
+      - Tránh để cây sát tường nóng.
+    see_expert_if_vi: Lá rụng hàng loạt hoặc tơ phủ kín ngọn.
+    sources: [ucipm_mites, empire_pests]
+
+  rep_muoi:
+    name_vi: Rệp muội (rệp xanh, rệp đen)
+    kind: pest
+    symptoms: [small_insects_shoots, sticky_leaves, pale_new_leaves]
+    signs_vi: Côn trùng nhỏ xanh / đen bám dày đọt non, lá non quăn, dính nhớt; hay có kiến đi theo.
+    treat_now_vi:
+      - Xịt nước mạnh cho rơi rệp, ngắt bỏ đọt bị nặng.
+      - Phun xà phòng diệt côn trùng hoặc dầu neem; lặp lại sau 5–7 ngày.
+    prevent_vi:
+      - Hạn chế bón đạm khi cây ra đọt rộ.
+      - Diệt đường đi của kiến lên chậu.
+    see_expert_if_vi: Rệp quay lại liên tục trên toàn tán.
+    sources: [ucipm_aphids, empire_pests]
+
+  sau_an_la:
+    name_vi: Sâu ăn lá
+    kind: pest
+    symptoms: [chewed_leaves]
+    signs_vi: Lá bị ăn khuyết mép, thủng lỗ; thấy phân sâu đen nhỏ dưới tán.
+    treat_now_vi:
+      - Bắt sâu bằng tay buổi sáng sớm hoặc chiều tối.
+      - Cắt bỏ lá bị cuộn có sâu bên trong.
+      - Nếu nhiều, dùng chế phẩm vi sinh Bt (Bacillus thuringiensis) theo hướng dẫn trên bao bì.
+    prevent_vi:
+      - Kiểm tra mặt dưới lá khi thấy bướm đẻ trứng.
+    see_expert_if_vi: Cây trụi lá nhanh trong vài ngày.
+    sources: [empire_pests]
+
+  phan_trang:
+    name_vi: Nấm phấn trắng
+    kind: disease
+    symptoms: [white_powder, yellow_leaves]
+    signs_vi: Lớp phấn trắng như bột trên mặt lá, đọt non; lá biến dạng. Hay gặp khi ẩm, thiếu nắng, tán quá dày.
+    treat_now_vi:
+      - Cắt bỏ lá bệnh, cho vào túi kín bỏ đi.
+      - Tỉa thưa tán cho thoáng, đưa cây ra chỗ nắng hơn.
+      - Phun thuốc gốc lưu huỳnh hoặc gốc đồng dành cho cây cảnh, theo liều trên bao bì.
+    prevent_vi:
+      - Tưới vào gốc, tránh làm ướt lá buổi chiều.
+    see_expert_if_vi: Phấn lan khắp tán sau 2 lần xử lý.
+    sources: [ucipm_powdery, empire_pests]
+
+  dom_la:
+    name_vi: Bệnh đốm lá (nấm)
+    kind: disease
+    symptoms: [brown_spots, yellow_leaves]
+    signs_vi: Đốm nâu / đen tròn có quầng vàng, lan dần rồi lá rụng; nặng sau mưa dầm.
+    treat_now_vi:
+      - Ngắt bỏ lá đốm, nhặt sạch lá rụng trên mặt chậu.
+      - Phun thuốc gốc đồng dành cho cây cảnh theo liều trên bao bì.
+    prevent_vi:
+      - Tránh tưới lên lá; để chỗ thoáng gió mùa mưa.
+    see_expert_if_vi: Đốm lan lên cành non, vỏ nứt chảy nhựa.
+    sources: []  # chưa có nguồn đã kiểm — chờ nghệ nhân duyệt
+
+  thoi_re:
+    name_vi: Thối rễ do úng
+    kind: disease
+    symptoms: [wilting_wet_soil, soft_dark_roots, yellow_leaves]
+    signs_vi: Cây héo dù đất ẩm, lá vàng rụng; nhấc bầu thấy rễ đen mềm, mùi hôi.
+    treat_now_vi:
+      - Ngừng tưới; đặt chỗ râm thoáng.
+      - Nhấc bầu kiểm tra, cắt bỏ rễ thối bằng kéo sạch, thay đất thoát nước tốt.
+      - Tỉa bớt tán cho cân với bộ rễ còn lại.
+    prevent_vi:
+      - Kiểm tra lỗ thoát nước; chỉ tưới khi mặt đất se khô.
+    see_expert_if_vi: Quá nửa bộ rễ đã thối.
+    sources: [rhs_rootrot]
+
+  chay_nang:
+    name_vi: Cháy lá do nắng / nóng
+    kind: abiotic
+    symptoms: [burnt_edges, yellow_leaves]
+    signs_vi: Mép lá khô cháy nâu, nhất là phía hứng nắng chiều; hay sau đợt nắng nóng hoặc vừa đổi chỗ.
+    treat_now_vi:
+      - Che lưới 30–50% hoặc chuyển chỗ có nắng sáng, râm chiều.
+      - Tưới đẫm sáng sớm; không bón phân lúc này.
+    prevent_vi:
+      - Tập cho cây quen nắng dần khi đổi chỗ.
+    see_expert_if_vi: Cành non khô chết dần từ ngọn.
+    sources: []  # chưa có nguồn đã kiểm — chờ nghệ nhân duyệt
+
+  thieu_dinh_duong:
+    name_vi: Thiếu dinh dưỡng
+    kind: abiotic
+    symptoms: [pale_new_leaves, yellow_leaves]
+    signs_vi: Lá non nhỏ, nhợt; lá già vàng đều; cây chậm lớn dù không thấy sâu.
+    treat_now_vi:
+      - Bón phân tan chậm hoặc phân hữu cơ hoai liều nhẹ, đều đặn mùa sinh trưởng.
+      - Nếu lâu chưa thay đất, lên kế hoạch thay chậu đúng mùa.
+    prevent_vi:
+      - Lịch bón đều, giảm vào mùa cây nghỉ.
+    see_expert_if_vi: Đã bón đủ mà lá vẫn vàng (có thể do rễ).
+    sources: [empire_fertilizer]
+
+weather_alerts:  # E2 nhắc việc theo dự báo Open-Meteo (3 ngày tới) — ngưỡng, lời khuyên GIẢ ĐỊNH, nghệ nhân chỉnh
+  heavy_rain: {mm: 50, title_vi: "Sắp mưa to", advice_vi: "Kê chậu cao, thông lỗ thoát nước; che mưa cho cây vừa thay đất, vừa cắt rễ."}
+  heat: {max_c: 37, title_vi: "Sắp nắng nóng", advice_vi: "Tưới đẫm sáng sớm, che lưới buổi chiều; tạm ngừng bón phân và uốn dây."}
+  cold: {min_c: 12, title_vi: "Sắp rét", advice_vi: "Đưa cây nhiệt đới (si, sanh, mai) vào chỗ kín gió; giảm tưới, không tuốt lá."}
+  wind: {kmh: 50, title_vi: "Sắp gió mạnh", advice_vi: "Hạ cây xuống thấp hoặc buộc chậu; kiểm tra cây đang néo dây, cọc chống."}

@@ -33,6 +33,8 @@ def ops_defaults() -> dict:
         "nursery_listing_free": 3,  # chưa có gói nhà vườn tháng: số tin đang hiện tối đa
         "nursery_featured_max": 3,  # gói nhà vườn tháng: số tin nổi bật cùng lúc
         "nursery_preview_limit": 10,  # gói nhà vườn tháng: số lần "Xem thử AI" mỗi phiên (thường: 2)
+        "health_daily_free": 5,  # đoán sâu bệnh: số lần / người / 24 giờ
+        "assistant_daily_ai": 20,  # hỏi đáp: số câu trả lời bằng AI / người / 24 giờ (quá thì tra bảng)
     }
 
 

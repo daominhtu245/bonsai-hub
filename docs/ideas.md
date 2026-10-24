@@ -59,6 +59,8 @@ Ký hiệu đối tượng: **NC** người chơi · **NV** nhà vườn · **NN
 - Đợt 3: B2 nhật ký đúng mốc · B3 dự đoán và thực tế · B4 thử thách phôi · B6 chọn dáng đẹp · B7 bậc tay nghề · F1 sổ cây (QR, chuyển chủ) · F7 báo mất + dấu vân thân (so với tin đăng: nối ở đợt 4).
 - Đợt 4: C1 tin đăng kèm dáng tương lai · C2 thẻ QR treo chậu · C3 gói nhà vườn tháng · C4 liên hệ Zalo, không giữ tiền · C7 chậu đối tác · C9 giá thị trường · F7 dò tin đăng giống cây báo mất.
 - Đợt 5: D1 hỏi nghệ nhân bằng lượt · D2 trang công khai nhà vườn / nghệ nhân · C5 nuôi hộ · C6 chăm hộ. D3 (nghệ nhân duyệt bộ luật) đã có từ vai trò Nghệ nhân.
+- Đợt 6: E2 nhắc theo thời tiết · E3 chụp lá đoán bệnh · E4 hỏi bằng giọng nói, đọc to · F4 (phần in tờ hồ sơ cây).
+- Chưa làm: C8 đấu giá (pháp lý) · F2 Zalo Mini App · A3 phần AI đọc nét vẽ tay · F4 phần đặt in với đối tác.
 
 ## Thứ tự đề xuất
 | Đợt | Việc |

@@ -246,7 +246,7 @@ def test_admin_ai_settings(db, client, login, monkeypatch):
     user, _ = login("user@example.com")
     assert client.get("/api/v1/admin/settings", headers=user).status_code == 403
     admin = _admin(client, login, monkeypatch)
-    defaults = {"cost_mode": "standard", "analysis_mode": "hybrid", "design_mode": "api", "cutout_mode": "on", "stage_mode": "ai",
+    defaults = {"cost_mode": "standard", "analysis_mode": "hybrid", "design_mode": "api", "cutout_mode": "on", "stage_mode": "ai", "assist_mode": "ai",
                 "cutout_model": None, "seg_model_ready": False, "app_env": get_settings().app_env}
     assert client.get("/api/v1/admin/settings", headers=admin).json() == defaults
     r = client.put("/api/v1/admin/settings", headers=admin, json={"cost_mode": "economy", "design_mode": "rules"})

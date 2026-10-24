@@ -2,7 +2,7 @@ import { api } from './api';
 
 /** Khu nghệ nhân: bộ luật có phiên bản + chấm ảnh / thiết kế (apps/api/bonsai_api/routers/artisan.py). */
 
-export type RuleDocKey = 'rule_set' | 'styles_vn' | 'species' | 'judging';
+export type RuleDocKey = 'rule_set' | 'styles_vn' | 'species' | 'judging' | 'pests';
 
 export interface RuleVersion {
   version: number;

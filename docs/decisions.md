@@ -77,6 +77,10 @@ Tài liệu kỹ thuật vẫn là nguồn chính. Đây là những chỗ code 
 | 61 | **Hỏi nghệ nhân trả bằng lượt** (mặc định 2, Cấu hình vận hành): trừ khi gửi, nghệ nhân "nhận" câu hỏi rồi trả lời; quá 72 giờ worker tự hoàn (ghi `refund`, ref `consult:{id}` — không hoàn hai lần). Trả công nghệ nhân ngoài hệ thống (thống kê số câu, điểm sao) | Đơn giản, không cần ví / chi trả trong app |
 | 62 | **Trang công khai chỉ cho nhà vườn, nghệ nhân** (tên trang a-z, 0-9, gạch ngang; tránh từ dành riêng). "Nghệ nhân xác minh" = vai trò nghệ nhân do quản trị gán | Hạn chế trang rác; xác minh thủ công lúc đầu |
 | 63 | **Chăm hộ / nuôi hộ**: app chỉ ghi yêu cầu + ảnh cập nhật; ảnh nhà vườn gửi vào nhật ký cây của chủ (không tính thưởng mốc). Số điện thoại chỉ lộ khi nhà vườn đã nhận | Theo dõi minh bạch mà không giữ tiền; tránh lộ số khi chưa đồng ý |
+| 64 | **Đoán sâu bệnh: AI chỉ chọn mã trong bảng** (`rules/pests.yaml`, nghệ nhân sửa ở Bộ luật), luật cứng loại mã lạ; cách xử lý lấy nguyên văn từ bảng, không tên thương mại / liều thuốc. Kết quả theo dấu hiệu có ngay, AI cập nhật sau; lỗi AI giữ kết quả tra bảng | Tránh AI bịa thuốc; trả lời được cả khi hết tiền API |
+| 65 | **Hỏi đáp + đọc to dùng Web Speech của trình duyệt** (nhận giọng nói vi-VN, đọc to) — không cần dịch vụ TTS / STT trả phí; trả lời tra bảng loài trước, AI (model rẻ, Q1) sau | Miễn phí, chạy ngay trên điện thoại; máy không hỗ trợ thì ẩn nút |
+| 66 | **Thời tiết: Open-Meteo** (không cần khóa); api lưu đệm 1 giờ; worker 6:30 gom theo tỉnh người dùng có cây, chống báo trùng bằng khóa Redis 4 ngày. Ngưỡng / lời khuyên trong bộ luật "Sâu bệnh, thời tiết" (không để trong rule_set để khỏi chèn vào prompt P2 / P4) | Miễn phí, nghệ nhân chỉnh được, không tốn token |
+| 67 | Chế độ "Trợ lý chăm cây" (AI / Tra bảng) ở Chế độ AI; giới hạn ngày ở Cấu hình vận hành | Chủ động tắt chi phí AI mà vẫn giữ tính năng |
 | 33 | ultralytics/torch chỉ cài vào worker khi `WORKER_WITH_CV=true` | Nặng ~1 GB; chưa có trọng số thì không cần |
 | 31 | OpenAI ảnh: đệm lề ảnh vào vào khổ gần nhất (1024², 1536×1024, 1024×1536) rồi cắt ảnh ra về đúng tỉ lệ gốc | Không thì CV loại vì sai tỉ lệ → sinh lại, tốn tiền |
 

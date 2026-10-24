@@ -117,6 +117,10 @@ const STAGES: Choice<AiSettings['stage_mode']>[] = [
   { key: 'ai', title: 'Vẽ bằng AI', detail: '3 ảnh giai đoạn vẽ riêng, đẹp hơn · tốn 3 lần tạo ảnh' },
   { key: 'derive', title: 'Dựng từ ảnh kết quả', detail: 'Cắt cành trên ảnh gốc + tầng lá ảnh kết quả lớn dần · miễn phí, luôn khớp nhau, chất lượng nháp' },
 ];
+const ASSIST: Choice<AiSettings['assist_mode']>[] = [
+  { key: 'ai', title: 'AI', detail: 'Đoán bệnh nhìn ảnh lá, trả lời câu hỏi theo cây · mỗi lần một lượt gọi model rẻ' },
+  { key: 'offline', title: 'Tra bảng', detail: 'Theo dấu hiệu người dùng chọn và bảng loài · miễn phí, trả lời ngay' },
+];
 const DESIGN: Choice<AiSettings['design_mode']>[] = [
   { key: 'api', title: 'API', detail: 'AI thiết kế trong khuôn khổ bộ luật tỉ lệ' },
   { key: 'rules', title: 'Bộ luật', detail: 'Không tốn API · cần nghệ nhân duyệt trước khi dùng thật' },
@@ -174,6 +178,7 @@ export function AiModeTab() {
           </div>
           <ChoiceGroup legend="Ảnh giai đoạn" name="stages" choices={STAGES} value={s.stage_mode} disabled={saving} onChange={(k) => save({ stage_mode: k })} />
           <ChoiceGroup legend="Thiết kế dáng" name="design" choices={DESIGN} value={s.design_mode} disabled={saving} onChange={(k) => save({ design_mode: k })} />
+          <ChoiceGroup legend="Trợ lý chăm cây" name="assist" choices={ASSIST} value={s.assist_mode} disabled={saving} onChange={(k) => save({ assist_mode: k })} />
           {error ? <Notice tone="danger">{error}</Notice> : null}
         </div>
       )}

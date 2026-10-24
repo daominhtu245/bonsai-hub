@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ShieldAlert } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Notice, Skeleton } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { communityApi, type PublicPassport } from '@/lib/community';
@@ -42,7 +42,7 @@ export default function PassportPublicPage() {
               ))}
             </ol>
           ) : null}
-          <footer className="text-label text-ink-subtle">Bonsai AI</footer>
+          <footer className="flex items-center justify-between text-label text-ink-subtle"><span>Bonsai AI</span><Link to={`/so-cay/${p.code}/in`}>In tờ hồ sơ</Link></footer>
         </article>
       )}
     </div>

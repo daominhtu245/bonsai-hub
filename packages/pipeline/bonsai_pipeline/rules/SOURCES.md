@@ -33,8 +33,17 @@ Thu thập 25/10/2026. Luật được **diễn đạt lại** dưới dạng d�
 | efloraindia_linhsam | eFlora of India — *Trifidacanthus unifoliolatus* — https://efloraofindia.com/?p=1364264 | B | tên khoa học, phân bố, gai, hoa |
 | empire_desmodium | Bonsai Empire — *Desmodium* — https://www.bonsaiempire.com/tree-species/desmodium | B | đặc điểm làm bonsai |
 | forum_linhsam | Bonsai Nut — *Desmodium unifoliatum* — https://mail.bonsainut.com/goto/post?id=884707 | C | thận trọng khi cắt rễ cây con |
+| ucipm_scale | UC Statewide IPM — *Scales* (Pest Notes) — https://ipm.ucanr.edu/PMG/PESTNOTES/pn7408.html | A | rệp vảy: dấu hiệu, lau / dầu khoáng / xà phòng |
+| ucipm_mealybug | UC Statewide IPM — *Mealybugs* — https://ipm.ucanr.edu/PMG/PESTNOTES/pn74174.html | A | rệp sáp |
+| ucipm_aphids | UC Statewide IPM — *Aphids* — https://ipm.ucanr.edu/PMG/PESTNOTES/pn7404.html | A | rệp muội, kiến đi kèm, hạn chế đạm |
+| ucipm_mites | UC Statewide IPM — *Spider Mites* — https://ipm.ucanr.edu/PMG/PESTNOTES/pn7405.html | A | nhện đỏ, bùng khi nóng khô, xịt nước |
+| ucipm_powdery | UC Statewide IPM — *Powdery Mildew on Ornamentals* — https://ipm.ucanr.edu/home-and-landscape/powdery-mildew-on-ornamentals/pest-notes/ | A | nấm phấn trắng, thoáng tán, lưu huỳnh |
+| rhs_rootrot | RHS — *Phytophthora root rot* — https://www.rhs.org.uk/disease/phytophthora-root-rot | A | thối rễ do úng, thoát nước |
+| empire_pests | Bonsai Empire — *Bonsai pests and diseases* — https://www.bonsaiempire.com/basics/bonsai-care/advanced/pests-diseases | B | rệp, nhện, rệp sáp, rệp vảy, sâu trên bonsai |
+| empire_fertilizer | Bonsai Empire — *Fertilizing bonsai* — https://www.bonsaiempire.com/basics/bonsai-care/fertilizing | B | bón đều mùa sinh trưởng |
 
 ## Còn thiếu (cần nghệ nhân hoặc tài liệu in)
+- Sâu bệnh (`pests.yaml`): **đốm lá** và **cháy lá do nắng** chưa có nguồn đã kiểm; thuốc trừ bệnh gốc đồng / lưu huỳnh cần nghệ nhân xác nhận liều cho cây cảnh ở Việt Nam. Các link nguồn kiểm tra ngày 25/10/2026.
 - Bảng điểm chính thức của Hội Sinh vật cảnh Việt Nam (không tìm thấy bản công khai).
 - Tốc độ to thân theo năm cho từng loài (không có số đo công bố) — `MAX_THICKEN_PCT_PER_YEAR` vẫn là giả định.
 - Xác nhận tên khoa học si / sanh theo vùng.

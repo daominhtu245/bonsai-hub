@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { NotifyPrompt } from '@/components/NotifyPrompt';
 import { SaveAndRemind } from '@/components/SaveAndRemind';
+import { SpeakButton } from '@/components/SpeakButton';
 import { TreeDiary } from '@/components/TreeDiary';
 import { TreePassport } from '@/components/TreePassport';
 import { TreeTools } from '@/components/TreeTools';
@@ -206,7 +207,10 @@ function Done({ result, onToggle }: { result: ResultView; onToggle: (code: strin
       </div>
       <div className="mx-gutter mt-5">
         {guide ? (
-          <GuideCard guide={guide} done={new Set(stage.done_tasks)} onToggle={(i) => onToggle(stage.code, i)} />
+          <>
+            <GuideCard guide={guide} done={new Set(stage.done_tasks)} onToggle={(i) => onToggle(stage.code, i)} />
+            <SpeakButton className="mt-2" text={[guide.name, guide.see, 'Việc cần làm:', ...guide.actions, guide.season ? `Thời điểm tốt: ${guide.season}` : ''].filter(Boolean).join('. ')} label="Đọc to hướng dẫn" />
+          </>
         ) : (
           <Notice tone="warn">Chưa có hướng dẫn cho giai đoạn này.</Notice>
         )}

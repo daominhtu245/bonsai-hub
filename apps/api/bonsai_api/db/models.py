@@ -756,3 +756,17 @@ class HealthCheck(Base):
     status: Mapped[str] = mapped_column(String(16), default="queued")  # queued | done | failed
     result: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = _created()
+
+
+class AssistantQuestion(Base):
+    """Hỏi đáp chăm cây bằng giọng nói / chữ (docs/ideas.md E4): trả lời từ bảng loài, hoặc AI nếu bật."""
+
+    __tablename__ = "assistant_questions"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    tree_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("trees.id", ondelete="SET NULL"))
+    question: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), default="queued")  # queued | done | failed
+    answer: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = _created()

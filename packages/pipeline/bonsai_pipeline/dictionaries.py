@@ -60,6 +60,7 @@ RULE_DOCS: dict[str, dict] = {
     "styles_vn": {"file": "styles_vn.yaml", "title_vi": "Dáng & thế Việt Nam"},
     "species": {"file": "species.yaml", "title_vi": "Đặc điểm loài"},
     "judging": {"file": "judging.yaml", "title_vi": "Bảng chấm & ngưỡng kiểm tra"},
+    "pests": {"file": "pests.yaml", "title_vi": "Sâu bệnh, thời tiết & cách xử lý"},
 }
 _override: ContextVar[dict[str, dict] | None] = ContextVar("bonsai_rules_override", default=None)
 

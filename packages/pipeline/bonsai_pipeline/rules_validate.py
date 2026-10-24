@@ -27,7 +27,26 @@ def validate_rule_doc(name: str, doc) -> list[str]:
         return [f"Không có bộ luật tên {name}."]
     if not isinstance(doc, dict):
         return ["Nội dung phải là một bảng (mapping)."]
-    return {"rule_set": _rule_set, "judging": _judging, "species": _species, "styles_vn": _styles_vn}[name](doc)
+    return {"rule_set": _rule_set, "judging": _judging, "species": _species, "styles_vn": _styles_vn, "pests": _pests}[name](doc)
+
+
+def _pests(d: dict) -> list[str]:
+    err: list[str] = []
+    sym, items = d.get("symptoms"), d.get("items")
+    if not isinstance(sym, dict) or not sym:
+        return ["Cần bảng «symptoms» (mã → mô tả)."]
+    if not isinstance(items, dict) or not items:
+        return ["Cần danh sách «items»."]
+    for key, it in items.items():
+        if not isinstance(it, dict) or not it.get("name_vi"):
+            err.append(f"«{key}»: thiếu tên.")
+            continue
+        bad = [s for s in it.get("symptoms") or [] if s not in sym]
+        if not it.get("symptoms") or bad:
+            err.append(f"«{key}»: dấu hiệu không có trong bảng: {', '.join(bad) or 'trống'}.")
+        if not isinstance(it.get("treat_now_vi"), list) or not it["treat_now_vi"]:
+            err.append(f"«{key}»: cần ít nhất một việc xử lý ngay.")
+    return err
 
 
 def _rule_set(d: dict) -> list[str]:

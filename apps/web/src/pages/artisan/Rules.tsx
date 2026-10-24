@@ -8,10 +8,10 @@ import { Badge, JsonBlock, PageHeader, Panel, Tabs, dt, useLoad } from '../admin
 import { RuleEditor } from './RuleEditor';
 
 // danh sách được thêm / xóa mục trong từng bộ luật ("" = cấp trên cùng, vd. mỗi loài)
-const COLLECTIONS: Record<RuleDocKey, string[]> = { rule_set: ['style_specifics'], styles_vn: ['the'], species: [''], judging: ['criteria'] };
+const COLLECTIONS: Record<RuleDocKey, string[]> = { rule_set: ['style_specifics'], styles_vn: ['the'], species: [''], judging: ['criteria'], pests: ['items'] };
 
 const DOCS: Array<[RuleDocKey, string]> = [
-  ['rule_set', 'Luật tạo dáng & tỉ lệ'], ['styles_vn', 'Dáng & thế Việt'], ['species', 'Loài cây'], ['judging', 'Bảng chấm & ngưỡng'],
+  ['rule_set', 'Luật tạo dáng & tỉ lệ'], ['styles_vn', 'Dáng & thế Việt'], ['species', 'Loài cây'], ['judging', 'Bảng chấm & ngưỡng'], ['pests', 'Sâu bệnh, thời tiết'],
 ];
 
 /** Bộ luật có phiên bản: sửa bằng form → lưu bản mới (kèm ghi chú) → áp dụng; xem / quay về bản cũ. */

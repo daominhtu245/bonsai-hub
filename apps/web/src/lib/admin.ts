@@ -50,6 +50,7 @@ export type AiSettings = {
   design_mode: 'api' | 'rules';
   cutout_mode: 'on' | 'off';
   stage_mode: 'ai' | 'derive';
+  assist_mode: 'ai' | 'offline';
   cutout_model: string | null;
   seg_model_ready: boolean;
   app_env: string;
