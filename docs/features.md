@@ -38,6 +38,9 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | **Gói Nhà vườn tháng** (690.000 đ / 30 ngày, 20 lượt) | Mua lượt | Đăng tin không giới hạn, 3 tin nổi bật, xem thử AI 10 lần / phiên; giá, số lượt, số tin chỉnh ở quản trị |
 | **Chậu hợp dáng** từ xưởng đối tác | Kết quả → Chậu hợp dáng | Cùng dáng chậu thiết kế, dài ≈ 2/3 chiều cao cây; link mua có mã giới thiệu |
 | **Giá thị trường**: giá mỗi cm gốc theo loài, cả nước và từng miền | Tiện ích → Giá thị trường | Chỉ công bố khi ≥ 5 tin (tránh lộ giá một người bán) |
+| **Hỏi nghệ nhân**: chọn cây, hỏi đích danh hoặc ai rảnh, trả 2 lượt; nhận đánh giá (ổn / sửa / làm lại) + lời khuyên; chấm 1–5 sao | Kết quả → Hỏi nghệ nhân; Tiện ích | Quá 72 giờ chưa trả lời: tự hoàn lượt (worker, mỗi giờ) |
+| **Trang công khai** nhà vườn / nghệ nhân `/nguoi/{tên}`: giới thiệu, chuyên môn, tin đang bán, Zalo, số lần góp ý + điểm | Tài khoản → Trang công khai | Chỉ nhà vườn, nghệ nhân |
+| **Chăm hộ / nuôi hộ**: gửi cây cho một nhà vườn; nhà vườn nhận, gửi ảnh + ghi chú; ảnh vào nhật ký cây | Trang nhà vườn → Gửi chăm hộ; Tiện ích → Chăm hộ, nuôi hộ | Số điện thoại hai bên chỉ hiện sau khi nhà vườn nhận. Tiền công tự thỏa thuận |
 | Vườn của tôi | Thanh dưới → Vườn | |
 | Mua lượt (VietQR) | Tài khoản → Mua lượt | Gói, giá do quản trị chỉnh |
 | **Nhập mã quà tặng** | Tài khoản, Mua lượt | |
@@ -59,6 +62,7 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | Nhóm | Trang | Chức năng |
 |---|---|---|
 | **Thử thách phôi** (tạo, xóa) · **Chậu đối tác** (thêm, bật / tắt, xóa) | Quản trị → Khách hàng | Thao tác ghi nhật ký quản trị |
+| **Hỏi đáp** (nghệ nhân): nhận câu hỏi, xem ảnh phôi + bản vẽ, trả lời | Quản trị → nhóm Nghệ nhân | Nghệ nhân chỉ thấy câu chưa ai nhận hoặc đã nhận |
 | Tổng quan | Bảng điều khiển | 12 chỉ số so kỳ trước, biểu đồ phiên / doanh thu–chi phí, phễu, phiên lỗi |
 | Vận hành | Phiên thiết kế | Lọc, tìm (mã phiên, email, mã lỗi), chi tiết pipeline / ảnh (kể cả ảnh xem thử) / phương án, chạy lại miễn phí, hoàn lượt, dừng phiên treo, **xuất Excel** |
 | | Phản hồi | Đánh giá của người dùng, link tới phiên |

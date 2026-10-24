@@ -41,6 +41,7 @@ class UserOut(ORM):
     referral_code: str | None = None
     public_slug: str | None = None
     bio: str | None = None
+    specialties: list[str] = []
     nursery_until: datetime | None = None
 
 

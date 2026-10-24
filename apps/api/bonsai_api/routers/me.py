@@ -2,8 +2,9 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 
-from ..db.models import PushSubscription
+from ..db.models import PushSubscription, User, UserRole
 from ..schemas import UserOut
 from ..security import DB, CurrentUser
 from ..services import referrals
@@ -21,6 +22,12 @@ class ProfileIn(BaseModel):
     birth_year: int | None = Field(default=None, ge=1920, le=2030)
     province: str | None = Field(default=None, max_length=32)
     bio: str | None = Field(default=None, max_length=1000)
+    # trang công khai /nguoi/{slug} — chỉ nhà vườn, nghệ nhân (docs/ideas.md C3, D2)
+    public_slug: str | None = Field(default=None, pattern=r"^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])?$")
+    specialties: list[str] | None = Field(default=None, max_length=8)
+
+
+RESERVED_SLUGS = {"admin", "api", "bonsai", "ho-tro", "nghe-nhan", "vuon", "tin", "cho"}
 
 
 class ReferralClaimIn(BaseModel):
@@ -51,6 +58,16 @@ def update_me(body: ProfileIn, user: CurrentUser, db: DB):
         user.province = data["province"] or None
     if "bio" in data:
         user.bio = (data["bio"] or "").strip() or None
+    if "public_slug" in data or "specialties" in data:
+        if user.role not in (UserRole.nursery, UserRole.artisan, UserRole.admin):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Trang công khai dành cho nhà vườn và nghệ nhân.")
+    if "public_slug" in data:
+        slug = data["public_slug"] or None
+        if slug and (slug in RESERVED_SLUGS or db.execute(select(User.id).where(User.public_slug == slug, User.id != user.id)).first()):
+            raise HTTPException(status.HTTP_409_CONFLICT, "Tên trang này đã có người dùng.")
+        user.public_slug = slug
+    if "specialties" in data:
+        user.specialties = [t.strip()[:40] for t in (data["specialties"] or []) if t.strip()]
     if data.get("consent_training") is not None:
         user.consent_training = data["consent_training"]
         user.consent_at = datetime.now(UTC) if data["consent_training"] else None

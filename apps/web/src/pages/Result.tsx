@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, Ruler, Share2, Sofa, SquarePen, Store, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, GraduationCap, Ruler, Share2, Sofa, SquarePen, Store, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { NotifyPrompt } from '@/components/NotifyPrompt';
@@ -241,23 +241,26 @@ function Done({ result, onToggle }: { result: ResultView; onToggle: (code: strin
           Chia sẻ ảnh
         </ButtonLink>
         <ButtonLink to={`/chon/${result.job_id}`} variant="secondary">Bản vẽ cắt tỉa</ButtonLink>
-        <ButtonLink to={`/ket-qua/${result.job_id}/ban-ve-ky-thuat`} variant="secondary">
-          <Ruler size={18} strokeWidth={1.75} aria-hidden="true" />
-          Bản vẽ kỹ thuật
-        </ButtonLink>
-        <ButtonLink to={`/ket-qua/${result.job_id}/dat-vao-phong`} variant="secondary">
-          <Sofa size={18} strokeWidth={1.75} aria-hidden="true" />
-          Đặt vào phòng
-        </ButtonLink>
-        <ButtonLink to={`/ket-qua/${result.job_id}/phieu-tap-ve`} variant="secondary">
-          <SquarePen size={18} strokeWidth={1.75} aria-hidden="true" />
-          Phiếu tập vẽ
-        </ButtonLink>
-        <ButtonLink to={`/tin-cua-toi?job=${result.job_id}&tree=${result.tree_id}&title=${encodeURIComponent(result.tree_nickname ?? '')}`} variant="secondary">
-          <Store size={18} strokeWidth={1.75} aria-hidden="true" />
-          Đăng bán
-        </ButtonLink>
       </section>
+      <nav aria-label="Làm thêm với cây này" className="mx-gutter mt-3">
+        <ul className="m-0 list-none divide-y divide-line overflow-hidden rounded-card border border-line bg-surface p-0 shadow-card">
+          {([
+            [`/ket-qua/${result.job_id}/ban-ve-ky-thuat`, 'Bản vẽ kỹ thuật', Ruler],
+            [`/ket-qua/${result.job_id}/dat-vao-phong`, 'Đặt vào phòng', Sofa],
+            [`/hoi-nghe-nhan/moi?job=${result.job_id}`, 'Hỏi nghệ nhân', GraduationCap],
+            [`/tin-cua-toi?job=${result.job_id}&tree=${result.tree_id}&title=${encodeURIComponent(result.tree_nickname ?? '')}`, 'Đăng bán', Store],
+            [`/ket-qua/${result.job_id}/phieu-tap-ve`, 'Phiếu tập vẽ', SquarePen],
+          ] as const).map(([to, label, Icon]) => (
+            <li key={label}>
+              <Link to={to} className="flex min-h-touch items-center gap-3 px-4 py-2.5 text-body text-ink no-underline hover:bg-surface-2">
+                <Icon size={18} strokeWidth={1.75} className="text-ink-muted" aria-hidden="true" />
+                <span className="flex-1">{label}</span>
+                <ChevronRight size={16} className="text-ink-subtle" aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
       <Feedback jobId={result.job_id} initial={result.my_rating} />
       <DeleteTree treeId={result.tree_id} />

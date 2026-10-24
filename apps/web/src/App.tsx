@@ -30,6 +30,17 @@ const ListingTagPage = lazy(() => import('@/pages/market/ListingTag'));
 const MyListingsPage = lazy(() => import('@/pages/market/MyListings'));
 const PriceIndexPage = lazy(() => import('@/pages/market/PriceIndex'));
 const AdminPots = lazy(() => import('@/pages/admin/PartnerPots'));
+const ArtisanConsults = lazy(() => import('@/pages/artisan/Consults'));
+const ArtisansPage = lazy(() => import('@/pages/expert/Artisans'));
+const PersonPage = lazy(() => import('@/pages/expert/Person'));
+const expertPages = () => import('@/pages/expert/Consults');
+const AskConsultPage = lazy(() => expertPages().then((m) => ({ default: m.AskConsultPage })));
+const MyConsultsPage = lazy(() => expertPages().then((m) => ({ default: m.MyConsultsPage })));
+const ConsultDetailPage = lazy(() => expertPages().then((m) => ({ default: m.ConsultDetailPage })));
+const carePages = () => import('@/pages/expert/Care');
+const CareListPage = lazy(() => carePages().then((m) => ({ default: m.CareListPage })));
+const CareNewPage = lazy(() => carePages().then((m) => ({ default: m.CareNewPage })));
+const CareDetailPage = lazy(() => carePages().then((m) => ({ default: m.CareDetailPage })));
 const CreditHistory = lazy(() => import('@/pages/CreditHistory'));
 const Share = lazy(() => import('@/pages/Share'));
 const Garden = lazy(() => import('@/pages/Garden'));
@@ -105,6 +116,14 @@ export default function App() {
               <Route path="/tin/:code/the" element={<ListingTagPage />} />
               <Route path="/tin-cua-toi" element={guard(<MyListingsPage />)} />
               <Route path="/tien-ich/gia" element={<PriceIndexPage />} />
+              <Route path="/nghe-nhan" element={<ArtisansPage />} />
+              <Route path="/nguoi/:slug" element={<PersonPage />} />
+              <Route path="/hoi-nghe-nhan" element={guard(<MyConsultsPage />)} />
+              <Route path="/hoi-nghe-nhan/moi" element={guard(<AskConsultPage />)} />
+              <Route path="/hoi-nghe-nhan/:consultId" element={guard(<ConsultDetailPage />)} />
+              <Route path="/cham-ho" element={guard(<CareListPage />)} />
+              <Route path="/cham-ho/moi" element={guard(<CareNewPage />)} />
+              <Route path="/cham-ho/:requestId" element={guard(<CareDetailPage />)} />
               <Route path="/tien-ich" element={<UtilitiesHub />} />
               <Route path="/tien-ich/mai-tet" element={<MaiTet />} />
               <Route path="/tien-ich/hop-menh" element={<MenhPage />} />
@@ -137,6 +156,8 @@ export default function App() {
                 <Route path="thong-bao" element={<AdminBroadcast />} />
                 <Route path="thu-thach" element={<AdminChallenges />} />
                 <Route path="chau-doi-tac" element={<AdminPots />} />
+                <Route path="hoi-dap" element={<ArtisanConsults />} />
+                <Route path="hoi-dap/:consultId" element={<ArtisanConsults />} />
               </Route>
               <Route path="/dieu-khoan" element={<Terms />} />
               <Route path="*" element={<ComingSoon title="Không tìm thấy trang" />} />

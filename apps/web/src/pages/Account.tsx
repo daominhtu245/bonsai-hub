@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { BottomNav } from '@/components/BottomNav';
 import { GiftCodeBox } from '@/components/GiftCodeBox';
 import { ProfileExtras } from '@/components/ProfileExtras';
+import { PublicProfile } from '@/components/PublicProfile';
 import { ReferralCard } from '@/components/ReferralCard';
 import { SkillCard } from '@/components/SkillCard';
 import { Button, ButtonLink, Notice, Segmented, Skeleton } from '@/components/ui';
@@ -138,6 +139,7 @@ export default function Account() {
         </div>
 
         <SkillCard />
+        <PublicProfile />
         <ReferralCard />
 
         <form onSubmit={save} className="flex flex-col gap-2">

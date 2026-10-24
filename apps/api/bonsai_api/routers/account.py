@@ -58,6 +58,8 @@ def credit_history(user: CurrentUser, db: DB):
         label = REASON_VI.get(e.reason.value, e.reason.value)
         if ref == "trial":
             label = "Quà chào mừng"
+        elif ref.startswith("consult:"):
+            label = "Hoàn lượt hỏi nghệ nhân" if e.reason.value == "refund" else "Hỏi nghệ nhân"
         elif ref.startswith("diary:"):
             label = f"Thưởng nhật ký mốc {ref.rsplit(':', 1)[1]} tháng"
         elif ref.startswith("code:"):

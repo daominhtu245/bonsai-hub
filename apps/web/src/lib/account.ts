@@ -77,7 +77,7 @@ export const accountApi = {
   payment: (id: string) => api<Payment>(`/payments/${id}`),
   payments: () => api<Payment[]>('/payments'),
   updateProfile: (body: { name?: string | null; garden_name?: string | null; phone?: string | null; consent_training?: boolean; notify_zalo?: boolean;
-    birth_year?: number | null; province?: string | null; bio?: string | null }) =>
+    birth_year?: number | null; province?: string | null; bio?: string | null; public_slug?: string | null; specialties?: string[] }) =>
     api<User>('/me', { method: 'PATCH', json: body }),
   deleteAccount: () => api<void>('/me', { method: 'DELETE', json: { confirm: true } }),
   redeemCode: (code: string) => api<{ credits_added: number; credits: number }>('/me/gift-code', { method: 'POST', json: { code } }),

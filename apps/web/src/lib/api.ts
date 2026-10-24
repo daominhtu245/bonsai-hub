@@ -16,6 +16,7 @@ export interface User {
   province?: string | null;
   referral_code?: string | null;
   public_slug?: string | null;
+  specialties?: string[];
   bio?: string | null;
   nursery_until?: string | null;
 }

@@ -21,6 +21,7 @@ app.conf.update(
         "monitoring-check": {"task": "bonsai_worker.tasks.monitoring.check", "schedule": crontab(minute="*/10")},
         # Nhắc việc theo lộ trình: 8 giờ sáng giờ Việt Nam (timezone ở trên).
         "stage-reminders": {"task": "bonsai_worker.tasks.reminders.stage_due", "schedule": crontab(hour=8, minute=0)},
+        "consult-refunds": {"task": "bonsai_worker.tasks.consults.refund_overdue", "schedule": crontab(minute=15)},
     },
 )
 

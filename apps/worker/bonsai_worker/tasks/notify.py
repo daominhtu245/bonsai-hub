@@ -165,3 +165,13 @@ def broadcast(segment: str, title: str, body: str, path: str = "/") -> dict:
                 log.exception("broadcast push failed for %s", uid)
     log.info("broadcast %s: %d users, %d devices", segment, users, sent)
     return {"users": users, "devices": sent}
+
+
+@app.task(name="bonsai_worker.tasks.notify.user_message")
+def user_message(user_id: str, event: str, title: str, body: str, path: str = "/") -> int:
+    """Báo một người dùng (Web Push) — câu hỏi nghệ nhân đã có trả lời, nhà vườn gửi ảnh chăm hộ…"""
+    base_url = os.environ.get("PUBLIC_BASE_URL", "http://localhost:8080").rstrip("/")
+    with get_sessionmaker()() as db:
+        sent = send_web_push(db, uuid.UUID(user_id), Message(event, title, body, path), base_url)
+        db.commit()
+        return sent
