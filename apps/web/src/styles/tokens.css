@@ -124,4 +124,6 @@
   --chart-1: #1BAF7A;
   --chart-2: #EB6834;
   --chart-3: #2A78D6;
+  /* Chữ không ghi màu riêng vẫn theo nền sáng (body đặt màu theo giao diện tối). */
+  color: var(--ink);
 }

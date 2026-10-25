@@ -37,10 +37,20 @@ export default function MenhPage() {
     <div className="mx-auto max-w-content pb-10">
       <BackHeader to="/tien-ich" title="Cây hợp mệnh" />
       <div className="flex flex-col gap-4 px-gutter py-4">
-        <label className="flex flex-col gap-1 text-caption font-medium">Năm sinh (âm lịch)
-          <input inputMode="numeric" maxLength={4} value={year} onChange={(e) => setYear(e.target.value.replace(/\D/g, ''))} placeholder="Vd. 1975"
-            className="min-h-touch rounded-btn border border-line-strong bg-surface px-3 text-body tabular" />
-        </label>
+        <section className="flex flex-col items-center gap-4 rounded-card border border-line bg-surface p-4 shadow-card">
+          <ul className="m-0 flex list-none justify-center gap-2 p-0" aria-label="Ngũ hành">
+            {Object.entries(EL).map(([name, { Icon, bg, fg }]) => (
+              <li key={name} className={cx('flex flex-col items-center gap-1 text-label transition-opacity duration-fast', m && m.element !== name ? 'opacity-40' : 'font-medium')}>
+                <span className={cx('flex h-11 w-11 items-center justify-center rounded-full', bg, fg)}><Icon size={20} strokeWidth={1.75} aria-hidden="true" /></span>
+                {name}
+              </li>
+            ))}
+          </ul>
+          <label className="flex w-full flex-col items-center gap-1 text-caption font-medium text-ink-muted">Năm sinh (âm lịch)
+            <input inputMode="numeric" maxLength={4} value={year} onChange={(e) => setYear(e.target.value.replace(/\D/g, ''))} placeholder="1975"
+              className="min-h-cta w-40 rounded-btn border border-line-strong bg-surface px-3 text-center text-h1 tabular text-ink placeholder:text-ink-subtle" />
+          </label>
+        </section>
         {error ? <Notice tone="danger">{error}</Notice> : null}
         {m ? (
           <>

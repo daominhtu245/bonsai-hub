@@ -53,7 +53,7 @@ export default function MaiTetPage() {
         </label>
         {error ? <Notice tone="danger">{error}</Notice> : !plan ? <Skeleton className="h-64 rounded-card" /> : (
           <>
-            <section className="theme-light relative overflow-hidden rounded-card bg-clay-soft p-4 shadow-card">
+            <section className="relative overflow-hidden rounded-card bg-clay-soft p-4 shadow-card">
               <div className="flex items-end justify-between gap-3">
                 <div>
                   <div className="text-label font-semibold uppercase tracking-wider text-clay">Còn</div>

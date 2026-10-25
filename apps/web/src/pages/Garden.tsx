@@ -76,7 +76,7 @@ export default function Garden() {
           state={state}
           skeleton={<div className="grid grid-cols-2 gap-3"><Skeleton className="aspect-[4/6] rounded-card" /><Skeleton className="aspect-[4/6] rounded-card" /></div>}
           empty={(
-            <PhotoHero src="/images/cutout.webp" title="Chưa có cây nào" sub="Chụp phôi đầu tiên để xem nó sẽ thành cây gì." ratio="4 / 3">
+            <PhotoHero src="/images/juniper.webp" title="Chưa có cây nào" sub="Chụp phôi đầu tiên để xem nó sẽ thành cây gì." ratio="4 / 3">
               <ButtonLink to="/chup" block={false} size="touch" className="self-start">Chụp phôi</ButtonLink>
             </PhotoHero>
           )}
