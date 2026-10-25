@@ -503,3 +503,78 @@ export function StylesVnVisual({ value, base, onChange, readOnly }: Props) {
     </div>
   );
 }
+
+// ---------- Bảng chấm ----------
+
+const HARD_WHY: Record<string, string> = {
+  trunk_changed: 'Đường cong, vị trí gốc, độ nghiêng, sẹo, u của thân khác ảnh gốc.',
+  trunk_too_thick: 'Thân dày lên quá mức so với số năm và tốc độ lớn của loài.',
+  removed_branch_present: 'Cành đã đánh dấu phải cắt vẫn còn trên ảnh.',
+  extra_trunk_or_major_branch: 'Mọc thêm thân hoặc cành lớn không có trong thiết kế.',
+  wrong_species_foliage: 'Lá không đúng loài cây.',
+  camera_or_background_changed: 'Đổi góc chụp, khung hình hoặc nền.',
+  pot_style_wrong: 'Chậu khác thiết kế (dáng, màu, vị trí).',
+};
+
+export function JudgingVisual({ value, base, onChange, readOnly }: Props) {
+  const crit = (value.criteria ?? {}) as Record<string, { weight: number; check?: string[] }>;
+  const total = Object.values(crit).reduce((s, c) => s + (c.weight || 0), 0);
+  const hard = (value.fidelity_hard_fail ?? []) as string[];
+  const baseHard = (get(base, ['fidelity_hard_fail']) ?? []) as string[];
+  const pass = value.pass_score as number;
+  return (
+    <div className="flex flex-col gap-5">
+      <section className="rounded-card border border-line bg-surface p-3">
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <h3 className="m-0 text-caption font-semibold">Trọng số tiêu chí (phần B — thẩm mỹ)</h3>
+          <span className={cx('rounded-chip px-2 text-label font-semibold', total === 100 ? 'bg-primary-soft text-primary-ink' : 'bg-danger-soft text-danger')}>
+            Tổng {total}/100{total === 100 ? '' : ' — cần bằng 100'}
+          </span>
+        </div>
+        <ul className="m-0 flex list-none flex-col gap-2 p-0">
+          {Object.entries(crit).map(([k, c]) => (
+            <li key={k} className="grid gap-2 md:grid-cols-[180px_1fr_auto] md:items-center">
+              <span className="text-caption font-medium">{({ trunk_nebari: 'Thân & rễ', branches: 'Cành', foliage_pads: 'Tầng lá', apex: 'Ngọn', proportions: 'Tỉ lệ', pot_harmony: 'Chậu hài hòa', realism_age: 'Độ già hợp lý', overall: 'Tổng thể' } as Record<string, string>)[k] ?? keyLabel(k)}</span>
+              <span className="flex flex-col gap-1">
+                <span className="h-3 rounded-full bg-surface-2"><span className="block h-full rounded-full bg-primary" style={{ width: `${Math.min(100, c.weight * 3)}%` }} /></span>
+                <span className="text-label text-ink-muted">{(c.check ?? []).map(termLabel).join(' · ')}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <Stepper label={`Trọng số ${k}`} value={c.weight} step={5} max={60} readOnly={readOnly} onChange={(n) => onChange(setIn(value, ['criteria', k, 'weight'], n) as Doc)} />
+                <Changed on={c.weight !== get(base, ['criteria', k, 'weight'])} />
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-line pt-3 text-caption">
+          <span className="font-semibold">Điểm đạt</span>
+          <Stepper label="Điểm đạt" value={pass} step={5} max={100} readOnly={readOnly} onChange={(n) => onChange(setIn(value, ['pass_score'], n) as Doc)} />
+          <span className="text-ink-muted">/100 và không dính lỗi loại thẳng</span>
+          <Changed on={pass !== get(base, ['pass_score'])} />
+          <span className="relative h-3 min-w-[160px] flex-1 rounded-full bg-gradient-to-r from-danger-soft to-primary-soft">
+            <span className="absolute top-[-3px] h-[18px] w-1 rounded bg-ink" style={{ left: `${pass}%` }} aria-hidden="true" />
+          </span>
+        </div>
+      </section>
+      <section>
+        <h3 className="m-0 mb-2 text-caption font-semibold">Lỗi loại thẳng (phần A — ảnh sai so với phôi / thiết kế) <span className="font-normal text-ink-subtle">· dính một lỗi là không đạt</span></h3>
+        <ul className="m-0 grid list-none gap-2 p-0 sm:grid-cols-2 xl:grid-cols-4">
+          {[...new Set([...Object.keys(HARD_WHY), ...hard])].map((code) => {
+            const on = hard.includes(code);
+            return (
+              <li key={code} className={cx('flex flex-col gap-1 rounded-card border bg-surface p-3', on ? 'border-danger' : 'border-dashed border-line opacity-60')}>
+                <span className="flex items-center gap-1.5 text-caption font-semibold">{termLabel(code)}<Changed on={on !== baseHard.includes(code)} /></span>
+                <span className="text-label text-ink-muted">{HARD_WHY[code] ?? ''}</span>
+                <label className="mt-auto flex min-h-touch cursor-pointer items-center gap-2 text-label font-medium">
+                  <input type="checkbox" role="switch" className="switch" checked={on} disabled={readOnly} aria-label={`Lỗi loại thẳng: ${termLabel(code)}`}
+                    onChange={() => onChange(setIn(value, ['fidelity_hard_fail'], on ? hard.filter((c) => c !== code) : [...hard, code]) as Doc)} />
+                  {on ? 'Loại thẳng' : 'Không xét'}
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    </div>
+  );
+}

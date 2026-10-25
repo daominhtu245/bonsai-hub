@@ -6,9 +6,9 @@ import { artisanApi, type RuleDocDetail, type RuleDocKey } from '@/lib/artisan';
 import { cx } from '@/lib/cx';
 import { Badge, JsonBlock, PageHeader, Panel, Tabs, dt, useLoad } from '../admin/kit';
 import { RuleEditor } from './RuleEditor';
-import { RuleSetVisual, StylesVnVisual } from './visual/RuleVisual';
+import { JudgingVisual, RuleSetVisual, StylesVnVisual } from './visual/RuleVisual';
 
-const VISUAL: Partial<Record<RuleDocKey, typeof RuleSetVisual>> = { rule_set: RuleSetVisual, styles_vn: StylesVnVisual };
+const VISUAL: Partial<Record<RuleDocKey, typeof RuleSetVisual>> = { rule_set: RuleSetVisual, styles_vn: StylesVnVisual, judging: JudgingVisual };
 
 // danh sách được thêm / xóa mục trong từng bộ luật ("" = cấp trên cùng, vd. mỗi loài)
 const COLLECTIONS: Record<RuleDocKey, string[]> = { rule_set: ['style_specifics'], styles_vn: ['the'], species: [''], judging: ['criteria'], pests: ['items'] };
