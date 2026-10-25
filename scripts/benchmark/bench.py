@@ -247,6 +247,8 @@ def collect(admin: Api, job_id: str) -> dict:
         "hard_fails": fails, "ai_total": total, "fidelity": {k: cv.get(k) for k in ("pad_cover", "outside_foliage", "removed_still_present", "apex_offset") if k in cv},
         "auto_pass": bool(sel) and not fails and (total is None or total >= 6.5),
         "low_confidence": bool(((d.get("progress") or {}).get("result") or {}).get("low_confidence")),
+        "species_ai": ((d.get("analysis") or {}).get("species") or {}).get("guess"),
+        "species_local": [x["key"] for x in (d.get("progress") or {}).get("species_local") or []],
         "repair_rounds": ((d.get("progress") or {}).get("result") or {}).get("repair_rounds"),
     }
 
@@ -280,6 +282,9 @@ def summarize(rows: list[dict], reviews: list[dict]) -> dict:
         "cost_usd": round(sum(r.get("cost_usd") or 0 for r in rows), 2),
         "avg_attempts": round(sum(r.get("attempts") or 0 for r in done) / max(1, len(done)), 2),
         "top_fails": sorted(fails.items(), key=lambda x: -x[1])[:8],
+        # máy đoán loài (CLIP) khớp AI (P1) bao nhiêu — đủ cao thì bỏ được bước nhận loài bằng API
+        "species_agree": sum(1 for r in rows if r.get("species_local") and r.get("species_ai") and r["species_local"][0] == r["species_ai"]),
+        "species_compared": sum(1 for r in rows if r.get("species_local") and r.get("species_ai") and r["species_ai"] != "other"),
     }
 
 
@@ -336,7 +341,7 @@ def report(run_dir: Path, compare: Path | None, admin: Api | None = None) -> Non
         f" · trung bình {s['avg_attempts']} lần vẽ / ảnh{' · so với ' + html.escape(compare.name) if compare else ''}</p>"
         f"<table><tr><th></th><th>Lần này</th><th>{'Lần trước' if prev else ''}</th></tr>"
         + line("Chạy xong", "done", "n") + line("Tự kiểm tra đạt", "auto_pass", "done") + line("Nghệ nhân đã chấm", "reviewed", "done")
-        + line("Nghệ nhân chấm đạt (Cổng 2 ≥ 70%)", "artisan_pass", "reviewed") + "</table>"
+        + line("Nghệ nhân chấm đạt (Cổng 2 ≥ 70%)", "artisan_pass", "reviewed") + line("Máy đoán loài khớp AI", "species_agree", "species_compared") + "</table>"
         "<h2>Lỗi hay gặp</h2><table>" + "".join(f"<tr><td>{html.escape(_vi(k))}</td><td>{v}</td></tr>" for k, v in s["top_fails"]) + "</table>"
         "<h2>Từng phôi (trái: ảnh gốc · phải: kết quả)</h2><div class=g>" + "".join(cards) + "</div>")
     (run_dir / "report.html").write_text(page)

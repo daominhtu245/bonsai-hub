@@ -291,7 +291,7 @@ export default function LabelEditor() {
               />
             </div>
             <p className="m-0 mt-2 text-label text-ink-subtle">
-              {detail.draft_source === 'sam' ? 'Nháp: SAM' : detail.draft_source === 'geometry' ? 'Nháp: hình học (thô)' : 'Thủ công'}
+              {detail.draft_source === 'sam' ? 'Nháp: SAM' : detail.draft_source === 'geometry' ? 'Nháp: hình học (thô)' : detail.draft_source === 'local' ? 'Nháp: tách nền + màu (thô, miễn phí)' : 'Thủ công'}
               {' · '}B cọ · E tẩy · L khoanh tô · K khoanh xóa · [ ] cỡ · giữ H ẩn mask
             </p>
           </div>

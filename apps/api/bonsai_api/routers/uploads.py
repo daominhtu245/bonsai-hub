@@ -18,7 +18,7 @@ def upload_prefix(user_id: uuid.UUID) -> str:
     return f"uploads/{user_id}/"
 
 
-@router.post("/presign", response_model=PresignOut, dependencies=[Depends(per_ip("presign", 120, 3600))])
+@router.post("/presign", response_model=PresignOut, dependencies=[Depends(per_ip("presign", 120, 3600, staff_exempt=True))])
 def presign(body: PresignIn, user: CurrentUser):
     s = get_settings()
     if body.size_bytes > s.max_upload_bytes:

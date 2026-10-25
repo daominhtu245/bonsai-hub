@@ -52,7 +52,8 @@ Dừng thêm tính năng (xem [status.md](status.md)). "Training" ở đây gồ
 | Q1 | **Nghệ nhân duyệt bộ luật** (`rule_set`, `styles_vn`, `species`, `judging`) ở `/admin/bo-luat` | 1–2 nghệ nhân, 2–3 buổi | công nghệ nhân |
 | Q2 | **Đo lần đầu**: chạy Q0 với chế độ hiện tại → nghệ nhân chấm ở `/admin/cham-diem` → tỉ lệ đạt + lỗi hay gặp | Nạp tiền AI | ~$10–20 / lần chạy |
 | Q3 | **Vòng sửa**: mỗi lần sửa prompt / luật / khóa vùng theo lỗi hay gặp → chạy lại cả bộ → chỉ giữ thay đổi làm tăng tỉ lệ đạt; tới Cổng 2 (≥ 70%) | Q2 | ~$10–20 / vòng |
-| Q4 | **Train YOLO-seg** thân / cành / rễ: gán nhãn 300–500 ảnh ở `/admin/gan-nhan` (SAM hỗ trợ) → đo thân chính xác, kiểm tra "thân bị đổi" thật | Ảnh phôi + công gán nhãn; GPU thuê vài giờ | ~$5 GPU |
+| Q4 | **Train YOLO-seg** thân / cành / rễ: gán nhãn 300–500 ảnh ở `/admin/gan-nhan` (SAM hỗ trợ) → đo thân chính xác, kiểm tra "thân bị đổi" thật. ✅ 25/10: 229 ảnh phôi có giấy phép đã vào Gán nhãn kèm nháp miễn phí (tách nền + màu); còn: người sửa nháp + duyệt, thêm ảnh chụp thật | Ảnh phôi + công gán nhãn; GPU thuê vài giờ | ~$5 GPU |
+| Q4b | **Máy đoán loài** (CLIP + phân loại, `models/species_clip.json`): 13 loài, đúng ngay 73%, top-3 89% trên tập kiểm tra; worker lưu kết quả cạnh P1 (`progress.species_local`), bộ đo báo tỉ lệ khớp → đủ cao thì thay bước nhận loài bằng API | ✅ không tốn API | 0 đ |
 | Q5 | Model chấm dáng từ điểm nghệ nhân + Chọn dáng đẹp | ~1–2 nghìn lượt chấm | sau beta |
 | Q6 | Model ảnh riêng (Flux / SDXL + ControlNet + LoRA theo loài) | 1–5 nghìn cặp ảnh trước / sau thật | nhiều tháng sau |
 

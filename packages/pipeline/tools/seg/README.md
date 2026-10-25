@@ -8,6 +8,12 @@ Không có trọng số → luôn dùng API (pipeline vẫn chạy).
 
 Lớp: `0 trunk` (thân chính đến ngọn), `1 branch` (mỗi cành một đối tượng), `2 root` (rễ nổi / nebari).
 
+## 0. Ảnh có sẵn (không tốn API)
+`scripts/dataset/` gom ảnh có giấy phép → phân loại CLIP → tách nền; `scripts/dataset/import_labels.py` đưa ảnh phôi đã lọc
+vào Gán nhãn. Ảnh tải lên được tạo **nháp miễn phí trên máy** (`labeling.local_drafts`: tách nền ISNet → bỏ lá theo màu →
+bỏ chậu theo hình khối → gỗ dày = thân, nhánh mảnh = cành, loe sát đất = rễ). Thô: ~½ ảnh dùng được ngay, còn lại sửa
+nhiều; không tách được thân thì mới gọi AI (L1) như dưới.
+
 ## 1–2. Gom ảnh và gán nhãn ngay trong app — `/admin` → Gán nhãn
 - **Tải ảnh lên** (tối đa 200 ảnh/lần) hoặc **Lấy ảnh từ phiên đã chạy** (chỉ người dùng đồng ý cho dùng ảnh huấn luyện,
   và cây của admin). Worker xóa EXIF, đọc ảnh bằng model chữ rẻ (~$0,002/ảnh, bước `L1` trong Chi phí) để lấy tọa độ

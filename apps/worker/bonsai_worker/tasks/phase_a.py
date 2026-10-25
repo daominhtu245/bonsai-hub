@@ -17,6 +17,7 @@ from bonsai_api.services.settings import get_all
 from bonsai_pipeline.adapters import AIError, ImageInput, get_llm_client
 from bonsai_pipeline.cost_mode import get_profile
 from bonsai_pipeline.cutout import PREPROCESS_FLAG, get_remover, make_cutout, shift_analysis
+from bonsai_pipeline.species_guess import get_guesser
 from bonsai_pipeline.phase_a import run_p1, run_p2
 from bonsai_pipeline.rule_engine import compute_targets
 from bonsai_pipeline.local_analysis import LocalAnalysis, analyze_parts
@@ -119,6 +120,13 @@ def run_phase_a(db: Session, job_id: uuid.UUID) -> None:
                 analysis = local.analysis
                 local_seg = SegmentationResult(measure_mask(parts.trunk), parts.trunk)
                 prompt_tags.append("A1.local")
+        # A0s — máy đoán loài (CLIP, miễn phí): chỉ lưu để đối chiếu với P1 ở trang quản trị / bộ đo, chưa đưa vào prompt.
+        if (guesser := get_guesser()) is not None:
+            try:
+                job.progress = {**(job.progress or {}), "species_local": [{"key": k, "p": p} for k, p in guesser.guess(images[0].data)]}
+                db.commit()
+            except Exception:  # noqa: BLE001
+                log.exception("species guess failed")
         if analysis is None:
             # A0c — tách nền + phác họa nét trên máy: P1 chỉ thấy phôi (bỏ tay, cây khác…) và có nét để đặt tọa độ.
             p1_images, p1_size, preprocess, offset = images, size, "none", (0, 0)

@@ -174,3 +174,100 @@ def read_mask(data: bytes, size: tuple[int, int]) -> np.ndarray:
     if arr.shape != (size[1], size[0]):
         raise ValueError(f"mask size {arr.shape[::-1]} != image size {size}")
     return arr
+
+
+# ---------- nháp không gọi AI (tách nền + màu) ----------
+
+FOLIAGE_HSV = ((25, 40, 35), (95, 255, 255))  # OpenCV H 0–180: vàng-lục → lục lam; lá non / lá già đều lọt
+
+
+def find_ground(obj: np.ndarray, top: int, bottom: int) -> int:
+    """Hàng mặt chậu / mặt đất: chậu là khối ĐẶC, RỘNG ở đáy (bề ngang gần như đều từng hàng); đi từ đáy lên, gặp hàng
+    hẹp hẳn lại (chân thân) thì dừng. Không thấy khối chậu → coi đáy khối cây là mặt đất."""
+    rows = np.arange(top, bottom + 1)
+    width = obj[top:bottom + 1].sum(1).astype(float)
+    span = np.array([(np.ptp(np.where(r)[0]) + 1) if r.any() else 1 for r in obj[top:bottom + 1]], float)
+    solid = width / span
+    h = bottom - top + 1
+    low = slice(int(h * 0.6), h)
+    pot_w = np.percentile(width[low], 80) if width[low].size else 0
+    ground = bottom
+    started = False
+    for i in range(h - 1, int(h * 0.35), -1):
+        is_pot = width[i] >= 0.55 * pot_w and solid[i] >= 0.8
+        if is_pot:
+            started, ground = True, int(rows[i])
+        elif started and width[i] < 0.45 * pot_w:
+            break
+    return ground
+
+
+def local_drafts(image_bytes: bytes, remover=None) -> list[DraftObject]:
+    """Mask nháp thân / cành / rễ chỉ bằng máy (không tốn API): tách nền lấy khối cây → bỏ lá theo màu → bỏ chậu / đất ở
+    đáy (dải rộng nhất phía dưới) → phần gỗ dày = thân, nhánh mảnh tách ra = cành, phần loe sát mặt đất = rễ.
+    Thô — chỉ để người gán nhãn sửa thay vì vẽ từ đầu. Không tách được → [] (worker chuyển sang cách có AI)."""
+    import cv2
+
+    from .cutout import get_remover, main_object
+
+    remover = remover or get_remover()
+    if remover is None:
+        return []
+    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    rgb = np.asarray(img)
+    h, w = rgb.shape[:2]
+    obj = main_object(remover.alpha(img))
+    if obj.mean() < 0.01:
+        return []
+    hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
+    lo, hi = FOLIAGE_HSV
+    leaf = cv2.inRange(hsv, np.array(lo), np.array(hi)).astype(bool)
+    wood = obj & ~leaf
+    k3 = np.ones((3, 3), np.uint8)
+    wood = cv2.morphologyEx(cv2.morphologyEx(wood.astype(np.uint8), cv2.MORPH_OPEN, k3), cv2.MORPH_CLOSE, k3).astype(bool)
+    ys = np.where(obj.any(1))[0]
+    top, bottom = int(ys.min()), int(ys.max())
+    ground = find_ground(obj, top, bottom)
+    above = wood.copy()
+    above[ground:] = False
+    if above.sum() < 50:
+        return []
+    n, lab, st, _ = cv2.connectedComponentsWithStats(above.astype(np.uint8), 8)
+    base_row = above[max(top, ground - max(3, (bottom - top) // 30)):ground]
+    base_labels = [i for i in np.unique(lab[max(top, ground - max(3, (bottom - top) // 30)):ground][base_row]) if i]
+    if not base_labels:
+        return []
+    tree = np.isin(lab, base_labels)
+    # thân = phần dày: mở hình thái bằng đĩa ~ 1/4 bề ngang gốc → giữ thân (và cành rất to), bỏ cành mảnh
+    base_w = max(4, int(np.median(tree[max(top, ground - (bottom - top) // 10):ground].sum(1)) or 4))
+    r = max(2, base_w // 6)
+    disk = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
+    trunk = cv2.morphologyEx(tree.astype(np.uint8), cv2.MORPH_OPEN, disk).astype(bool)
+    tn, tlab, tst, _ = cv2.connectedComponentsWithStats(trunk.astype(np.uint8), 8)
+    if tn > 1:  # giữ khối dày chạm gốc
+        keep = [i for i in range(1, tn) if tst[i][1] + tst[i][3] >= ground - base_w]
+        trunk = np.isin(tlab, keep) if keep else trunk
+    if trunk.sum() < 0.25 * tree.sum():  # phôi thân mảnh: cả khối gỗ chạm gốc là thân (cành để người gán tách)
+        trunk = tree.copy()
+    objects = [DraftObject("trunk", "trunk", trunk)]
+    rest = tree & ~cv2.dilate(trunk.astype(np.uint8), k3).astype(bool)
+    bn, blab, bst, _ = cv2.connectedComponentsWithStats(rest.astype(np.uint8), 8)
+    min_area = max(30, int(0.0004 * h * w))
+    branches = sorted((i for i in range(1, bn) if bst[i][4] >= min_area), key=lambda i: -bst[i][4])[:12]
+    root_band_top = ground - max(4, (bottom - top) // 14)
+    for j, i in enumerate(branches, 1):
+        m = blab == i
+        if bst[i][1] >= root_band_top:  # nằm hẳn trong dải sát đất → rễ, không phải cành
+            continue
+        objects.append(DraftObject(f"branch_b{j}", "branch", m))
+    # rễ: gỗ trong dải sát mặt đất, rộng hơn chân thân
+    band = wood.copy()
+    band[:root_band_top] = False
+    band[ground + max(2, base_w // 6):] = False
+    cols = np.where(trunk[max(top, ground - base_w):ground].any(0))[0]
+    if cols.size:
+        band[:, cols.min():cols.max() + 1] &= False
+    # dải quá rộng / quá đặc thường là mặt đất trong chậu, không phải rễ → để người gán vẽ rễ tay
+    if min_area <= band.sum() <= 1.5 * base_w * max(4, (bottom - top) // 14):
+        objects.append(DraftObject("root", "root", band))
+    return objects

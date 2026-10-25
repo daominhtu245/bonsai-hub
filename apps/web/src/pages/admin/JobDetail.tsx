@@ -56,6 +56,8 @@ function Overview({ d }: { d: Detail }) {
             {a.summary_vi ? <p className="m-0 text-caption">{a.summary_vi}</p> : null}
             <KeyValue items={[
               ['Loài (AI)', a.species ? `${SPECIES_NAME[a.species.guess] ?? a.species.guess} · ${Math.round(a.species.confidence * 100)}%` : '—'],
+              ['Loài (máy đoán, miễn phí)', ((d.progress as { species_local?: Array<{ key: string; p: number }> })?.species_local ?? [])
+                .map((g) => `${SPECIES_NAME[g.key] ?? g.key.replace(/_/g, ' ')} ${Math.round(g.p * 100)}%`).join(' · ') || '—'],
               ['Thân', a.trunk ? `${String(a.trunk.movement)} · thuôn ${String(a.trunk.taper)} · nghiêng ${String(a.trunk.lean_angle_deg)}°` : '—'],
               ['Rễ', a.nebari ? `${String(a.nebari.quality)} · ${String(a.nebari.spread_side)}` : '—'],
               ['Số cành', String(a.branches?.length ?? 0)],
