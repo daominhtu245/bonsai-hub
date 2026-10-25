@@ -1,17 +1,16 @@
 import { useEffect, useState } from 'react';
 import {
-  CalendarHeart, ChevronRight, CloudRain, CloudSun, GraduationCap, HandHeart, HeartPulse, Leaf, LineChart, MessageCircleQuestion,
-  Snowflake, Sparkles, Store, Sun, Swords, ThumbsUp, Wind, type LucideIcon,
+  CalendarHeart, ChevronRight, CloudSun, GraduationCap, HandHeart, HeartPulse, Leaf, LineChart, MessageCircleQuestion,
+  Sparkles, Store, Swords, ThumbsUp, type LucideIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { Tile, type Tone } from '@/components/ui';
 import { accountApi, type GardenTree } from '@/lib/account';
-import { assistApi, type Weather } from '@/lib/assist';
 import { useAuth } from '@/lib/auth';
 import { useFeatures, type FeatureKey } from '@/lib/features';
-import { toolsApi } from '@/lib/tools';
+import { daysUntil, useToday } from '@/lib/today';
 
 export type HubItem = { to: string; title: string; sub: string; Icon: LucideIcon; feature: FeatureKey | FeatureKey[] };
 
@@ -55,29 +54,16 @@ export const HUB: Array<{ group: string; tone: Tone; items: HubItem[] }> = [
   },
 ];
 
-const WEATHER_ICON = { heavy_rain: CloudRain, heat: Sun, cold: Snowflake, wind: Wind } as const;
-const daysUntil = (iso: string) => Math.max(0, Math.ceil((new Date(`${iso}T00:00:00`).getTime() - Date.now()) / 86400000));
-
 /** "Hôm nay": thời tiết nơi ở + cảnh báo, đếm ngược Tết, việc tiếp theo của cây — lý do để mở app mỗi ngày. */
 function Today() {
   const { user } = useAuth();
-  const on = useFeatures();
   const me = user.status === 'ready' ? user.data : null;
-  const province = me?.province ?? null;
-  const [w, setW] = useState<Weather | null>(null);
-  const [tet, setTet] = useState<{ tet: string; from: string } | null>(null);
+  const { weather: w, today, alert, WIcon, tet } = useToday();
   const [task, setTask] = useState<GardenTree | null>(null);
-  useEffect(() => {
-    if (province && on('weather')) assistApi.weather(province).then(setW).catch(() => null);
-    if (on('mai_tet')) toolsApi.maiTet(province).then((p) => setTet({ tet: p.tet, from: p.defoliate_from })).catch(() => null);
-  }, [province]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (me) accountApi.garden().then((g) => setTask(g.trees.find((t) => t.next_task_vi) ?? null)).catch(() => null);
   }, [me?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const today = w?.days[0];
-  const alert = w?.alerts[0];
-  const WIcon = alert ? WEATHER_ICON[alert.kind] : today && today.rain_mm >= 5 ? CloudRain : today && today.max_c >= 33 ? Sun : CloudSun;
   if (!today && !tet && !task) return null;
   return (
     <section aria-label="Hôm nay" className="overflow-hidden rounded-card border border-line bg-surface shadow-card">

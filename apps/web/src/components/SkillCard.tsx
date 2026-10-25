@@ -7,9 +7,10 @@ import { cx } from '@/lib/cx';
 const LEVELS = [['hoc_tro', 'Học trò'], ['tho', 'Thợ'], ['nghe_nhan', 'Nghệ nhân']] as const;
 
 /** B7 — Bậc tay nghề: Học trò → Thợ → Nghệ nhân, tiến độ tới bậc sau. */
-export function SkillCard() {
-  const [s, setS] = useState<Skill | null>(null);
-  useEffect(() => { communityApi.skill().then(setS).catch(() => setS(null)); }, []);
+export function SkillCard({ data }: { data?: Skill | null }) {
+  const [own, setOwn] = useState<Skill | null>(null);
+  useEffect(() => { if (data === undefined) communityApi.skill().then(setOwn).catch(() => setOwn(null)); }, [data === undefined]); // eslint-disable-line react-hooks/exhaustive-deps
+  const s = data === undefined ? own : data;
   if (!s) return null;
   return (
     <section className="rounded-card border border-line bg-surface p-4 shadow-card" aria-label="Bậc tay nghề">

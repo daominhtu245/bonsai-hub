@@ -46,7 +46,8 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | **Đọc to hướng dẫn** giai đoạn | Kết quả, dưới thẻ hướng dẫn | Ẩn nếu máy không hỗ trợ |
 | **Thời tiết & việc cần làm** 3 ngày theo tỉnh; **thông báo 6:30** khi sắp mưa to / nắng nóng / rét / gió mạnh | Tiện ích → Thời tiết | Dự báo Open-Meteo (miễn phí); mỗi tỉnh, ngày, loại chỉ báo một lần; ngưỡng ở bộ luật "Sâu bệnh, thời tiết" |
 | **Tờ hồ sơ cây** in làm quà (ảnh, lịch sử, mã QR) | Trang sổ cây → In tờ hồ sơ | |
-| Vườn của tôi | Thanh dưới → Vườn | |
+| **Trang chủ** (đã đăng nhập): lời chào, chip thời tiết + đếm ngược Tết, thẻ "Việc hôm nay" của cây cần chăm, dải ảnh vườn, 4 lối tắt tiện ích | Thanh dưới → Trang chủ | Chip / lối tắt ẩn theo tính năng đang tắt |
+| Vườn của tôi: lưới ảnh (ảnh minh họa tương lai + phôi gốc tròn ở góc), số cây / việc / lượt, lọc Còn việc · Chờ chọn thế, nhắc "x ngày chưa chụp" (≥ 30 ngày) | Thanh dưới → Vườn | |
 | Mua lượt (VietQR) | Tài khoản → Mua lượt | Gói, giá do quản trị chỉnh |
 | **Nhập mã quà tặng** | Tài khoản, Mua lượt | |
 | **Lịch sử lượt** (mua / dùng / hoàn / tặng) | Tài khoản → Lịch sử lượt | |

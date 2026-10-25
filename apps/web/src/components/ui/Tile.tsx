@@ -11,10 +11,10 @@ const TONE: Record<Tone, string> = {
   seal: 'bg-danger-soft text-danger',
 };
 
-export function IconBadge({ Icon, tone = 'ink', size = 'md' }: { Icon: LucideIcon; tone?: Tone; size?: 'md' | 'lg' }) {
+export function IconBadge({ Icon, tone = 'ink', size = 'md' }: { Icon: LucideIcon; tone?: Tone; size?: 'sm' | 'md' | 'lg' }) {
   return (
-    <span className={cx('flex flex-none items-center justify-center rounded-full', TONE[tone], size === 'lg' ? 'h-14 w-14' : 'h-10 w-10')}>
-      <Icon size={size === 'lg' ? 26 : 20} strokeWidth={1.75} aria-hidden="true" />
+    <span className={cx('flex flex-none items-center justify-center rounded-full', TONE[tone], size === 'lg' ? 'h-14 w-14' : size === 'sm' ? 'h-8 w-8' : 'h-10 w-10')}>
+      <Icon size={size === 'lg' ? 26 : size === 'sm' ? 16 : 20} strokeWidth={1.75} aria-hidden="true" />
     </span>
   );
 }

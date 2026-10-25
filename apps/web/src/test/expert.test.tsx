@@ -121,10 +121,13 @@ describe('Nghệ nhân, chăm hộ', () => {
     ]);
     localStorage.setItem('bonsai.token', 'tok');
     render(<AuthProvider><MemoryRouter><PublicProfile /></MemoryRouter></AuthProvider>);
-    await userEvent.type(await screen.findByLabelText('Tên trang'), 'Vườn Bà Lá');
+    expect(await screen.findByText('Chưa tạo')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Tạo trang' }));
+    await userEvent.type(screen.getByLabelText('Tên trang'), 'Vườn Bà Lá');
     await userEvent.type(screen.getByLabelText(/Chuyên môn/), 'Si');
     await userEvent.click(screen.getByRole('button', { name: 'Lưu trang' }));
     await waitFor(() => expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ public_slug: 'vuon-ba-la', bio: null, specialties: ['Si'] }));
     expect(await screen.findByText('Đã lưu trang.')).toBeInTheDocument();
+    expect(screen.getByText('/nguoi/vuon-ba-la')).toBeInTheDocument();
   });
 });

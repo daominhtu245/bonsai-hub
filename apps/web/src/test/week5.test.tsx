@@ -3,7 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '@/lib/auth';
 import Buy from '@/pages/Buy';
+import Account from '@/pages/Account';
 import Garden from '@/pages/Garden';
+import Home from '@/pages/Home';
 import Share from '@/pages/Share';
 import { json, mockFetch } from './fetchMock';
 import { user } from './fixtures';
@@ -24,6 +26,7 @@ function renderAt(path: string, route: string, el: JSX.Element) {
 
 const tree = (patch: object) => ({
   tree_id: 't1', nickname: 'Si sân sau', species_key: 'si', thumbnail_url: 'https://r2/t.webp', job_id: 'j1', job_status: 'done',
+  photo_url: 'https://r2/p.webp', future_url: 'https://r2/S4.webp', last_photo_at: null, created_at: '2020-01-01T00:00:00Z',
   style_vi: 'Trực uốn', stage_code: 'S1', stage_name_vi: 'Tạo khung', stages_done: 1, next_task_vi: 'Uốn dây cành trái', ...patch,
 });
 
@@ -37,20 +40,75 @@ describe('Garden', () => {
       ] })],
     ]);
     renderAt('/vuon', '/vuon', <Garden />);
-    expect(await screen.findByText('2 cây · 4 lượt')).toBeInTheDocument();
+    const stats = await screen.findByRole('region', { name: 'Tổng quan vườn' });
+    expect(stats).toHaveTextContent('2cây');
+    expect(stats).toHaveTextContent('1việc');
+    expect(stats).toHaveTextContent('4lượt');
+    expect(screen.getByRole('link', { name: /Mai mới mua/ })).toHaveTextContent('Chờ chọn thế');
     expect(screen.getByText('Trực uốn · S1 Tạo khung')).toBeInTheDocument();
     expect(screen.getByText('Tiếp theo: Uốn dây cành trái')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Mai mới mua/ })).toHaveAttribute('href', '/chon/j2');
     expect(screen.getByRole('img', { name: 'Đã xong 1/5 giai đoạn' })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Còn việc cần làm' }));
+    await userEvent.click(screen.getByRole('button', { name: /Còn việc cần làm/ }));
     expect(screen.queryByText('Mai mới mua')).not.toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Điều hướng chính' })).toBeInTheDocument();
+    expect(screen.getByText('Minh họa')).toBeInTheDocument();
+    expect(screen.getByAltText('Phôi gốc')).toHaveAttribute('src', 'https://r2/p.webp');
+    expect(screen.getByText(/ngày chưa chụp/)).toBeInTheDocument();
   });
 
   it('shows empty state', async () => {
     mockFetch([['GET /api/v1/me', () => json(user)], ['GET /api/v1/garden', () => json({ credits: 1, trees: [] })]]);
     renderAt('/vuon', '/vuon', <Garden />);
     expect(await screen.findByText('Chưa có cây nào')).toBeInTheDocument();
+  });
+});
+
+describe('Home dashboard', () => {
+  it('greets, shows today task, garden rail and explore tiles', async () => {
+    mockFetch([
+      ['GET /api/v1/me', () => json({ ...user, province: 'hue' })],
+      ['GET /api/v1/garden', () => json({ credits: 4, trees: [tree({})] })],
+      [/GET .*\/tools\/mai-tet/, () => json({ tet: '2099-01-01', defoliate_from: '2098-12-01' })],
+      [/GET .*\/weather/, () => json({ province_vi: 'Huế', days: [{ date: '2026-10-25', min_c: 22, max_c: 29, rain_mm: 0, wind_kmh: 5 }], alerts: [] })],
+    ]);
+    renderAt('/', '/', <Home />);
+    expect(await screen.findByRole('heading', { level: 1, name: /Chào buổi .+, Ba/ })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Việc hôm nay: Si sân sau' })).toHaveAttribute('href', '/ket-qua/j1');
+    expect(screen.getByText('Uốn dây cành trái')).toBeInTheDocument();
+    expect(await screen.findByText('22–29°')).toBeInTheDocument();
+    expect(await screen.findByText(/ngày tới Tết/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Thêm cây/ })).toHaveAttribute('href', '/chup');
+    expect(screen.getByRole('link', { name: /Hỏi cách chăm/ })).toHaveAttribute('href', '/tien-ich/hoi-dap');
+  });
+
+  it('invites a first capture when the garden is empty', async () => {
+    mockFetch([['GET /api/v1/me', () => json(user)], ['GET /api/v1/garden', () => json({ credits: 1, trees: [] })]]);
+    renderAt('/', '/', <Home />);
+    expect(await screen.findByRole('link', { name: /Chụp phôi đầu tiên/ })).toHaveAttribute('href', '/chup');
+  });
+});
+
+describe('Account hero', () => {
+  it('shows credits, tree count and skill level; gift code folds open', async () => {
+    mockFetch([
+      ['GET /api/v1/me', () => json({ ...user, credits: 7 })],
+      ['GET /api/v1/garden', () => json({ credits: 7, trees: [tree({}), tree({ tree_id: 't2' })] })],
+      ['GET /api/v1/me/skill', () => json({ level: 'tho', level_vi: 'Thợ', next_vi: 'Nghệ nhân', progress: [] })],
+      ['GET /api/v1/payments', () => json([])],
+    ]);
+    renderAt('/tai-khoan', '/tai-khoan', <Account />);
+    const hero = await screen.findByRole('region', { name: 'Hồ sơ của bạn' });
+    expect(hero).toHaveTextContent('Chú Ba');
+    expect(hero).toHaveTextContent('7lượt');
+    await waitFor(() => expect(hero).toHaveTextContent('2cây'));
+    await waitFor(() => expect(hero).toHaveTextContent('Thợbậc'));
+    expect(screen.queryByLabelText('Mã quà tặng')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Nhập mã quà tặng' }));
+    expect(screen.getByLabelText('Mã quà tặng')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Lưu hồ sơ' })).not.toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Tên vườn'), 'Vườn Ba');
+    expect(screen.getByRole('button', { name: 'Lưu hồ sơ' })).toBeInTheDocument();
   });
 });
 

@@ -13,6 +13,10 @@ export interface GardenTree {
   stage_name_vi: string | null;
   stages_done: number;
   next_task_vi: string | null;
+  photo_url?: string | null;
+  future_url?: string | null;
+  last_photo_at?: string | null;
+  created_at?: string | null;
 }
 
 export interface Package {

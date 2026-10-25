@@ -1,10 +1,11 @@
 """Màn 08 — Vườn của tôi: mỗi cây kèm phiên thiết kế mới nhất, giai đoạn hiện tại và việc tiếp theo."""
 
 import uuid
+from datetime import datetime
 
 from fastapi import APIRouter
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from .. import storage
 from ..db.models import (
@@ -29,6 +30,10 @@ class GardenTree(BaseModel):
     stage_name_vi: str | None
     stages_done: int  # số giai đoạn đã làm xong hết việc (để vẽ thanh tiến độ)
     next_task_vi: str | None
+    photo_url: str | None = None  # ảnh phôi gốc (mặt trước)
+    future_url: str | None = None  # ảnh minh họa S4 đã chọn
+    last_photo_at: datetime | None = None  # lần chụp nhật ký gần nhất (nhắc chụp lại)
+    created_at: datetime | None = None
 
 
 class GardenOut(BaseModel):
@@ -56,14 +61,17 @@ def garden(user: CurrentUser, db: DB):
     out = []
     for tree in trees:
         job = db.execute(select(DesignJob).where(DesignJob.tree_id == tree.id).order_by(DesignJob.created_at.desc())).scalars().first()
-        thumb_key = None
+        thumb_key = photo_key = future_key = None
         front = db.execute(select(TreePhoto).where(TreePhoto.tree_id == tree.id, TreePhoto.source == PhotoSource.upload)
                            .order_by(TreePhoto.is_front.desc(), TreePhoto.view_index)).scalars().first()
         if front and not front.storage_key.startswith("uploads/"):
-            thumb_key = front.storage_key
+            thumb_key = photo_key = front.storage_key
+        last = db.execute(select(func.max(TreePhoto.taken_at)).where(TreePhoto.tree_id == tree.id,
+                                                                    TreePhoto.source == PhotoSource.progress)).scalar()
         item = GardenTree(tree_id=tree.id, nickname=tree.nickname, species_key=tree.species_key, thumbnail_url=None,
                           job_id=job.id if job else None, job_status=job.status.value if job else None, style_vi=None,
-                          stage_code=None, stage_name_vi=None, stages_done=0, next_task_vi=None)
+                          stage_code=None, stage_name_vi=None, stages_done=0, next_task_vi=None, last_photo_at=last,
+                          created_at=tree.created_at)
         if job and job.chosen_option_id:
             opt = db.get(DesignOption, job.chosen_option_id)
             item.style_vi = styles[opt.style_key].name_vi if opt and opt.style_key in styles else None
@@ -77,7 +85,9 @@ def garden(user: CurrentUser, db: DB):
             final = db.execute(select(RenderImage).where(RenderImage.job_id == job.id, RenderImage.stage_code == "S4",
                                                          RenderImage.selected)).scalars().first()
             if final:
-                thumb_key = final.storage_key
+                thumb_key = future_key = final.storage_key
         item.thumbnail_url = storage.presign_get(thumb_key) if thumb_key else None
+        item.photo_url = storage.presign_get(photo_key) if photo_key else None
+        item.future_url = storage.presign_get(future_key) if future_key else None
         out.append(item)
     return GardenOut(trees=out, credits=user.credits)

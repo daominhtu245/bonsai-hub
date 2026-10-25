@@ -175,6 +175,7 @@ def test_garden_current_stage_and_next_task(db, client, login, bucket):
     t = g["trees"][0]
     assert t["stage_code"] == "S1" and t["stages_done"] == 1 and t["next_task_vi"] == "S1-b"
     assert t["style_vi"] == "Trực uốn" and "S4.webp" in t["thumbnail_url"] and g["credits"] == 1
+    assert "S4.webp" in t["future_url"] and t["last_photo_at"] is None and t["created_at"]
 
 
 # ---------- admin ----------

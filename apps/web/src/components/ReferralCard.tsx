@@ -19,10 +19,13 @@ export function ReferralCard() {
   const claim = () => toolsApi.claimReferral(code).then(() => { setMsg('Đã nhận mã. Bạn được tặng lượt khi phân tích phôi đầu tiên.'); setR({ ...r, claimed: true }); })
     .catch((e: ApiError) => setMsg(e.message));
   return (
-    <div className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4 shadow-card">
-      <div className="flex items-center gap-2 text-body font-semibold"><Gift size={18} aria-hidden="true" />Giới thiệu bạn — mỗi bên +{r.credits_each} lượt</div>
+    <div className="flex flex-col gap-3 rounded-card border border-primary-soft bg-primary-soft p-4 shadow-card">
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-primary text-primary-on"><Gift size={20} aria-hidden="true" /></span>
+        <span className="flex flex-col"><span className="text-body font-semibold text-primary-ink">Giới thiệu bạn</span><span className="text-caption text-primary-ink">Mỗi bên được tặng +{r.credits_each} lượt</span></span>
+      </div>
       <div className="flex items-center gap-2">
-        <span className="rounded-btn bg-surface-2 px-3 py-2 font-mono text-[18px] font-semibold tracking-[0.15em]">{r.code}</span>
+        <span className="rounded-btn border border-dashed border-primary bg-surface px-3 py-2 font-mono text-[18px] font-semibold tracking-[0.15em]">{r.code}</span>
         <Button size="touch" block={false} onClick={share}><Share2 size={16} aria-hidden="true" />Gửi cho bạn</Button>
       </div>
       {r.invited ? <span className="text-caption text-ink-muted">Đã mời {r.invited} người · {r.rewarded} người đã dùng</span> : null}
