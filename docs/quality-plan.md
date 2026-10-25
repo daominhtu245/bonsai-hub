@@ -40,3 +40,21 @@ Chạy lại phiên B trên 2 phiên cũ (giữ nguyên phôi + thiết kế, ch
 - Đã sửa sau lần thử: vùng chậu cắt cứng (giờ cả dải dưới), vệt sọc mép sau khi căn (bỏ mép không có dữ liệu),
   lỗi trung thực là lỗi "mềm" (vẫn chấm P4 để có hướng dẫn sửa), mặt nạ sai cỡ với ảnh vuông.
 - Chưa thử lại được sau khi sửa: tài khoản OpenAI hết tiền.
+
+## Giai đoạn tập trung chất lượng (từ 25/10/2026)
+Dừng thêm tính năng (xem [status.md](status.md)). "Training" ở đây gồm 2 việc khác nhau:
+**chỉnh có đo** (prompt, bộ luật, khóa vùng — làm ngay, không cần GPU) và **huấn luyện model riêng**
+(YOLO-seg, model chấm, model ảnh — cần dữ liệu, làm dần). GPT Image / Gemini không cho tự huấn luyện.
+
+| # | Việc | Cần gì | Tốn |
+|---|---|---|---|
+| Q0 | **Bộ đo cố định**: 20 phôi thật (đủ 5 loài, nhiều góc / nền), bảng chấm ~10 tiêu chí, lệnh chạy cả bộ + báo cáo so sánh trước / sau | Ảnh phôi thật (chủ dự án / nhà vườn quen) | 0 đ |
+| Q1 | **Nghệ nhân duyệt bộ luật** (`rule_set`, `styles_vn`, `species`, `judging`) ở `/admin/bo-luat` | 1–2 nghệ nhân, 2–3 buổi | công nghệ nhân |
+| Q2 | **Đo lần đầu**: chạy Q0 với chế độ hiện tại → nghệ nhân chấm ở `/admin/cham-diem` → tỉ lệ đạt + lỗi hay gặp | Nạp tiền AI | ~$10–20 / lần chạy |
+| Q3 | **Vòng sửa**: mỗi lần sửa prompt / luật / khóa vùng theo lỗi hay gặp → chạy lại cả bộ → chỉ giữ thay đổi làm tăng tỉ lệ đạt; tới Cổng 2 (≥ 70%) | Q2 | ~$10–20 / vòng |
+| Q4 | **Train YOLO-seg** thân / cành / rễ: gán nhãn 300–500 ảnh ở `/admin/gan-nhan` (SAM hỗ trợ) → đo thân chính xác, kiểm tra "thân bị đổi" thật | Ảnh phôi + công gán nhãn; GPU thuê vài giờ | ~$5 GPU |
+| Q5 | Model chấm dáng từ điểm nghệ nhân + Chọn dáng đẹp | ~1–2 nghìn lượt chấm | sau beta |
+| Q6 | Model ảnh riêng (Flux / SDXL + ControlNet + LoRA theo loài) | 1–5 nghìn cặp ảnh trước / sau thật | nhiều tháng sau |
+
+Song song: deploy bản hiện tại (tính năng phụ để Nội bộ), mời beta có **đồng ý dùng ảnh** → nguồn ảnh phôi thật
+và nút "Sai ở đâu" cho Q3–Q5.
