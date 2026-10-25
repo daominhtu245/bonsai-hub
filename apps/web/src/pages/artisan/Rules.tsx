@@ -6,6 +6,9 @@ import { artisanApi, type RuleDocDetail, type RuleDocKey } from '@/lib/artisan';
 import { cx } from '@/lib/cx';
 import { Badge, JsonBlock, PageHeader, Panel, Tabs, dt, useLoad } from '../admin/kit';
 import { RuleEditor } from './RuleEditor';
+import { RuleSetVisual, StylesVnVisual } from './visual/RuleVisual';
+
+const VISUAL: Partial<Record<RuleDocKey, typeof RuleSetVisual>> = { rule_set: RuleSetVisual, styles_vn: StylesVnVisual };
 
 // danh sách được thêm / xóa mục trong từng bộ luật ("" = cấp trên cùng, vd. mỗi loài)
 const COLLECTIONS: Record<RuleDocKey, string[]> = { rule_set: ['style_specifics'], styles_vn: ['the'], species: [''], judging: ['criteria'], pests: ['items'] };
@@ -36,6 +39,8 @@ function DocEditor({ detail, onSaved, reload }: { detail: RuleDocDetail; onSaved
   const [note, setNote] = useState('');
   const [activate, setActivate] = useState(true);
   const [busy, setBusy] = useState(false);
+  const Visual = VISUAL[detail.doc];
+  const [mode, setMode] = useState<'visual' | 'form'>(Visual ? 'visual' : 'form');
   const [msg, setMsg] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(detail.content), [draft, detail.content]);
   const [rev, setRev] = useState(0); // đổi → form dựng lại (ô số giữ chữ đang gõ riêng)
@@ -99,7 +104,20 @@ function DocEditor({ detail, onSaved, reload }: { detail: RuleDocDetail; onSaved
             Đang xem bản {viewing.version} (chỉ xem).
           </Notice>
         ) : null}
-        <RuleEditor key={viewing ? `v${viewing.version}` : `draft-${rev}`} value={viewing ? viewing.content : draft} onChange={setDraft} readOnly={Boolean(viewing)} collections={COLLECTIONS[detail.doc]} />
+        {Visual ? (
+          <div role="group" aria-label="Cách sửa" className="flex self-start rounded-btn bg-surface-2 p-1">
+            {([['visual', 'Trực quan (có hình)'], ['form', 'Form đầy đủ']] as const).map(([m, label]) => (
+              <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)}
+                className={cx('min-h-[40px] rounded-[6px] px-4 text-caption font-medium', mode === m ? 'bg-surface text-ink shadow-card' : 'text-ink-muted hover:text-ink')}>{label}</button>
+            ))}
+          </div>
+        ) : null}
+        {Visual && mode === 'visual' ? (
+          <Visual key={viewing ? `v${viewing.version}` : `draft-${rev}`} value={(viewing ? viewing.content : draft) as never} base={detail.content as never}
+            onChange={(v) => setDraft(v as Record<string, unknown>)} readOnly={Boolean(viewing)} />
+        ) : (
+          <RuleEditor key={viewing ? `v${viewing.version}` : `draft-${rev}`} value={viewing ? viewing.content : draft} onChange={setDraft} readOnly={Boolean(viewing)} collections={COLLECTIONS[detail.doc]} />
+        )}
         <JsonBlock data={viewing ? viewing.content : draft} label="Xem dạng mã (JSON)" />
       </div>
 

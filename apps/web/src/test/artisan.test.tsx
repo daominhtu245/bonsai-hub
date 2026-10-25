@@ -93,6 +93,7 @@ describe('Khu nghệ nhân', () => {
       ['POST /api/v1/artisan/rules/rule_set', () => json({ ...detail, active: { ...detail.active, version: 2 } })],
     ]);
     renderAt('/admin/bo-luat');
+    await userEvent.click(await screen.findByRole('button', { name: 'Form đầy đủ' }));
     expect(await screen.findByText('Độ cao cành đầu (phần chiều cao cây)')).toBeInTheDocument();
     expect(screen.getByTitle('bar_branches')).toHaveTextContent('Cành ngang nhau hai bên'); // mã → nhãn tiếng Việt
     const to = screen.getByLabelText('Độ cao cành đầu (phần chiều cao cây) đến');
@@ -107,5 +108,41 @@ describe('Khu nghệ nhân', () => {
     const body = calls.find((c) => c.method === 'POST' && c.url.endsWith('/rules/rule_set'))?.body as { content: typeof content; note: string; activate: boolean };
     expect(body.content.proportions.first_branch_height_ratio).toEqual([0.25, 0.36]);
     expect(body).toMatchObject({ note: 'Hạ cành đầu', activate: true });
+  });
+
+  it('visual mode: steppers redraw the diagram, fault cards toggle rules', async () => {
+    const content = { version: 2, proportions: { height_to_base_diameter: [5, 7], first_branch_height_ratio: [0.25, 0.4], branch_to_trunk_caliper_max: 0.33 },
+      branches: { forbidden: ['bar_branches', 'crossing_branches'], one_per_level: true, spread_angle_deg: 120, order: ['left_or_right'] } };
+    const detail = {
+      doc: 'rule_set', title_vi: 'Luật tạo dáng & tỉ lệ', content,
+      active: { version: 1, note: 'Từ file', active: true, created_by: 'seed', created_at: '2026-10-25T00:00:00Z', activated_by: 'seed', activated_at: null },
+      versions: [{ version: 1, note: 'Từ file', active: true, created_by: 'seed', created_at: '2026-10-25T00:00:00Z', activated_by: 'seed', activated_at: null }],
+    };
+    const calls = mockFetch([
+      ['GET /api/v1/me', () => json(artisan)],
+      ['GET /api/v1/artisan/rules/rule_set', () => json(detail)],
+      ['POST /api/v1/artisan/rules/rule_set/validate', () => json({ errors: [] })],
+      ['POST /api/v1/artisan/rules/rule_set', () => json(detail)],
+    ]);
+    renderAt('/admin/bo-luat');
+    expect(await screen.findByRole('img', { name: 'Sơ đồ tỉ lệ cây mẫu' })).toHaveTextContent('cao = 6 × gốc');
+    await userEvent.click(screen.getByRole('button', { name: 'Tăng Chiều cao so với đường kính gốc đến' }));
+    expect(screen.getByRole('img', { name: 'Sơ đồ tỉ lệ cây mẫu' })).toHaveTextContent('cao = 6,25 × gốc');
+    expect(screen.getAllByText('đã sửa').length).toBe(1);
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Lỗi cấm & nguyên tắc' }));
+    expect(screen.getByRole('img', { name: 'Cành ngang nhau hai bên' })).toBeInTheDocument();
+    const crossing = screen.getByRole('switch', { name: 'Áp dụng: Cành bắt chéo' });
+    expect(crossing).toBeChecked();
+    await userEvent.click(crossing);
+    await userEvent.click(screen.getByRole('switch', { name: 'Áp dụng: Cành chĩa vào người xem' }));
+    await userEvent.type(screen.getByLabelText('Ghi chú thay đổi'), 'Cho phép cành chéo nhẹ');
+    const save = screen.getByRole('button', { name: /Lưu bản mới/ });
+    await waitFor(() => expect(save).toBeEnabled());
+    await userEvent.click(save);
+    await waitFor(() => expect(calls.find((c) => c.method === 'POST' && c.url.endsWith('/rules/rule_set'))).toBeTruthy());
+    const body = calls.find((c) => c.method === 'POST' && c.url.endsWith('/rules/rule_set'))?.body as { content: typeof content };
+    expect(body.content.branches.forbidden).toEqual(['bar_branches', 'eye_poke_branches']);
+    expect(body.content.proportions.height_to_base_diameter).toEqual([5, 7.5]);
   });
 });

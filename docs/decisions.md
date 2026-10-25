@@ -86,6 +86,7 @@ Tài liệu kỹ thuật vẫn là nguồn chính. Đây là những chỗ code 
 | 70 | **Hộp "Việc cần xử lý"** tính trực tiếp từ dữ liệu (không bảng riêng): ngưỡng chuyển khoản 15 phút, câu hỏi nghệ nhân 24 / 60 giờ, chăm hộ 48 giờ; thanh bên đếm việc đỏ / vàng, tải lại mỗi phút | Quản trị một người vẫn không sót việc; không thêm trạng thái phải đồng bộ |
 | 71 | **Báo vi phạm** (`reports`, migration 0014) chỉ cho tin đăng + trang công khai; xử lý theo nội dung (đóng mọi báo cáo cùng nội dung), ẩn = đổi trạng thái sẵn có (tin `hidden`, gỡ `public_slug`), không xóa; người đăng nhận thông báo kèm lý do | Chợ phôi có rủi ro lừa đảo / cây trộm; giữ dữ liệu để tra cứu |
 | 72 | Ghi chú nội bộ người dùng (`users.admin_note`), phản hồi có `resolved_at` + `admin_note`; nhắn riêng dùng chung `notify.user_message` | Lưu vết chăm sóc khách, không cần CRM ngoài |
+| 73 | **Bộ luật trực quan** là một cách nhìn trên cùng JSON (không đổi lưu trữ / phiên bản); hình vẽ SVG theo token (không hình hoạt hình), ảnh thế là ảnh Commons có giấy phép (`public/images/styles`, CREDITS.md). Góc thân trong `style_specifics` thống nhất **so với phương thẳng đứng** (thế xiêu 60–80° so với mặt đất → 10–30°) | Nghệ nhân không hình dung được luật chỉ bằng chữ; sơ đồ làm lộ chỗ luật mâu thuẫn |
 | 33 | ultralytics/torch chỉ cài vào worker khi `WORKER_WITH_CV=true` | Nặng ~1 GB; chưa có trọng số thì không cần |
 | 31 | OpenAI ảnh: đệm lề ảnh vào vào khổ gần nhất (1024², 1536×1024, 1024×1536) rồi cắt ảnh ra về đúng tỉ lệ gốc | Không thì CV loại vì sai tỉ lệ → sinh lại, tốn tiền |
 

@@ -24,7 +24,7 @@ export const KEY_LABEL: Record<string, string> = {
   // chậu
   pot: 'Chậu', placement: 'Vị trí cây trong chậu', shape_by_style: 'Dáng chậu theo thế', color: 'Màu chậu', pot_subdued_not_competing: 'Chậu không lấn át cây',
   in_pot_only: 'Chỉ được có trong chậu', flowering_or_fruiting: 'Cây hoa / quả', conifer_or_evergreen: 'Cây lá kim / thường xanh', massive_trunk: 'Thân rất to',
-  style_specifics: 'Đặc điểm từng thế', trunk_angle_deg: 'Góc thân (độ)', first_branch_ratio: 'Độ cao cành đầu', first_branch: 'Cành đầu',
+  style_specifics: 'Đặc điểm từng thế', trunk_angle_deg: 'Góc nghiêng thân so với phương thẳng đứng (độ)', first_branch_ratio: 'Độ cao cành đầu', first_branch: 'Cành đầu',
   crown: 'Tán', foliage: 'Lá', deadwood: 'Lũa (jin, shari)', trunks: 'Số thân', secondary_max_diameter_ratio: 'Thân phụ to tối đa (phần thân chính)',
   secondary_max_height_ratio: 'Thân phụ cao tối đa (phần thân chính)', display_faults: 'Lỗi khi trưng bày',
   // thế cây
@@ -68,6 +68,12 @@ export const TERM_LABEL: Record<string, string> = {
   rectangle_or_oval: 'Chữ nhật / bầu dục', deep_round_or_hexagonal: 'Sâu, tròn / lục giác', medium_deep_round: 'Tròn, sâu vừa', small_round_shallow: 'Tròn nhỏ, nông',
   deep_rectangle: 'Chữ nhật sâu', glazed_complementing_flowers: 'Men màu hợp hoa', unglazed_earth: 'Không men, màu đất', tree: 'Cây', soil: 'Đất', moss: 'Rêu',
   natural_rock: 'Đá tự nhiên', visible_wire_marks: 'Hằn dây', fresh_large_scars_on_front: 'Sẹo mới ở mặt tiền', unrelated_objects_in_pot: 'Vật lạ trong chậu',
+  // đặc điểm từng thế
+  s_curves_tightening_upward: 'Khúc chữ S nhỏ dần lên ngọn', at_each_bend_outside: 'Ở lưng mỗi khúc uốn', stronger_on_side_opposite_lean: 'Khỏe hơn ở phía ngược chiều nghiêng',
+  opposite_to_lean: 'Ngược chiều nghiêng', falls_below_pot_bottom: 'Đổ thấp hơn đáy chậu', above_pot_rim: 'Ở trên miệng chậu', tall: 'Cao',
+  drops_to_pot_rim_never_below_pot_bottom: 'Đổ tới miệng chậu, không thấp hơn đáy chậu', medium_deep: 'Sâu vừa', tall_slender_crooked: 'Cao, mảnh, khúc khuỷu',
+  none_on_lower_trunk: 'Không cành ở thân dưới', top_only: 'Chỉ ở phần ngọn', optional_jin_shari: 'Có thể có lũa (jin, shari)', leaning: 'Nghiêng',
+  all_swept_one_side: 'Mọi cành dạt về một phía', two_from_same_base: 'Hai thân chung một gốc', single_shared: 'Một tán chung', over_rock_into_pot: 'Ôm đá, rễ cắm xuống chậu',
   // bảng chấm
   trunk_changed: 'Thân bị đổi', trunk_too_thick: 'Thân to quá mức', removed_branch_present: 'Cành phải cắt vẫn còn',
   extra_trunk_or_major_branch: 'Mọc thêm thân / cành lớn', wrong_species_foliage: 'Sai loại lá', camera_or_background_changed: 'Đổi góc chụp / nền',

@@ -90,9 +90,10 @@ pot:
   in_pot_only: [tree, soil, moss, natural_rock]   # [wiki]
 
 style_specifics:                          # góc, cành, ngọn riêng từng thế [empire, vt, vn_dang]
-  chokkan: {trunk_angle_deg: 0, first_branch_ratio: 0.25, note: straight trunk, apex directly over base}
+                                          # trunk_angle_deg: góc thân so với PHƯƠNG THẲNG ĐỨNG (0 = thẳng), cùng cách đo với styles_vn.dang
+  chokkan: {trunk_angle_deg: 0, first_branch_ratio: 0.25, note: "thân thẳng, ngọn ngay trên gốc"}
   moyogi: {trunk: s_curves_tightening_upward, branches: at_each_bend_outside, apex: over_base}
-  shakan: {trunk_angle_deg: [60, 80], roots: stronger_on_side_opposite_lean, first_branch: opposite_to_lean}
+  shakan: {trunk_angle_deg: [10, 30], roots: stronger_on_side_opposite_lean, first_branch: opposite_to_lean}
   kengai: {trunk: falls_below_pot_bottom, crown: above_pot_rim, pot: tall}
   han_kengai: {trunk: drops_to_pot_rim_never_below_pot_bottom, pot: medium_deep}
   bunjingi: {trunk: tall_slender_crooked, branches: none_on_lower_trunk, foliage: top_only, deadwood: optional_jin_shari}
