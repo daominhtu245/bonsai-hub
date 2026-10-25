@@ -195,3 +195,17 @@ def message(user_id: uuid.UUID, body: MessageIn, db: DB, admin: Admin):
     audit(db, admin, "user.message", "user", u.id, title=body.title)
     db.commit()
     return Response(status_code=status.HTTP_202_ACCEPTED)
+
+
+# ---------- điểm nghệ nhân theo phiên (bộ đo chất lượng) ----------
+
+
+@router.get("/reviews")
+def reviews_for_jobs(db: DB, job_id: Annotated[list[uuid.UUID], Query()]):
+    """Mọi lượt chấm của nghệ nhân cho các phiên (scripts/benchmark/bench.py gom tỉ lệ đạt theo người chấm)."""
+    from ..db.models import ArtisanReview
+
+    rows = db.execute(select(ArtisanReview).where(ArtisanReview.job_id.in_(job_id[:500]))).scalars().all()
+    return [{"job_id": str(r.job_id), "kind": r.kind, "render_id": str(r.render_id) if r.render_id else None, "reviewer_id": str(r.reviewer_id),
+             "total": float(r.total) if r.total is not None else None, "passed": r.passed, "hard_fails": r.hard_fails or [],
+             "scores": r.scores or {}, "comment": r.comment} for r in rows]

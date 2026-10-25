@@ -101,3 +101,20 @@ def test_user_related_note_message_and_stolen_clear(db, client, login, monkeypat
     assert client.post(f"/api/v1/admin/stolen-trees/{t.id}/clear", headers=admin).status_code == 204
     db.expire_all()
     assert db.get(Tree, t.id).stolen_at is None
+
+
+def test_reviews_for_jobs(db, client, login, bucket):  # noqa: F811
+    from sqlalchemy import select
+
+    from bonsai_api.db.models import ArtisanReview, RenderImage
+
+    headers, job = _done_job(db, client, login, bucket)
+    render = db.execute(select(RenderImage).where(RenderImage.job_id == job.id)).scalars().first()
+    admin = _admin(db, login)
+    _, nb = login("nghenhan@example.com")
+    db.add(ArtisanReview(kind="image", job_id=job.id, render_id=render.id, reviewer_id=uuid.UUID(nb["user"]["id"]), scores={"overall": 7}, hard_fails=[],
+                         total=70, passed=True))
+    db.commit()
+    rows = client.get(f"/api/v1/admin/reviews?job_id={job.id}&job_id={uuid.uuid4()}", headers=admin).json()
+    assert len(rows) == 1 and rows[0]["passed"] is True and rows[0]["total"] == 70.0
+    assert client.get(f"/api/v1/admin/reviews?job_id={job.id}", headers=headers).status_code == 403

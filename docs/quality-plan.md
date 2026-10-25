@@ -48,7 +48,7 @@ Dừng thêm tính năng (xem [status.md](status.md)). "Training" ở đây gồ
 
 | # | Việc | Cần gì | Tốn |
 |---|---|---|---|
-| Q0 | **Bộ đo cố định**: 20 phôi thật (đủ 5 loài, nhiều góc / nền), bảng chấm ~10 tiêu chí, lệnh chạy cả bộ + báo cáo so sánh trước / sau | Ảnh phôi thật (chủ dự án / nhà vườn quen) | 0 đ |
+| Q0 | **Bộ đo cố định**: 20 phôi thật (đủ 5 loài, nhiều góc / nền), bảng chấm ~10 tiêu chí, lệnh chạy cả bộ + báo cáo so sánh trước / sau. ✅ công cụ: `scripts/benchmark/bench.py` (seed · check · run · report); ảnh mạng có giấy phép: `scripts/dataset/` (tải → CLIP phân loại → tách nền); hướng dẫn chụp: `docs/huong-dan-chup-phoi.md` | Ảnh phôi thật (chủ dự án / nhà vườn quen) | 0 đ |
 | Q1 | **Nghệ nhân duyệt bộ luật** (`rule_set`, `styles_vn`, `species`, `judging`) ở `/admin/bo-luat` | 1–2 nghệ nhân, 2–3 buổi | công nghệ nhân |
 | Q2 | **Đo lần đầu**: chạy Q0 với chế độ hiện tại → nghệ nhân chấm ở `/admin/cham-diem` → tỉ lệ đạt + lỗi hay gặp | Nạp tiền AI | ~$10–20 / lần chạy |
 | Q3 | **Vòng sửa**: mỗi lần sửa prompt / luật / khóa vùng theo lỗi hay gặp → chạy lại cả bộ → chỉ giữ thay đổi làm tăng tỉ lệ đạt; tới Cổng 2 (≥ 70%) | Q2 | ~$10–20 / vòng |
