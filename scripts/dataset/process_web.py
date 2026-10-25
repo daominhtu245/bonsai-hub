@@ -125,7 +125,7 @@ def build_index() -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default=str(Path(__file__).resolve().parents[2] / "data" / "models" / "isnet-general-use.onnx"))
+    ap.add_argument("--model", default=str(Path(__file__).resolve().parents[2] / "models" / "isnet-general-use.onnx"))
     ap.add_argument("--index-only", action="store_true")
     a = ap.parse_args()
     if not a.index_only:

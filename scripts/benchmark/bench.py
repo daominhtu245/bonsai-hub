@@ -97,7 +97,7 @@ def check() -> None:
     sys.path.insert(0, str(REPO / "scripts" / "dataset"))
     from process_web import Session, process
 
-    sess = Session(str(REPO / "data" / "models" / "isnet-general-use.onnx"))
+    sess = Session(str(REPO / "models" / "isnet-general-use.onnx"))
     bad = 0
     for c in load_cases():
         for p in c["photos"]:

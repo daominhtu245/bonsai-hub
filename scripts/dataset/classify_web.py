@@ -68,7 +68,9 @@ def _session(name: str):
 
     so = ort.SessionOptions()
     so.intra_op_num_threads = os.cpu_count() or 4
-    return ort.InferenceSession(str(MODELS / f"{name}.onnx"), so, providers=["CPUExecutionProvider"])
+    # phần ảnh dùng chung file với worker (models/, máy đoán loài) — không giữ 2 bản
+    path = MODELS.parents[2] / "models" / "clip-vit-b32-vision-q.onnx" if name == "vision_model_quantized" else MODELS / f"{name}.onnx"
+    return ort.InferenceSession(str(path), so, providers=["CPUExecutionProvider"])
 
 
 def text_embeddings() -> np.ndarray:

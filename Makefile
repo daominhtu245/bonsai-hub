@@ -3,7 +3,7 @@ PY := .venv/bin/python
 PG_TEST_PORT ?= 55432
 export TEST_DATABASE_URL ?= postgresql+psycopg://bonsai:bonsai@localhost:$(PG_TEST_PORT)/bonsai_test
 
-.PHONY: setup db-dev test test-py test-web up down migrate seed
+.PHONY: setup db-dev test test-py test-web up down migrate seed clean
 
 setup:  ## Cài venv Python + node_modules
 	python3.12 -m venv .venv
@@ -40,9 +40,14 @@ up:  ## Toàn bộ stack (cần .env). Build tuần tự: build song song cùng 
 	docker tag bonsai-worker bonsai-beat
 	docker tag bonsai-api bonsai-s3-init
 	$(COMPOSE) up -d --no-build
-	# Dọn bản build cũ không tên của bonsai > 7 ngày. Không dọn mới hơn: builder cổ điển dùng chính các lớp
-	# trung gian đó làm cache (xóa đi thì lần sau phải cài lại toàn bộ thư viện Python).
-	docker image prune -f --filter label=bonsai.project=bonsai --filter until=168h
+	# Dọn bản build cũ không tên của bonsai > 1 ngày (build lại nhiều lần trong ngày để lại ~0,3–1,4 GB / lần).
+	# Bản trong ngày còn làm cache: dọn luôn thì lần build sau cài lại thư viện (~2 phút api, lâu hơn với worker).
+	docker image prune -f --filter label=bonsai.project=bonsai --filter until=24h
+	-@command -v colima >/dev/null && colima ssh -- sudo fstrim /var/lib/docker >/dev/null 2>&1 || true  # Mac: trả chỗ trống cho máy
+
+clean:  ## Ổ sắp đầy: dọn MỌI bản build cũ của bonsai (chỉ nhãn bonsai, không đụng dự án khác) + trả chỗ cho Mac. Lần build sau chậm hơn một lần.
+	docker image prune -f --filter label=bonsai.project=bonsai
+	-@command -v colima >/dev/null && colima ssh -- sudo fstrim -v /var/lib/docker || true
 
 down:
 	$(COMPOSE) down
