@@ -173,6 +173,12 @@ nơi lưu ảnh và khóa AI. Sửa đến khi in ra `OK`.
 
 ---
 
+### Model chạy trên máy (thư mục `models/`, gắn vào worker ở `/models`)
+- `models/species_clip.json` — máy đoán loài (đã có trong git).
+- `models/clip-vit-b32-vision-q.onnx` (~89 MB, không có trong git): tải một lần
+  `curl -L -o models/clip-vit-b32-vision-q.onnx https://huggingface.co/Xenova/clip-vit-base-patch32/resolve/main/onnx/vision_model_quantized.onnx`.
+  Thiếu file thì bỏ qua bước đoán loài, pipeline vẫn chạy.
+
 ## 5. Build và chạy
 
 ```bash

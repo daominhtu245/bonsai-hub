@@ -22,7 +22,9 @@ export function BottomNav() {
             <Link key={to} to={to} aria-current={active ? 'page' : undefined}
               className={cx('flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-label font-medium no-underline transition-colors duration-fast',
                 active ? 'text-primary' : 'text-ink-subtle hover:text-ink')}>
-              <Icon size={20} strokeWidth={active ? 2.25 : 1.75} aria-hidden="true" />
+              <span className={cx('flex h-7 w-12 items-center justify-center rounded-full transition-colors duration-fast', active && 'bg-primary-soft')}>
+                <Icon size={20} strokeWidth={active ? 2.25 : 1.75} aria-hidden="true" />
+              </span>
               {label}
             </Link>
           );

@@ -34,6 +34,8 @@ ${vars('dark')}
 /* Nội dung đóng vai "ảnh chụp" (hình minh họa) giữ màu bảng sáng ở mọi chế độ. */
 .theme-light {
 ${vars('light')}
+  /* chữ không ghi màu riêng vẫn theo nền sáng (body đặt màu theo giao diện tối) */
+  color: var(--ink);
 }
 `;
 writeFileSync(resolve(here, '../src/styles/tokens.css'), css);

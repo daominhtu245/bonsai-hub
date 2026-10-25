@@ -14,9 +14,9 @@ Giao diện và nội dung hiển thị: **tiếng Việt**. Prompt gửi cho mo
 | `docs/architecture.md` | Stack, kiến trúc, pipeline A/B, trạng thái job, DB, API, chi phí, hạ tầng, kế hoạch 6 tuần, rủi ro |
 | `docs/prompt_system.md` | Toàn bộ prompt P1→P6, từ điển thế/loài, bộ luật tỉ lệ (YAML), luật chấm P4, kiểm tra đơn điệu giai đoạn |
 | `docs/ui-spec.md` | Nguyên tắc UX, 9 màn hình, trạng thái bắt buộc, giọng văn, trợ năng |
-| `design/tokens.json`, `design/tailwind.tokens.cjs` | Hệ thiết kế **v2** (kiểu công cụ chuyên nghiệp: trung tính, một màu nhấn, Be Vietnam Pro), sáng/tối |
-| `design/mockups/*.dc.html` | Mockup 9 màn hình v1 — chỉ còn dùng để tham chiếu **luồng và chức năng**; giao diện đã thay bằng hệ v2 |
-| `/he-thong-thiet-ke` (web) | Thư viện component v2 đang dùng |
+| `design/tokens.json`, `design/tailwind.tokens.cjs` | Hệ thiết kế **v3 "Vườn Việt"** (xanh ngọc bích, đất nung, vàng mai, nền giấy dó; Be Vietnam Pro), sáng/tối — sửa màu ở `design/tokens.json` rồi `npm run tokens` |
+| `design/mockups/*.dc.html` | Mockup 9 màn hình v1 — chỉ còn dùng để tham chiếu **luồng và chức năng**; giao diện đã thay bằng hệ v3 |
+| `/he-thong-thiet-ke` (web) | Thư viện component đang dùng |
 | `docs/features.md` | Danh sách chức năng hiện có (người dùng / quản trị) |
 | `docs/deploy.md` | Deploy lên VPS Ubuntu có Nginx (domain, cổng trong `.env`) |
 | `docs/ideas.md` | Danh sách ý tưởng phát triển đã chốt + thứ tự |
@@ -24,7 +24,7 @@ Giao diện và nội dung hiển thị: **tiếng Việt**. Prompt gửi cho mo
 | `docs/quality-plan.md` | Kế hoạch sửa chất lượng ảnh kết quả (phản hồi beta), giai đoạn tập trung Q0–Q6 |
 | `docs/huong-dan-test.md` | Hướng dẫn test từng chức năng theo đúng thứ tự tạo dữ liệu |
 
-Khi tài liệu và mockup lệch nhau: **tài liệu kỹ thuật** quyết định hành vi; giao diện theo **hệ thiết kế v2** (tokens + thư viện component), không theo màu/chữ của mockup v1.
+Khi tài liệu và mockup lệch nhau: **tài liệu kỹ thuật** quyết định hành vi; giao diện theo **hệ thiết kế v3** (tokens + thư viện component), không theo màu/chữ của mockup v1.
 
 ## Stack (đã chốt)
 - Frontend: React + Vite + TypeScript + Tailwind, PWA. Font: Be Vietnam Pro (duy nhất). Icon: lucide-react.
