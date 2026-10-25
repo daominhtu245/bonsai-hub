@@ -28,6 +28,10 @@ export interface FailedJob {
 }
 
 export interface FeedbackRow {
+  id?: string;
+  user_id?: string;
+  resolved_at?: string | null;
+  admin_note?: string | null;
   job_id: string;
   rating: 1 | -1;
   reason_tags: string[];
@@ -65,7 +69,8 @@ export const adminApi = {
   activate: (id: number) => api<PromptRow>(`/admin/prompts/${id}/activate`, { method: 'POST' }),
   costs: (days = 14) => api<Costs>(`/admin/costs?days=${days}`),
   failed: () => api<FailedJob[]>('/admin/jobs/failed'),
-  feedback: (rating?: 1 | -1) => api<FeedbackRow[]>(`/admin/feedback${rating ? `?rating=${rating}` : ''}`),
+  feedback: (rating?: 1 | -1, openOnly = false) =>
+    api<FeedbackRow[]>(`/admin/feedback?${new URLSearchParams({ ...(rating ? { rating: String(rating) } : {}), ...(openOnly ? { open_only: 'true' } : {}) })}`),
   gift: (email: string, credits: number, batch: string) =>
     api<{ email: string; credited: boolean; credits: number }>('/admin/credits/gift', { method: 'POST', json: { email, credits, batch } }),
   species: () => api<SpeciesRefs[]>('/admin/species'),

@@ -1,12 +1,14 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   Activity, BarChart3, Bell, BookOpen, Brush, ClipboardCheck, CreditCard, FileCode2, Gift, LayoutDashboard, ListChecks, Menu,
   MessageSquare, Receipt, Scale, ScrollText, Search, Settings2, SlidersHorizontal, Users, X,
-  Swords, Amphora, MessagesSquare, ShieldCheck, Bot, ToggleRight,
+  Swords, Amphora, MessagesSquare, ShieldCheck, Bot, ToggleRight, Flag, CreditCard as PayIcon, ListChecks as JobIcon, Store, UserRound,
 } from 'lucide-react';
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { BrandMark } from '@/components/BrandMark';
 import { adminApi } from '@/lib/admin';
+import { adminCommunityApi, type SearchHit } from '@/lib/adminCommunity';
+import { InboxProvider, useInbox } from './inbox';
 import { useAuth } from '@/lib/auth';
 import { cx } from '@/lib/cx';
 
@@ -44,6 +46,7 @@ const NAV: NavGroup[] = [
   {
     group: 'Cộng đồng & chợ',
     items: [
+      { to: '/admin/bao-cao', label: 'Báo vi phạm', Icon: Flag },
       { to: '/admin/cong-dong', label: 'Kiểm duyệt & dịch vụ', Icon: ShieldCheck },
       { to: '/admin/thu-thach', label: 'Thử thách phôi', Icon: Swords },
       { to: '/admin/chau-doi-tac', label: 'Chậu đối tác', Icon: Amphora },
@@ -73,23 +76,82 @@ const NAV: NavGroup[] = [
 
 const UUID = /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 
+const HIT_ICON: Record<SearchHit['kind'], typeof Users> = { user: UserRound, job: JobIcon, listing: Store, payment: PayIcon };
+const HIT_KIND: Record<SearchHit['kind'], string> = { user: 'Người dùng', job: 'Phiên', listing: 'Tin đăng', payment: 'Chuyển khoản' };
+
+/** Tìm nhanh: gõ là gợi ý (người dùng, phiên, tin đăng, chuyển khoản); ↑ ↓ chọn, Enter mở; phím "/" để nhảy vào ô. */
 function QuickSearch({ onDone }: { onDone?: () => void }) {
   const [q, setQ] = useState('');
+  const [hits, setHits] = useState<SearchHit[] | null>(null);
+  const [active, setActive] = useState(0);
   const navigate = useNavigate();
+  const box = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement;
+      if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) && !t.isContentEditable) {
+        e.preventDefault();
+        box.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+  useEffect(() => {
+    const v = q.trim();
+    if (v.length < 2) return setHits(null);
+    const t = window.setTimeout(() => adminCommunityApi.search(v).then((h) => { setHits(h); setActive(0); }).catch(() => setHits([])), 250);
+    return () => window.clearTimeout(t);
+  }, [q]);
+  const go = (to: string) => {
+    navigate(to);
+    setQ('');
+    setHits(null);
+    box.current?.blur();
+    onDone?.();
+  };
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const v = q.trim();
     if (!v) return;
+    if (hits?.length) return go(hits[active].to);
     // Mã phiên → mở thẳng; còn lại tìm người dùng (email, tên, SĐT, tên vườn).
-    navigate(UUID.test(v) ? `/admin/phien/${v}` : `/admin/nguoi-dung?q=${encodeURIComponent(v)}`);
-    setQ('');
-    onDone?.();
+    go(UUID.test(v) ? `/admin/phien/${v}` : `/admin/nguoi-dung?q=${encodeURIComponent(v)}`);
   };
+  const open = hits !== null && q.trim().length >= 2;
   return (
     <form onSubmit={submit} role="search" className="relative w-full max-w-[420px] 3xl:max-w-[560px]">
       <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-subtle" aria-hidden="true" />
-      <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Mã phiên, email, SĐT…" aria-label="Tìm nhanh"
+      <input ref={box} type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm người dùng, phiên, tin, chuyển khoản…  ( / )" aria-label="Tìm nhanh"
+        role="combobox" aria-expanded={open} aria-controls="quick-results" aria-activedescendant={open && hits?.length ? `hit-${active}` : undefined}
+        onKeyDown={(e) => {
+          if (!hits?.length) return;
+          if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => (a + 1) % hits.length); }
+          if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => (a - 1 + hits.length) % hits.length); }
+          if (e.key === 'Escape') setHits(null);
+        }}
+        onBlur={() => window.setTimeout(() => setHits(null), 150)}
         className="min-h-[40px] w-full rounded-btn border border-line bg-surface-2 pl-9 pr-3 text-caption text-ink focus:bg-surface" />
+      {open ? (
+        <ul id="quick-results" role="listbox" aria-label="Kết quả tìm nhanh"
+          className="absolute inset-x-0 top-[calc(100%+4px)] z-50 m-0 max-h-[60vh] list-none overflow-y-auto rounded-card border border-line bg-surface p-1 shadow-raised">
+          {hits!.length === 0 ? <li className="px-3 py-2.5 text-caption text-ink-muted">Không thấy kết quả · Enter để tìm người dùng</li> : hits!.map((h, i) => {
+            const Icon = HIT_ICON[h.kind];
+            return (
+              <li key={h.kind + h.to} id={`hit-${i}`} role="option" aria-selected={i === active}
+                onMouseDown={(e) => { e.preventDefault(); go(h.to); }} onMouseEnter={() => setActive(i)}
+                className={cx('flex min-h-[44px] cursor-pointer items-center gap-3 rounded-btn px-3 py-1.5', i === active && 'bg-surface-2')}>
+                <Icon size={16} className="flex-none text-ink-muted" aria-hidden="true" />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-caption font-medium">{h.label}</span>
+                  <span className="truncate text-label text-ink-muted">{h.sub}</span>
+                </span>
+                <span className="flex-none text-label text-ink-subtle">{HIT_KIND[h.kind]}</span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
     </form>
   );
 }
@@ -97,6 +159,7 @@ function QuickSearch({ onDone }: { onDone?: () => void }) {
 export const ARTISAN_PATHS = NAV.filter((g) => g.artisan).flatMap((g) => g.items.map((i) => i.to));
 
 function SideNav({ onNavigate, artisanOnly }: { onNavigate?: () => void; artisanOnly?: boolean }) {
+  const { inbox } = useInbox();
   return (
     <nav aria-label="Quản trị" className="flex flex-col gap-5 px-3 py-4">
       {NAV.filter((g) => !artisanOnly || g.artisan).map((g) => (
@@ -109,7 +172,12 @@ function SideNav({ onNavigate, artisanOnly }: { onNavigate?: () => void; artisan
                   className={({ isActive }) => cx('flex min-h-[40px] items-center gap-2.5 rounded-btn px-3 text-caption no-underline',
                     isActive ? 'bg-surface-2 font-semibold text-ink' : 'text-ink-muted hover:bg-surface-2 hover:text-ink')}>
                   <Icon size={17} strokeWidth={1.75} aria-hidden="true" />
-                  {label}
+                  <span className="flex-1">{label}</span>
+                  {inbox?.badges[to] ? (
+                    <span className="tabular min-w-[20px] rounded-full bg-danger px-1.5 text-center text-label font-semibold leading-5 text-surface" aria-label={`${inbox.badges[to]} việc chờ`}>
+                      {inbox.badges[to] > 99 ? '99+' : inbox.badges[to]}
+                    </span>
+                  ) : null}
                 </NavLink>
               </li>
             ))}
@@ -137,6 +205,7 @@ export default function AdminLayout() {
   if (artisanOnly && !ARTISAN_PATHS.some((p) => location.pathname.startsWith(p))) return <Navigate to="/admin/cham-diem" replace />;
 
   return (
+    <InboxProvider enabled={role === 'admin'}>
     <div className="min-h-dvh bg-bg lg:grid lg:grid-cols-[248px_1fr] 3xl:grid-cols-[272px_1fr]">
       <aside className="sticky top-0 hidden h-dvh overflow-y-auto border-r border-line bg-surface lg:block">
         <Link to="/admin" className="flex h-[60px] items-center gap-2 border-b border-line px-5 no-underline">
@@ -176,5 +245,6 @@ export default function AdminLayout() {
         </main>
       </div>
     </div>
+    </InboxProvider>
   );
 }

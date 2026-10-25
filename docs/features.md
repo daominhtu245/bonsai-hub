@@ -70,14 +70,17 @@ cấu hình. **Quản trị** có nhiều công cụ hơn để vận hành và 
 | **Thử thách phôi** (tạo, xóa) · **Chậu đối tác** (thêm, bật / tắt, xóa) | Quản trị → Khách hàng | Thao tác ghi nhật ký quản trị |
 | **Hỏi đáp** (nghệ nhân): nhận câu hỏi, xem ảnh phôi + bản vẽ, trả lời | Quản trị → nhóm Nghệ nhân | Nghệ nhân chỉ thấy câu chưa ai nhận hoặc đã nhận |
 | **Bộ luật Sâu bệnh, thời tiết** (sửa trên giao diện) · **Trợ lý chăm cây: AI / Tra bảng** | Bộ luật & thông số; Chế độ AI | Tra bảng: không tốn API |
-| **Tính năng**: từng tính năng người dùng **Mở / Nội bộ / Tắt**; danh sách email **người thử**; số lượt dùng 30 ngày | Hệ thống → Tính năng | Api chặn thật (không chỉ ẩn nút). Nội bộ = quản trị, nghệ nhân, người thử |
-| **Kiểm duyệt & dịch vụ**: ẩn / hiện tin đăng, gỡ trang công khai, cây báo mất; hỏi nghệ nhân (sắp quá hạn, hoàn lượt ngay, gỡ nghệ nhân đã nhận); chăm hộ | Cộng đồng & chợ → Kiểm duyệt & dịch vụ | Ghi nhật ký quản trị kèm lý do |
+| **Tính năng**: từng tính năng người dùng **Mở / Nội bộ / Tắt**; lọc theo trạng thái (kèm số đếm), tìm theo tên; danh sách email **người thử**; số lượt dùng 30 ngày | Hệ thống → Tính năng | Api chặn thật (không chỉ ẩn nút). Nội bộ = quản trị, nghệ nhân, người thử |
+| **Việc cần xử lý** (đầu Bảng điều khiển): báo vi phạm, chuyển khoản treo > 15 phút, câu hỏi nghệ nhân > 24 giờ, chăm hộ chưa nhận > 48 giờ, phản hồi "Chưa đúng" chưa xem, phiên lỗi 24 giờ, câu trợ lý chưa trả lời được, tin mới, cây báo mất; **số đỏ trên thanh bên**, số việc gấp trên tiêu đề tab; tự cập nhật mỗi phút | Bảng điều khiển | Bấm thẳng vào từng dòng để xử lý |
+| **Tìm nhanh** (phím `/`): gõ là gợi ý người dùng (email, tên, SĐT, tên vườn), phiên (mã), tin đăng (mã, tiêu đề), chuyển khoản (nội dung CK); ↑ ↓ Enter | Thanh trên | |
+| **Báo vi phạm**: người dùng báo tin đăng / trang công khai (lừa đảo, cây bị trộm, sai thông tin, phản cảm, spam); hàng chờ có ảnh, mô tả, số lần bị báo, người báo / người đăng; **Ẩn nội dung · Ẩn và khóa người đăng · Không vi phạm** (xử lý một lần cho mọi báo cáo cùng nội dung, người đăng nhận thông báo kèm lý do) | Cộng đồng & chợ → Báo vi phạm | Nút "Báo vi phạm" dưới tin đăng, trang công khai; tối đa 20 lần / người / ngày |
+| **Kiểm duyệt & dịch vụ**: số đếm trên từng tab; tin đăng tìm theo mã / tiêu đề, **bấm một tin xem chi tiết** (ảnh lớn, mô tả, kích thước, liên hệ, số báo cáo) và ẩn kèm lý do chọn sẵn; tên người bấm sang hồ sơ; **gỡ báo mất**; gỡ trang công khai, cây báo mất; hỏi nghệ nhân (sắp quá hạn, hoàn lượt ngay, gỡ nghệ nhân đã nhận); chăm hộ | Cộng đồng & chợ → Kiểm duyệt & dịch vụ | Ghi nhật ký quản trị kèm lý do |
 | **Trợ lý chăm cây**: câu hỏi, lượt đoán bệnh 30 ngày; lọc "chưa trả lời được" để bổ sung bảng loài / sâu bệnh | Cộng đồng & chợ → Trợ lý chăm cây | |
 | **Thông số tính năng** (lượt thưởng, lượt hỏi nghệ nhân, tin miễn phí, tin nổi bật, xem thử AI gói tháng, giới hạn đoán bệnh / hỏi đáp mỗi ngày) | Hệ thống → Cấu hình vận hành | |
 | Tổng quan | Bảng điều khiển | 12 chỉ số so kỳ trước, biểu đồ phiên / doanh thu–chi phí, phễu, phiên lỗi |
 | Vận hành | Phiên thiết kế | Lọc, tìm (mã phiên, email, mã lỗi), chi tiết pipeline / ảnh (kể cả ảnh xem thử) / phương án, chạy lại miễn phí, hoàn lượt, dừng phiên treo, **xuất Excel** |
-| | Phản hồi | Đánh giá của người dùng, link tới phiên |
-| Khách hàng | Người dùng | Hồ sơ, sổ lượt, thanh toán, đổi vai trò, cộng/trừ lượt có lý do, khóa, tặng lượt hàng loạt, **xuất Excel** |
+| | Phản hồi | Mặc định "Chưa đúng · chưa xử lý"; lý do, bình luận, người gửi, phiên; **Đã xử lý + ghi đã làm gì** / mở lại |
+| Khách hàng | Người dùng | Hồ sơ, sổ lượt, thanh toán, **cây, tin đăng, hỏi nghệ nhân & chăm hộ, bị báo**; đổi vai trò, cộng/trừ lượt có lý do, khóa, **nhắn riêng** (thông báo tới máy người đó), **ghi chú nội bộ**, tặng lượt hàng loạt, **xuất Excel** |
 | | Thanh toán | Đối soát, xác nhận tay theo mã sao kê, hủy đơn, **xuất Excel** |
 | | **Mã quà tặng** | Tạo mã (tự sinh hoặc đặt tên), số lượt, giới hạn người dùng, hạn dùng, bật/tắt, xem ai đã dùng |
 | | **Gửi thông báo** | Web Push theo nhóm: tất cả, nhà vườn, đã mua, chưa mua, không dùng 30 ngày, hết lượt; xem trước, lịch sử gửi |

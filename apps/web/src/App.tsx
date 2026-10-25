@@ -38,6 +38,7 @@ const PassportPrintPage = lazy(() => import('@/pages/community/PassportPrint'));
 const ArtisanConsults = lazy(() => import('@/pages/artisan/Consults'));
 const AdminFeatures = lazy(() => import('@/pages/admin/Features'));
 const AdminCommunity = lazy(() => import('@/pages/admin/Community'));
+const AdminReports = lazy(() => import('@/pages/admin/Reports'));
 const AdminAssistantLog = lazy(() => import('@/pages/admin/AssistantLog'));
 const ArtisansPage = lazy(() => import('@/pages/expert/Artisans'));
 const PersonPage = lazy(() => import('@/pages/expert/Person'));
@@ -173,6 +174,7 @@ export default function App() {
                 <Route path="hoi-dap" element={<ArtisanConsults />} />
                 <Route path="tinh-nang" element={<AdminFeatures />} />
                 <Route path="cong-dong" element={<AdminCommunity />} />
+                <Route path="bao-cao" element={<AdminReports />} />
                 <Route path="tro-ly" element={<AdminAssistantLog />} />
                 <Route path="hoi-dap/:consultId" element={<ArtisanConsults />} />
               </Route>

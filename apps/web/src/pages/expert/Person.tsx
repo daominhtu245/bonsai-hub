@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { MessageCircle, Phone, Star } from 'lucide-react';
+import { ReportButton } from '@/components/ReportButton';
 import { Link, useParams } from 'react-router-dom';
 import { ButtonLink, Notice, Skeleton } from '@/components/ui';
 import { ApiError } from '@/lib/api';
@@ -63,6 +64,7 @@ export default function PersonPage() {
           </ul>
         </section>
       ) : null}
+      <div className="px-gutter pb-6"><ReportButton kind="profile" target={p.slug} /></div>
     </div>
   );
 }

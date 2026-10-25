@@ -186,10 +186,14 @@ class FeedbackRow(BaseModel):
     style_key: str | None
     user_email: str | None
     created_at: datetime
+    id: str | None = None
+    user_id: str | None = None
+    resolved_at: datetime | None = None
+    admin_note: str | None = None
 
 
 @router.get("/feedback", response_model=list[FeedbackRow])
-def feedback_list(db: DB, rating: int | None = None, limit: int = 100):
+def feedback_list(db: DB, rating: int | None = None, open_only: bool = False, limit: int = 100):
     q = (select(Feedback, User.email, DesignOption.style_key)
          .join(User, User.id == Feedback.user_id)
          .join(DesignJob, DesignJob.id == Feedback.job_id)
@@ -197,8 +201,11 @@ def feedback_list(db: DB, rating: int | None = None, limit: int = 100):
          .order_by(Feedback.created_at.desc()).limit(min(limit, 500)))
     if rating in (1, -1):
         q = q.where(Feedback.rating == rating)
+    if open_only:
+        q = q.where(Feedback.resolved_at.is_(None))
     return [FeedbackRow(job_id=str(f.job_id), rating=f.rating, reason_tags=f.reason_tags or [], comment=f.comment,
-                        style_key=style, user_email=email, created_at=f.created_at) for f, email, style in db.execute(q)]
+                        style_key=style, user_email=email, created_at=f.created_at, id=str(f.id), user_id=str(f.user_id),
+                        resolved_at=f.resolved_at, admin_note=f.admin_note) for f, email, style in db.execute(q)]
 
 
 # ---------- tặng lượt (mời dùng thử beta) ----------

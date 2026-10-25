@@ -116,10 +116,17 @@ describe('Admin console', () => {
   it('lists feedback with a link to the job', async () => {
     mockFetch([
       ['GET /api/v1/me', () => json(admin)],
-      ['GET /api/v1/admin/feedback?rating=-1', () => json([{ job_id: 'j1234567890', rating: -1, reason_tags: ['trunk'], comment: 'Thân bị vẽ khác', style_key: 'moyogi', user_email: 'a@b.vn', created_at: '2026-10-21T10:00:00Z' }])],
+      ['GET /api/v1/admin/inbox', () => json({ items: [], urgent: 0, badges: {} })],
+      ['GET /api/v1/admin/feedback?rating=-1&open_only=true', () => json([{ id: 'f1', user_id: 'u9', job_id: 'j1234567890', rating: -1, reason_tags: ['trunk'], comment: 'Thân bị vẽ khác', style_key: 'moyogi', user_email: 'a@b.vn', created_at: '2026-10-21T10:00:00Z', resolved_at: null, admin_note: null }])],
+      ['POST /api/v1/admin/feedback/f1/resolve', () => json({ resolved_at: '2026-10-25T10:00:00Z', admin_note: 'sửa P3a' })],
     ]);
     renderAdmin('/admin/phan-hoi', 'phan-hoi', <FeedbackPage />);
-    expect(await screen.findByText('Thân bị vẽ khác')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'j1234567' })).toHaveAttribute('href', '/admin/phien/j1234567890');
+    expect(await screen.findByText('“Thân bị vẽ khác”')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'phiên j1234567' })).toHaveAttribute('href', '/admin/phien/j1234567890');
+    expect(screen.getByRole('link', { name: 'a@b.vn' })).toHaveAttribute('href', '/admin/nguoi-dung/u9');
+    await userEvent.click(screen.getByRole('button', { name: 'Đã xử lý' }));
+    await userEvent.type(screen.getByLabelText('Đã làm gì'), 'sửa P3a');
+    await userEvent.click(screen.getByRole('button', { name: 'Đánh dấu đã xử lý' }));
+    expect(await screen.findByText('Không còn phản hồi chưa xử lý.')).toBeInTheDocument();
   });
 });

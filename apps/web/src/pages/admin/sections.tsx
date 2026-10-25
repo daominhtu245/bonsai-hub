@@ -6,7 +6,9 @@ import { adminApi, type AiSettings, type CostMode, type FeedbackRow, type Prompt
 import { ApiError } from '@/lib/api';
 import { labelsApi, type LabelList, type LabelStatus } from '@/lib/labels';
 import { termLabel } from '@/lib/ruleLabels';
-import { useLoad } from './kit';
+import { adminCommunityApi } from '@/lib/adminCommunity';
+import { useInbox } from './inbox';
+import { useAction, useConfirm, useLoad } from './kit';
 
 export function PromptsTab() {
   const [state, reload] = useLoad<PromptRow[]>(adminApi.prompts);
@@ -69,27 +71,68 @@ export function PromptsTab() {
   );
 }
 
+type FbFilter = 'open' | 'bad' | 'good' | 'all';
+
+/** Phản hồi người dùng: mặc định "Chưa đúng · chưa xử lý" — xem phiên, ghi việc đã làm, đánh dấu đã xử lý. */
 export function FeedbackTab() {
-  const [rating, setRating] = useState<1 | -1 | undefined>(-1);
-  const [state] = useLoad<FeedbackRow[]>(() => adminApi.feedback(rating), [rating]);
+  const [filter, setFilter] = useState<FbFilter>('open');
+  const rating = filter === 'good' ? 1 : filter === 'all' ? undefined : -1;
+  const [state, , setData] = useLoad<FeedbackRow[]>(() => adminApi.feedback(rating, filter === 'open'), [filter]);
+  const [ask, dialog] = useConfirm();
+  const [run, notice] = useAction();
+  const { refresh } = useInbox();
+  const resolve = async (r: FeedbackRow, resolved: boolean) => {
+    let note: string | undefined;
+    if (resolved) {
+      const res = await ask({ title: 'Đã xử lý phản hồi', confirmLabel: 'Đánh dấu đã xử lý', body: 'Ghi lại đã làm gì (đổi prompt, sửa luật, hoàn lượt…) để lần sau tra.',
+        note: { label: 'Đã làm gì', placeholder: 'VD: P3a v4 giữ thân chặt hơn' } });
+      if (!res) return;
+      note = res.note;
+    }
+    await run(async () => {
+      const out = await adminCommunityApi.resolveFeedback(r.id!, resolved, note);
+      if (state.status === 'ready') {
+        setData(filter === 'open' && resolved ? state.data.filter((x) => x.id !== r.id) : state.data.map((x) => (x.id === r.id ? { ...x, ...out } : x)));
+      }
+      refresh();
+    }, resolved ? 'Đã đánh dấu xử lý.' : 'Đã mở lại.');
+  };
   return (
     <div className="flex flex-col gap-3 text-caption">
-      <div className="flex gap-2" role="group" aria-label="Lọc đánh giá">
-        <FilterChip selected={rating === -1} onClick={() => setRating(-1)}>Chưa đúng</FilterChip>
-        <FilterChip selected={rating === 1} onClick={() => setRating(1)}>Hợp lý</FilterChip>
-        <FilterChip selected={rating === undefined} onClick={() => setRating(undefined)}>Tất cả</FilterChip>
+      {dialog}
+      {notice}
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Lọc đánh giá">
+        <FilterChip selected={filter === 'open'} onClick={() => setFilter('open')}>Chưa đúng · chưa xử lý</FilterChip>
+        <FilterChip selected={filter === 'bad'} onClick={() => setFilter('bad')}>Chưa đúng</FilterChip>
+        <FilterChip selected={filter === 'good'} onClick={() => setFilter('good')}>Hợp lý</FilterChip>
+        <FilterChip selected={filter === 'all'} onClick={() => setFilter('all')}>Tất cả</FilterChip>
       </div>
       <StateView state={state} skeleton={<Skeleton className="h-40 rounded-card" />} empty={null}>
-        {(rows) => rows.length === 0 ? <p className="text-ink-muted">Chưa có phản hồi.</p> : (
-          <ul className="m-0 flex list-none flex-col gap-2 p-0">
+        {(rows) => rows.length === 0 ? <p className="text-ink-muted">{filter === 'open' ? 'Không còn phản hồi chưa xử lý.' : 'Chưa có phản hồi.'}</p> : (
+          <ul className="m-0 grid list-none gap-2 p-0 xl:grid-cols-2">
             {rows.map((r) => (
-              <li key={r.job_id + r.created_at} className="rounded-card border border-line bg-surface p-3">
-                <div className="flex justify-between gap-2">
-                  <span className={r.rating === 1 ? 'font-semibold text-primary-ink' : 'font-semibold text-danger'}>{r.rating === 1 ? 'Hợp lý' : 'Chưa đúng'}</span>
+              <li key={r.id ?? r.job_id + r.created_at} className={`flex flex-col gap-1.5 rounded-card border bg-surface p-3 ${r.rating === -1 && !r.resolved_at ? 'border-danger' : 'border-line'}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <span className={r.rating === 1 ? 'font-semibold text-primary-ink' : 'font-semibold text-danger'}>{r.rating === 1 ? 'Hợp lý' : 'Chưa đúng'}</span>
+                    {r.resolved_at ? <span className="rounded-chip bg-primary-soft px-2 py-0.5 text-label text-primary-ink">Đã xử lý</span> : null}
+                  </span>
                   <span className="text-ink-muted">{new Date(r.created_at).toLocaleString('vi-VN')}</span>
                 </div>
-                <div className="text-ink-muted">{r.user_email} · {r.style_key ?? '—'} · <Link to={`/admin/phien/${r.job_id}`} className="font-mono">{r.job_id.slice(0, 8)}</Link>{r.reason_tags.length ? ` · ${r.reason_tags.map(termLabel).join(', ')}` : ''}</div>
-                {r.comment ? <p className="m-0 mt-1">{r.comment}</p> : null}
+                {r.reason_tags.length ? <div className="flex flex-wrap gap-1">{r.reason_tags.map((t) => <span key={t} className="rounded-chip bg-surface-2 px-2 py-0.5 text-label">{termLabel(t)}</span>)}</div> : null}
+                {r.comment ? <p className="m-0 text-body">“{r.comment}”</p> : null}
+                <div className="text-ink-muted">
+                  {r.user_id ? <Link to={`/admin/nguoi-dung/${r.user_id}`}>{r.user_email}</Link> : r.user_email} · {r.style_key ?? '—'} · <Link to={`/admin/phien/${r.job_id}`} className="font-mono">phiên {r.job_id.slice(0, 8)}</Link>
+                </div>
+                {r.admin_note ? <p className="m-0 rounded-btn bg-surface-2 px-2 py-1.5"><span className="font-medium">Đã làm:</span> {r.admin_note}</p> : null}
+                {r.id && r.rating === -1 ? (
+                  <div className="flex gap-2 pt-1">
+                    {r.resolved_at
+                      ? <Button size="touch" block={false} variant="ghost" onClick={() => resolve(r, false)}>Mở lại</Button>
+                      : <Button size="touch" block={false} variant="secondary" onClick={() => resolve(r, true)}>Đã xử lý</Button>}
+                    <Link to={`/admin/phien/${r.job_id}`} className="inline-flex min-h-touch items-center px-2 font-medium">Mở phiên</Link>
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>

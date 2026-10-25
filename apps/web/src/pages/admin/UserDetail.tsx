@@ -1,14 +1,45 @@
 import { useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Send } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Button } from '@/components/ui';
+import { Button, Notice } from '@/components/ui';
+import { adminCommunityApi } from '@/lib/adminCommunity';
 import { consoleApi, type Role, type UserDetail as Detail } from '@/lib/adminConsole';
 import { cx } from '@/lib/cx';
 import {
   Badge, DataTable, KeyValue, PageHeader, Panel, ROLE_LABEL, StatCard, StatusBadge, Tabs, TableView, dt, num, shortId, usd, useAction, useConfirm, useLoad, vnd,
 } from './kit';
 
-type Tab = 'jobs' | 'ledger' | 'payments' | 'audit';
+type Tab = 'jobs' | 'ledger' | 'payments' | 'trees' | 'listings' | 'services' | 'reports' | 'audit';
+const ACTION_VI: Record<string, string> = {
+  'user.credits': 'Cộng / trừ lượt', 'user.role': 'Đổi vai trò', 'user.lock': 'Khóa', 'user.unlock': 'Mở khóa', 'user.note': 'Sửa ghi chú',
+  'user.message': 'Nhắn riêng', 'credits.gift': 'Tặng lượt', 'payment.confirm': 'Xác nhận chuyển khoản', 'payment.cancel': 'Hủy chuyển khoản',
+};
+const LISTING_VI: Record<string, string> = { active: 'Đang hiện', sold: 'Đã bán', hidden: 'Đã ẩn' };
+const SERVICE_VI: Record<string, string> = {
+  open: 'Chờ trả lời', answered: 'Đã trả lời', refunded: 'Đã hoàn lượt', requested: 'Chờ nhận', active: 'Đang chăm', done: 'Xong', declined: 'Từ chối',
+};
+const PATHS: Array<[string, string]> = [['/', 'Trang chủ'], ['/vuon', 'Vườn'], ['/tai-khoan/luot', 'Lịch sử lượt'], ['/mua-luot', 'Mua lượt'], ['/tien-ich', 'Tiện ích']];
+
+/** Ghi chú nội bộ: chỉ quản trị thấy (khách quen, đã hứa bù lượt, cần theo dõi…). */
+function NotePanel({ userId, initial }: { userId: string; initial: string | null }) {
+  const [v, setV] = useState(initial ?? '');
+  const [saved, setSaved] = useState(initial ?? '');
+  const [run, notice, busy] = useAction();
+  return (
+    <Panel title="Ghi chú nội bộ">
+      {notice}
+      <textarea value={v} onChange={(e) => setV(e.target.value)} rows={3} maxLength={2000} aria-label="Ghi chú nội bộ"
+        placeholder="Chỉ quản trị thấy · VD: khách quen, đã hứa bù 2 lượt"
+        className="w-full rounded-btn border border-line-strong bg-surface p-2 text-caption text-ink" />
+      {v !== saved ? (
+        <div className="mt-2 flex justify-end">
+          <Button size="touch" block={false} disabled={busy} onClick={() => run(async () => { const r = await adminCommunityApi.setUserNote(userId, v); setSaved(r.admin_note ?? ''); setV(r.admin_note ?? ''); }, 'Đã lưu ghi chú.')}>Lưu ghi chú</Button>
+        </div>
+      ) : null}
+    </Panel>
+  );
+}
+
 const REASON: Record<string, string> = { purchase: 'Mua', render: 'Dùng', refund: 'Hoàn', gift: 'Tặng', adjust: 'Điều chỉnh' };
 
 export default function UserDetail() {
@@ -18,6 +49,20 @@ export default function UserDetail() {
   const [state, , setData] = useLoad(() => consoleApi.user(userId), [userId]);
   const [confirm, dialog] = useConfirm();
   const [run, notice, busy] = useAction();
+  const [rel] = useLoad(() => adminCommunityApi.userRelated(userId), [userId]);
+  const r = rel.status === 'ready' ? rel.data : null;
+
+  const message = async (d: Detail) => {
+    const res = await confirm({
+      title: 'Nhắn riêng', body: `Gửi thông báo tới ${d.user.name || d.user.email} (điện thoại / trình duyệt${d.notify_zalo ? ', Zalo' : ''}).`,
+      confirmLabel: 'Gửi', fields: [
+        { name: 'title', label: 'Tiêu đề', required: true, placeholder: 'VD: Đã hoàn lượt cho bạn' },
+        { name: 'body', label: 'Nội dung (tối đa 180 ký tự)', required: true, placeholder: 'VD: Ảnh lần trước chưa đạt, mình đã cộng lại 1 lượt.' },
+        { name: 'path', label: 'Bấm vào mở trang', required: true, options: PATHS, defaultValue: '/' },
+      ],
+    });
+    if (res) await run(() => adminCommunityApi.messageUser(d.user.id, { title: res.values.title, body: res.values.body.slice(0, 180), path: res.values.path }), 'Đã gửi thông báo.');
+  };
 
   const adjust = async (d: Detail) => {
     const r = await confirm({
@@ -57,6 +102,7 @@ export default function UserDetail() {
                 sub={u.email ?? u.phone ?? u.id}
                 actions={<>
                   <Button size="touch" block={false} disabled={busy} onClick={() => adjust(d)}>Cộng / trừ lượt</Button>
+                  <Button size="touch" block={false} variant="secondary" disabled={busy || u.deleted} onClick={() => message(d)}><Send size={16} aria-hidden="true" />Nhắn riêng</Button>
                   <label className="flex min-h-touch items-center gap-2 rounded-btn border border-line-strong bg-surface pl-3 text-caption">
                     <span className="text-ink-muted">Vai trò</span>
                     <select value={u.role} onChange={(e) => role(d, e.target.value as Role)} disabled={busy} className="min-h-[42px] bg-transparent pr-2 font-medium">
@@ -75,7 +121,9 @@ export default function UserDetail() {
                 <StatCard label="Lượt trả phí" value={u.paid_jobs} format={num} />
               </div>
               <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)] 3xl:grid-cols-[420px_minmax(0,1fr)]">
-                <Panel title="Hồ sơ" className="xl:self-start">
+                <div className="flex flex-col gap-4 xl:self-start">
+                {r?.admin_note ? <Notice tone="warn">{r.admin_note}</Notice> : null}
+                <Panel title="Hồ sơ">
                   <KeyValue items={[
                     ['Đăng nhập bằng', u.auth_provider],
                     ['Email', u.email ?? '—'],
@@ -87,11 +135,21 @@ export default function UserDetail() {
                     ['Thông báo Zalo', d.notify_zalo ? 'Bật' : 'Tắt'],
                     ['Thiết bị nhận Web Push', String(d.push_devices)],
                     ['Khóa lúc', d.deleted_at ? dt(d.deleted_at) : '—'],
+                    ['Trang công khai', r?.public_slug ? <a key="pp" href={`/nguoi/${r.public_slug}`} target="_blank" rel="noreferrer">/nguoi/{r.public_slug}</a> : '—'],
+                    ['Đã báo vi phạm', r ? `${r.reports_made} lần` : '—'],
                     ['Mã', <span className="font-mono text-label">{u.id}</span>],
                   ]} />
                 </Panel>
+                {r ? <NotePanel key={userId} userId={userId} initial={r.admin_note} /> : null}
+                </div>
                 <div className="min-w-0">
-                  <Tabs value={tab} onChange={setTab} tabs={[['jobs', `Phiên (${d.jobs.length})`], ['ledger', `Sổ lượt (${d.ledger.length})`], ['payments', `Thanh toán (${d.payments.length})`], ['audit', `Nhật ký (${d.audit.length})`]]} />
+                  <Tabs value={tab} onChange={setTab} tabs={[
+                    ['jobs', `Phiên (${d.jobs.length})`], ['ledger', `Sổ lượt (${d.ledger.length})`], ['payments', `Thanh toán (${d.payments.length})`],
+                    ['trees', `Cây (${r?.trees.length ?? '…'})`], ['listings', `Tin đăng (${r?.listings.length ?? '…'})`],
+                    ['services', `Nghệ nhân & chăm hộ (${r ? r.consults.length + r.care.length : '…'})`],
+                    ['reports', <span key="rp" className={r?.reports_against.length ? 'text-danger' : undefined}>Bị báo ({r?.reports_against.length ?? '…'})</span>],
+                    ['audit', `Nhật ký (${d.audit.length})`],
+                  ]} />
                   <Panel pad={false}>
                     {tab === 'jobs' ? (
                       <DataTable rows={d.jobs} rowKey={(j) => j.id} onRowClick={(j) => navigate(`/admin/phien/${j.id}`)} empty="Chưa có phiên."
@@ -120,12 +178,50 @@ export default function UserDetail() {
                           { key: 'st', header: 'Trạng thái', render: (p) => <StatusBadge status={p.status} /> },
                           { key: 'amt', header: 'Số tiền', align: 'right', render: (p) => vnd(p.amount_vnd) },
                         ]} />
+                    ) : tab === 'trees' ? (
+                      <DataTable rows={r?.trees ?? []} rowKey={(t) => t.id} empty="Chưa có cây."
+                        columns={[
+                          { key: 'n', header: 'Cây', render: (t) => t.nickname || '—' },
+                          { key: 's', header: 'Loài', render: (t) => t.species_key ?? '—' },
+                          { key: 'p', header: 'Sổ cây', render: (t) => (t.passport_code ? <a href={`/so-cay/${t.passport_code}`} target="_blank" rel="noreferrer" className="font-mono">{t.passport_code}</a> : '—') },
+                          { key: 'st', header: '', render: (t) => (t.stolen ? <Badge tone="danger">Báo mất</Badge> : null) },
+                          { key: 'at', header: 'Tạo', align: 'right', render: (t) => dt(t.created_at) },
+                        ]} />
+                    ) : tab === 'listings' ? (
+                      <DataTable rows={r?.listings ?? []} rowKey={(x) => x.id} onRowClick={(x) => navigate(`/admin/cong-dong?tab=listings&q=${x.code}`)} empty="Chưa đăng tin."
+                        columns={[
+                          { key: 't', header: 'Tin', render: (x) => x.title },
+                          { key: 'c', header: 'Mã', render: (x) => <span className="font-mono">{x.code}</span> },
+                          { key: 'st', header: 'Trạng thái', render: (x) => <Badge tone={x.status === 'hidden' ? 'warn' : x.status === 'active' ? 'success' : 'neutral'}>{LISTING_VI[x.status] ?? x.status}</Badge> },
+                          { key: 'p', header: 'Giá', align: 'right', render: (x) => (x.price_vnd ? vnd(x.price_vnd) : '—') },
+                          { key: 'v', header: 'Xem', align: 'right', render: (x) => num(x.views) },
+                        ]} />
+                    ) : tab === 'services' ? (
+                      <DataTable rows={[
+                        ...(r?.consults ?? []).map((c) => ({ id: c.id, what: c.role === 'asker' ? 'Hỏi nghệ nhân' : 'Trả lời (nghệ nhân)', text: c.question, status: c.status, at: c.created_at, to: `/admin/hoi-dap/${c.id}` })),
+                        ...(r?.care ?? []).map((c) => ({ id: c.id, what: `${c.kind === 'care' ? 'Chăm hộ' : 'Nuôi hộ'} · ${c.role === 'owner' ? 'chủ cây' : 'nhà vườn'}`, text: '', status: c.status, at: c.created_at, to: '/admin/cong-dong?tab=care' })),
+                      ].sort((a, b) => b.at.localeCompare(a.at))} rowKey={(x) => x.id} onRowClick={(x) => navigate(x.to)} empty="Chưa dùng dịch vụ."
+                        columns={[
+                          { key: 'w', header: 'Loại', render: (x) => x.what },
+                          { key: 't', header: 'Nội dung', render: (x) => <span className="line-clamp-1 max-w-[380px] text-ink-muted">{x.text || '—'}</span> },
+                          { key: 's', header: 'Trạng thái', render: (x) => <Badge>{SERVICE_VI[x.status] ?? x.status}</Badge> },
+                          { key: 'at', header: 'Lúc', align: 'right', render: (x) => dt(x.at) },
+                        ]} />
+                    ) : tab === 'reports' ? (
+                      <DataTable rows={r?.reports_against ?? []} rowKey={(x) => x.id} onRowClick={() => navigate('/admin/bao-cao?status=all')} empty="Chưa bị ai báo."
+                        columns={[
+                          { key: 'k', header: 'Nội dung', render: (x) => x.kind_vi },
+                          { key: 'r', header: 'Lý do', render: (x) => <span className="font-medium text-danger">{x.reason_vi}</span> },
+                          { key: 'n', header: 'Ghi chú', render: (x) => <span className="text-ink-muted">{x.note ?? '—'}</span> },
+                          { key: 's', header: 'Trạng thái', render: (x) => <Badge tone={x.status === 'open' ? 'danger' : 'neutral'}>{x.status === 'open' ? 'Chờ xử lý' : x.status === 'actioned' ? 'Đã ẩn' : 'Không vi phạm'}</Badge> },
+                          { key: 'at', header: 'Lúc', align: 'right', render: (x) => dt(x.created_at) },
+                        ]} />
                     ) : (
                       <DataTable rows={d.audit} rowKey={(a) => String(a.id)} empty="Chưa có thao tác quản trị nào."
                         columns={[
                           { key: 'at', header: 'Lúc', render: (a) => dt(a.created_at) },
                           { key: 'who', header: 'Quản trị viên', render: (a) => a.admin_email ?? '—' },
-                          { key: 'act', header: 'Thao tác', render: (a) => <span className="font-mono text-label">{a.action}</span> },
+                          { key: 'act', header: 'Thao tác', render: (a) => ACTION_VI[a.action] ?? <span className="font-mono text-label">{a.action}</span> },
                           { key: 'detail', header: 'Chi tiết', render: (a) => <span className="text-label text-ink-muted">{a.detail ? Object.entries(a.detail).filter(([, v]) => v !== null).map(([k, v]) => `${k}: ${String(v)}`).join(' · ') : '—'}</span> },
                         ]} />
                     )}

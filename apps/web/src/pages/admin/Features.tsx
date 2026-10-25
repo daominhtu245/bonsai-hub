@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Button, Notice } from '@/components/ui';
+import { Button, FilterChip, Notice } from '@/components/ui';
 import { adminCommunityApi, type FeatureRow, type FeatureState, type FeaturesAdmin } from '@/lib/adminCommunity';
 import { cx } from '@/lib/cx';
-import { PageHeader, Panel, TableView, num, useAction, useLoad } from './kit';
+import { PageHeader, Panel, SearchBox, TableView, num, useAction, useLoad } from './kit';
 
 const STATES: Array<[FeatureState, string]> = [['on', 'Mở'], ['staff', 'Nội bộ'], ['off', 'Tắt']];
 const TONE: Record<FeatureState, string> = { on: 'bg-primary text-primary-on', staff: 'bg-warn-soft text-warn-ink', off: 'bg-surface-2 text-ink' };
@@ -25,6 +25,8 @@ export default function FeaturesPage() {
   const [state, reload, set] = useLoad(() => adminCommunityApi.features());
   const [run, notice, busy] = useAction();
   const [testers, setTesters] = useState('');
+  const [q, setQ] = useState('');
+  const [only, setOnly] = useState<FeatureState | ''>('');
   const data = state.status === 'ready' ? state.data : null;
   useEffect(() => { if (data) setTesters(data.testers.join('\n')); }, [data?.testers.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
   const apply = (body: Parameters<typeof adminCommunityApi.saveFeatures>[0], ok: string) =>
@@ -38,12 +40,26 @@ export default function FeaturesPage() {
       {notice}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
         <TableView state={state}>
-          {(d: FeaturesAdmin) => (
+          {(d: FeaturesAdmin) => {
+            const count = (s: FeatureState) => d.items.filter((i) => i.state === s).length;
+            const norm = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase();
+            const items = d.items.filter((i) => (!only || i.state === only) && (!q || norm(i.label_vi + i.group_vi).includes(norm(q))));
+            return (
             <div className="flex flex-col gap-4">
-              {[...new Set(d.items.map((i) => i.group_vi))].map((g) => (
+              <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Lọc theo trạng thái">
+                {([['', `Tất cả ${d.items.length}`], ...STATES.map(([s, l]) => [s, `${l} ${count(s)}`])] as Array<[FeatureState | '', string]>).map(([s, l]) => (
+                  <FilterChip key={s || 'all'} selected={only === s} onClick={() => setOnly(s)}>
+                    {s ? <span aria-hidden="true" className={cx('h-2.5 w-2.5 rounded-full', s === 'on' ? 'bg-primary' : s === 'staff' ? 'bg-warn' : 'bg-line-strong')} /> : null}
+                    {l}
+                  </FilterChip>
+                ))}
+                <SearchBox value={q} onChange={setQ} placeholder="Tìm tính năng" />
+              </div>
+              {items.length === 0 ? <Panel><span className="text-caption text-ink-muted">Không có tính năng phù hợp.</span></Panel> : null}
+              {[...new Set(items.map((i) => i.group_vi))].map((g) => (
                 <Panel key={g} title={g} pad={false}>
                   <ul className="m-0 list-none divide-y divide-line p-0">
-                    {d.items.filter((i) => i.group_vi === g).map((i) => (
+                    {items.filter((i) => i.group_vi === g).map((i) => (
                       <li key={i.key} className="flex flex-wrap items-center gap-3 px-4 py-2.5">
                         <span className="flex min-w-[200px] flex-1 flex-col">
                           <span className="text-caption font-medium">{i.label_vi}</span>
@@ -56,7 +72,8 @@ export default function FeaturesPage() {
                 </Panel>
               ))}
             </div>
-          )}
+            );
+          }}
         </TableView>
         <Panel title="Người thử" className="xl:self-start">
           <div className="flex flex-col gap-2">

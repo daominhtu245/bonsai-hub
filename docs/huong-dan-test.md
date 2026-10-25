@@ -230,6 +230,11 @@ Ghi lại **mã phiên** (phần cuối URL `/ket-qua/<mã>`) — các bước s
 
 ## 12. Kiểm tra phía quản trị sau khi test
 
+- **Báo vi phạm**: tài khoản B mở một tin của A (`/tin/{mã}`) → **Báo vi phạm** → chọn "Nghi lừa đảo" → Gửi. Quản trị: thanh bên mục **Báo vi phạm** có số đỏ, Bảng điều khiển có thẻ "Báo vi phạm chờ xử lý" → mở → **Ẩn nội dung** (nhập lý do) → tin biến mất khỏi chợ, A nhận thông báo, số đỏ mất.
+- **Tìm nhanh**: nhấn `/`, gõ email của A → chọn gợi ý → mở hồ sơ A; gõ mã tin, nội dung chuyển khoản (BONSAI…) cũng ra.
+- **Hồ sơ người dùng**: tab Cây / Tin đăng / Nghệ nhân & chăm hộ / Bị báo có dữ liệu của A; thử **Ghi chú nội bộ** (lưu, tải lại trang vẫn còn) và **Nhắn riêng** (A nhận thông báo nếu đã bật).
+- **Phản hồi**: A bấm "Chưa đúng" ở màn Kết quả → Quản trị → Phản hồi → **Đã xử lý** + ghi đã làm gì → thẻ biến khỏi danh sách "chưa xử lý".
+
 - **Cộng đồng & chợ → Kiểm duyệt & dịch vụ**: ẩn thử một tin (tin biến mất khỏi chợ), gỡ thử một trang công khai; tab Hỏi nghệ nhân xem câu sắp quá hạn, thử **Hoàn lượt ngay**.
 - **Cộng đồng & chợ → Trợ lý chăm cây**: bật "Chỉ những lượt chưa trả lời được" → bổ sung bảng ở Bộ luật.
 - **Hệ thống → Tính năng**: cột "lượt dùng / 30 ngày" tăng sau khi test.

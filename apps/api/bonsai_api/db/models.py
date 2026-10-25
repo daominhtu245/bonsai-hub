@@ -138,6 +138,7 @@ class User(Base):
     bio: Mapped[str | None] = mapped_column(Text)
     specialties: Mapped[list[Any]] = mapped_column(JSONB, default=list, server_default=text("'[]'::jsonb"))
     nursery_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # gói nhà vườn còn hạn tới
+    admin_note: Mapped[str | None] = mapped_column(Text)  # ghi chú nội bộ của quản trị (người dùng không thấy)
     # Cache; nguồn gốc là credit_ledger (xem services/credits.py).
     credits: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     created_at: Mapped[datetime] = _created()
@@ -331,6 +332,8 @@ class Feedback(Base):
     reason_tags: Mapped[list[Any]] = mapped_column(JSONB, default=list)
     comment: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = _created()
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # quản trị đã xem / xử lý
+    admin_note: Mapped[str | None] = mapped_column(Text)
 
     __table_args__ = (
         UniqueConstraint("job_id", "user_id", name="uq_feedback_job_user"),
@@ -770,3 +773,23 @@ class AssistantQuestion(Base):
     status: Mapped[str] = mapped_column(String(16), default="queued")  # queued | done | failed
     answer: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = _created()
+
+
+class Report(Base):
+    """Người dùng báo vi phạm (tin đăng, trang công khai, bài thử thách) → hàng chờ kiểm duyệt ở /admin/bao-cao."""
+
+    __tablename__ = "reports"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    reporter_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
+    target_kind: Mapped[str] = mapped_column(String(24))  # listing | profile | challenge_entry
+    target_id: Mapped[str] = mapped_column(String(64))
+    reason: Mapped[str] = mapped_column(String(24))  # scam | wrong_info | stolen | offensive | spam | other
+    note: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), default="open", index=True)  # open | actioned | dismissed
+    resolution: Mapped[str | None] = mapped_column(Text)
+    resolved_by: Mapped[str | None] = mapped_column(String(320))
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = _created()
+
+    __table_args__ = (Index("ix_reports_target", "target_kind", "target_id"),)

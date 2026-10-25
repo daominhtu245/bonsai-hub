@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { MessageCircle, Phone, QrCode } from 'lucide-react';
+import { ReportButton } from '@/components/ReportButton';
 import { Link, useParams } from 'react-router-dom';
 import { Notice, Skeleton } from '@/components/ui';
 import { ApiError } from '@/lib/api';
@@ -57,6 +58,7 @@ export default function ListingPublicPage() {
       ) : null}
       <p className="m-0 text-label text-ink-subtle">Bonsai AI chỉ kết nối, không nhận tiền thay. Xem cây tận nơi trước khi trả tiền.</p>
       <Link to={`/tin/${x.code}/the`} className="inline-flex min-h-touch items-center gap-1 text-caption text-ink-muted"><QrCode size={16} aria-hidden="true" />In thẻ QR treo chậu</Link>
+      <ReportButton kind="listing" target={x.code} />
     </div>
   );
 }

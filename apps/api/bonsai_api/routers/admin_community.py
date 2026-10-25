@@ -13,7 +13,7 @@ from sqlalchemy import func, or_, select
 
 from .. import storage
 from ..db.models import (
-    AssistantQuestion, CareRequest, Consult, CreditReason, HealthCheck, Listing, Tree, User,
+    AssistantQuestion, CareRequest, Consult, CreditReason, HealthCheck, Listing, Report, Tree, User,
 )
 from ..security import DB, require_admin
 from ..services.audit import audit
@@ -45,8 +45,13 @@ def listings(db: DB, status_: Literal["active", "sold", "hidden"] | None = Query
         stmt = stmt.where(or_(Listing.title.ilike(f"%{q}%"), Listing.code == q.upper()))
     rows = db.execute(stmt.order_by(Listing.created_at.desc()).limit(limit)).scalars().all()
     users = _users(db, [x.user_id for x in rows])
+    report_counts = dict(db.execute(select(Report.target_id, func.count()).where(Report.target_kind == "listing", Report.status == "open")
+                                    .group_by(Report.target_id)).all())
     now = datetime.now(UTC)
     return [{"id": str(x.id), "code": x.code, "title": x.title, "price_vnd": x.price_vnd, "status": x.status, "views": x.views,
+             "description": x.description, "kind": x.kind, "province": x.province, "species_key": x.species_key, "contact_phone": x.contact_phone,
+             "height_cm": x.height_cm, "trunk_cm": x.trunk_cm,
+             "reports": report_counts.get(str(x.id), 0),
              "featured": bool(x.featured_until and x.featured_until > now), "seller": _who(users.get(x.user_id)),
              "photo_url": storage.presign_get(x.photo_key) if x.photo_key else None, "created_at": x.created_at.isoformat()} for x in rows]
 
@@ -103,6 +108,32 @@ def stolen_trees(db: DB):
     users = _users(db, [t.user_id for t in rows])
     return [{"tree_id": str(t.id), "nickname": t.nickname, "passport_code": t.passport_code, "stolen_at": t.stolen_at.isoformat(),
              "owner": _who(users.get(t.user_id))} for t in rows]
+
+
+@router.post("/stolen-trees/{tree_id}/clear")
+def clear_stolen(tree_id: uuid.UUID, db: DB, admin: Admin):
+    """Gỡ cờ báo mất (chủ đã tìm lại cây, hoặc báo nhầm)."""
+    t = db.get(Tree, tree_id)
+    if t is None or t.stolen_at is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Cây không ở trạng thái báo mất.")
+    audit(db, admin, "tree.stolen_clear", "tree", t.id, passport=t.passport_code)
+    t.stolen_at = None
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/community/counts")
+def community_counts(db: DB):
+    """Số đếm trên từng tab của trang Kiểm duyệt & dịch vụ."""
+    one = lambda stmt: db.execute(stmt).scalar_one()  # noqa: E731
+    return {
+        "listings": one(select(func.count()).select_from(Listing).where(Listing.status == "active")),
+        "listings_hidden": one(select(func.count()).select_from(Listing).where(Listing.status == "hidden")),
+        "consults": one(select(func.count()).select_from(Consult).where(Consult.status == "open")),
+        "care": one(select(func.count()).select_from(CareRequest).where(CareRequest.status.in_(["requested", "active"]))),
+        "profiles": one(select(func.count()).select_from(User).where(User.public_slug.is_not(None))),
+        "stolen": one(select(func.count()).select_from(Tree).where(Tree.stolen_at.is_not(None))),
+    }
 
 
 # ---------- hỏi nghệ nhân ----------
