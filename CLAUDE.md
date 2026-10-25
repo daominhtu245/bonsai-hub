@@ -22,6 +22,7 @@ Giao diện và nội dung hiển thị: **tiếng Việt**. Prompt gửi cho mo
 | `docs/ideas.md` | Danh sách ý tưởng phát triển đã chốt + thứ tự |
 | `docs/status.md` | Tình trạng dự án (% từng phần) + quyết định đang tập trung chất lượng |
 | `docs/quality-plan.md` | Kế hoạch sửa chất lượng ảnh kết quả (phản hồi beta), giai đoạn tập trung Q0–Q6 |
+| `docs/token-usage.md` | Token mỗi bước / mỗi phiên (đo thật) để tính chi phí |
 | `docs/huong-dan-test.md` | Hướng dẫn test từng chức năng theo đúng thứ tự tạo dữ liệu |
 
 Khi tài liệu và mockup lệch nhau: **tài liệu kỹ thuật** quyết định hành vi; giao diện theo **hệ thiết kế v3** (tokens + thư viện component), không theo màu/chữ của mockup v1.
