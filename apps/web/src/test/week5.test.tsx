@@ -1,12 +1,13 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '@/lib/auth';
 import Buy from '@/pages/Buy';
 import Account from '@/pages/Account';
 import Garden from '@/pages/Garden';
 import Home from '@/pages/Home';
 import Share from '@/pages/Share';
+import { AppShell } from '@/components/AppShell';
 import { json, mockFetch } from './fetchMock';
 import { user } from './fixtures';
 
@@ -51,7 +52,6 @@ describe('Garden', () => {
     expect(screen.getByRole('img', { name: 'Đã xong 1/5 giai đoạn' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /Còn việc cần làm/ }));
     expect(screen.queryByText('Mai mới mua')).not.toBeInTheDocument();
-    expect(screen.getByRole('navigation', { name: 'Điều hướng chính' })).toBeInTheDocument();
     expect(screen.getByText('Minh họa')).toBeInTheDocument();
     expect(screen.getByAltText('Phôi gốc')).toHaveAttribute('src', 'https://r2/p.webp');
     expect(screen.getByText(/ngày chưa chụp/)).toBeInTheDocument();
@@ -61,6 +61,34 @@ describe('Garden', () => {
     mockFetch([['GET /api/v1/me', () => json(user)], ['GET /api/v1/garden', () => json({ credits: 1, trees: [] })]]);
     renderAt('/vuon', '/vuon', <Garden />);
     expect(await screen.findByText('Chưa có cây nào')).toBeInTheDocument();
+  });
+});
+
+describe('AppShell', () => {
+  it('keeps one bottom nav across pages, highlights the owning tab, hides it in full-screen flows', async () => {
+    localStorage.setItem('bonsai.token', 'tok');
+    mockFetch([['GET /api/v1/me', () => json(user)]]);
+    render(
+      <AuthProvider>
+        <MemoryRouter initialEntries={['/tien-ich/thoi-tiet']}>
+          <Routes>
+            <Route element={<AppShell />}>
+              <Route path="/tien-ich/thoi-tiet" element={<Link to="/ket-qua/j1">tới kết quả</Link>} />
+              <Route path="/ket-qua/:id" element={<Link to="/chup">chụp</Link>} />
+            </Route>
+            <Route path="/chup" element={<div>màn chụp</div>} />
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>,
+    );
+    const nav = screen.getByRole('navigation', { name: 'Điều hướng chính' });
+    expect(within(nav).getByRole('link', { name: 'Tiện ích' })).toHaveAttribute('aria-current', 'page');
+    await userEvent.click(screen.getByRole('link', { name: 'tới kết quả' }));
+    expect(screen.getByRole('navigation', { name: 'Điều hướng chính' })).toBe(nav); // không gắn lại
+    expect(within(nav).getByRole('link', { name: 'Vườn' })).toHaveAttribute('aria-current', 'page');
+    await userEvent.click(screen.getByRole('link', { name: 'chụp' }));
+    expect(screen.getByText('màn chụp')).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Điều hướng chính' })).not.toBeInTheDocument();
   });
 });
 

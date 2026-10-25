@@ -63,7 +63,7 @@ export default function MarketPage() {
           </ul>
         )}
       </div>
-      <Link to="/tin-cua-toi?moi=1" className="fixed bottom-6 right-1/2 z-10 flex min-h-cta translate-x-1/2 items-center gap-2 rounded-full bg-primary px-5 font-semibold text-primary-on no-underline shadow-raised">
+      <Link to="/tin-cua-toi?moi=1" className="fixed bottom-[calc(var(--nav-h)+16px)] right-1/2 z-10 flex min-h-cta translate-x-1/2 items-center gap-2 rounded-full bg-primary px-5 font-semibold text-primary-on no-underline shadow-raised">
         <Plus size={20} aria-hidden="true" />Đăng tin bán
       </Link>
     </div>

@@ -5,9 +5,9 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BackHeader } from '@/components/BackHeader';
-import { BottomNav } from '@/components/BottomNav';
 import { Tile, type Tone } from '@/components/ui';
-import { accountApi, type GardenTree } from '@/lib/account';
+import { type GardenTree } from '@/lib/account';
+import { cachedGarden, loadGarden } from '@/lib/garden';
 import { useAuth } from '@/lib/auth';
 import { useFeatures, type FeatureKey } from '@/lib/features';
 import { daysUntil, useToday } from '@/lib/today';
@@ -59,9 +59,9 @@ function Today() {
   const { user } = useAuth();
   const me = user.status === 'ready' ? user.data : null;
   const { weather: w, today, alert, WIcon, tet } = useToday();
-  const [task, setTask] = useState<GardenTree | null>(null);
+  const [task, setTask] = useState<GardenTree | null>(cachedGarden(me?.id)?.trees.find((t) => t.next_task_vi) ?? null);
   useEffect(() => {
-    if (me) accountApi.garden().then((g) => setTask(g.trees.find((t) => t.next_task_vi) ?? null)).catch(() => null);
+    if (me) loadGarden(me.id).then((g) => setTask(g.trees.find((t) => t.next_task_vi) ?? null)).catch(() => null);
   }, [me?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!today && !tet && !task) return null;
@@ -118,7 +118,6 @@ export default function UtilitiesHub() {
           </section>
         ))}
       </div>
-      <BottomNav />
     </div>
   );
 }

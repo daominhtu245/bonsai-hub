@@ -3,14 +3,13 @@ import { ArrowRight, CalendarCheck, CalendarHeart, Camera, MapPin, PenTool, Plus
 import { Link } from 'react-router-dom';
 import { AnnouncementBar } from '@/components/AnnouncementBar';
 import { AppHeader } from '@/components/AppHeader';
-import { BottomNav } from '@/components/BottomNav';
 import { HeroShot } from '@/components/HeroShot';
 import { StageBar, TreeImage, TreePhotoCard } from '@/components/TreePhotoCard';
 import { ButtonLink, Chip, PhotoHero, Skeleton, Tile } from '@/components/ui';
-import { accountApi, type GardenTree } from '@/lib/account';
+import { type GardenTree } from '@/lib/account';
 import { useAuth } from '@/lib/auth';
 import { useFeatures } from '@/lib/features';
-import { destination, focusTree, photoOverdue, treeName } from '@/lib/garden';
+import { cachedGarden, destination, focusTree, loadGarden, photoOverdue, treeName } from '@/lib/garden';
 import { daysUntil, useToday } from '@/lib/today';
 import { HUB } from './utilities/Hub';
 
@@ -131,12 +130,12 @@ function FocusCard({ t }: { t: GardenTree }) {
   );
 }
 
-function Dashboard({ name }: { name: string | null }) {
+function Dashboard({ name, uid }: { name: string | null; uid: string }) {
   const on = useFeatures();
-  const [trees, setTrees] = useState<GardenTree[] | null>(null);
+  const [trees, setTrees] = useState<GardenTree[] | null>(cachedGarden(uid)?.trees ?? null);
   useEffect(() => {
-    accountApi.garden().then((g) => setTrees(g.trees)).catch(() => setTrees([]));
-  }, []);
+    loadGarden(uid).then((g) => setTrees(g.trees)).catch(() => setTrees((t) => t ?? []));
+  }, [uid]);
   const now = new Date();
   const focus = trees ? focusTree(trees) : null;
   const explore = HUB.flatMap((g) => g.items.map((i) => ({ ...i, tone: g.tone })))
@@ -213,8 +212,7 @@ export default function Home() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-content flex-col">
       <AppHeader />
-      {me ? <Dashboard name={me.name} /> : <Landing />}
-      {me ? <BottomNav /> : null}
+      {me ? <Dashboard name={me.name} uid={me.id} /> : <Landing />}
     </div>
   );
 }

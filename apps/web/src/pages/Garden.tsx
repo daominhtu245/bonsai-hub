@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Coins, ListChecks, Plus, Sprout, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { BottomNav } from '@/components/BottomNav';
 import { ReceiveTree } from '@/components/ReceiveTree';
 import { TreePhotoCard } from '@/components/TreePhotoCard';
 import { ButtonLink, EmptyState, FilterChip, PhotoHero, Skeleton, StateView, type ViewState } from '@/components/ui';
-import { accountApi, type GardenTree } from '@/lib/account';
+import { type GardenTree } from '@/lib/account';
+import { useAuth } from '@/lib/auth';
+import { cachedGarden, loadGarden } from '@/lib/garden';
 import { ApiError } from '@/lib/api';
 import { useFeatures } from '@/lib/features';
 
@@ -30,14 +31,17 @@ function Stat({ to, Icon, value, label }: { to: string; Icon: LucideIcon; value:
 
 /** Màn 08 — Vườn của tôi: lưới ảnh cây (phôi → minh họa tương lai), số liệu nhanh, lọc theo việc cần làm. */
 export default function Garden() {
-  const [state, setState] = useState<ViewState<{ trees: GardenTree[]; credits: number }>>({ status: 'loading' });
+  const { user } = useAuth();
+  const uid = user.status === 'ready' ? user.data.id : null;
+  const first = cachedGarden(uid);
+  const [state, setState] = useState<ViewState<{ trees: GardenTree[]; credits: number }>>(
+    first ? (first.trees.length ? { status: 'ready', data: first } : { status: 'empty' }) : { status: 'loading' });
   const [filter, setFilter] = useState<Filter>('all');
   const on = useFeatures();
 
   const load = () => {
-    setState({ status: 'loading' });
-    accountApi
-      .garden()
+    if (!cachedGarden(uid)) setState({ status: 'loading' });
+    loadGarden(uid)
       .then((g) => setState(g.trees.length ? { status: 'ready', data: g } : { status: 'empty' }))
       .catch((e: ApiError) => setState({ status: 'error', message: e.message, retry: load }));
   };
@@ -94,7 +98,6 @@ export default function Garden() {
         </StateView>
         {on('passport') ? <ReceiveTree onReceived={load} /> : null}
       </main>
-      <BottomNav />
     </div>
   );
 }

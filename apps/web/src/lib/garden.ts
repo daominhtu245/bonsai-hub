@@ -1,4 +1,4 @@
-import type { GardenTree } from './account';
+import { accountApi, type GardenTree } from './account';
 import { SPECIES_NAME } from './copy';
 
 /** Mỗi cây trong vườn dẫn tới đâu, trạng thái hiển thị và lời mời làm tiếp. */
@@ -40,4 +40,19 @@ export function photoOverdue(t: GardenTree): number | null {
 /** Cây nên làm trước: còn việc trong lộ trình, rồi tới cây chờ chọn thế. */
 export function focusTree(trees: GardenTree[]): GardenTree | null {
   return trees.find((t) => t.next_task_vi) ?? trees.find((t) => t.job_status === 'awaiting_choice') ?? null;
+}
+
+// ---------- dữ liệu vườn dùng chung (Trang chủ, Vườn, Tiện ích, Tài khoản) ----------
+// Giữ bản gần nhất theo người dùng: mở lại trang là hiện ngay, tải ngầm bản mới (không nháy khung xương mỗi lần chuyển tab).
+type Garden = { trees: GardenTree[]; credits: number };
+let cache: { uid: string; data: Garden } | null = null;
+
+export function cachedGarden(uid: string | null | undefined): Garden | null {
+  return uid && cache?.uid === uid ? cache.data : null;
+}
+
+export async function loadGarden(uid: string | null | undefined): Promise<Garden> {
+  const data = await accountApi.garden();
+  if (uid) cache = { uid, data };
+  return data;
 }

@@ -29,7 +29,6 @@ describe('Tiện ích', () => {
     mockFetch([['GET /api/v1/me', () => json(me)]]);
     renderAt('/tien-ich', <UtilitiesHub />);
     expect(await screen.findByRole('link', { name: /Mai kịp Tết/ })).toHaveAttribute('href', '/tien-ich/mai-tet');
-    expect(screen.getByRole('navigation', { name: 'Điều hướng chính' })).toHaveTextContent('Tiện ích');
   });
 
   it('rescue: answers questions and shows a plan', async () => {

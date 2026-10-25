@@ -4,7 +4,6 @@ import {
   Store, UserRound, type LucideIcon,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BottomNav } from '@/components/BottomNav';
 import { GiftCodeBox } from '@/components/GiftCodeBox';
 import { ProfileExtras } from '@/components/ProfileExtras';
 import { PublicProfile } from '@/components/PublicProfile';
@@ -15,6 +14,7 @@ import { Button, ButtonLink, Chip, IconBadge, Notice, Segmented, Skeleton, type 
 import { accountApi, vnd, type Payment } from '@/lib/account';
 import { ApiError, type User } from '@/lib/api';
 import { communityApi, type Skill } from '@/lib/community';
+import { cachedGarden, loadGarden } from '@/lib/garden';
 import { useAuth } from '@/lib/auth';
 import { disablePush, enablePush, pushState, type PushState } from '@/lib/push';
 import { getTheme, setTheme, type ThemePref } from '@/lib/theme';
@@ -101,11 +101,11 @@ export default function Account() {
   const [theme, setThemeState] = useState<ThemePref>(getTheme);
   const [push, setPush] = useState<PushState | null>(null);
   const [prefError, setPrefError] = useState<string | null>(null);
-  const [trees, setTrees] = useState<number | null>(null);
+  const [trees, setTrees] = useState<number | null>(cachedGarden(me?.id)?.trees.length ?? null);
   const [skill, setSkill] = useState<Skill | null>(null);
   const [gift, setGift] = useState(false);
   useEffect(() => {
-    accountApi.garden().then((g) => setTrees(g.trees.length)).catch(() => null);
+    loadGarden(me?.id).then((g) => setTrees(g.trees.length)).catch(() => null);
     if (on('skill_levels')) communityApi.skill().then(setSkill).catch(() => null);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -260,7 +260,6 @@ export default function Account() {
           <Button variant="danger" size="touch" onClick={removeAccount}>Xóa tài khoản</Button>
         </div>
       </main>
-      <BottomNav />
     </div>
   );
 }

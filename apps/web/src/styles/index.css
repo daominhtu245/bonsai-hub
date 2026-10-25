@@ -100,3 +100,24 @@
     padding: 0;
   }
 }
+
+/* Khung app (components/AppShell.tsx): thanh điều hướng dưới cố định; trang bên trong cao bằng màn hình trừ thanh dưới. */
+:root {
+  --nav-h: calc(56px + env(safe-area-inset-bottom));
+}
+.app-shell .min-h-dvh {
+  min-height: calc(100dvh - var(--nav-h));
+}
+.app-shell .h-dvh {
+  height: calc(100dvh - var(--nav-h));
+}
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.page-enter {
+  animation: page-in 160ms var(--easing, ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-enter { animation: none; }
+}
