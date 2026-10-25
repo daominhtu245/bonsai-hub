@@ -10,7 +10,7 @@ from sqlalchemy import select
 from .. import queue
 from sqlalchemy.dialects.postgresql import insert
 
-from ..db.models import DesignJob, DesignOption, Feedback, JobStatus, Stage, StageTaskCheck, Tree, TreePhoto
+from ..db.models import UserRole, DesignJob, DesignOption, Feedback, JobStatus, Stage, StageTaskCheck, Tree, TreePhoto
 from ..db.session import get_sessionmaker
 from ..schemas import ChooseIn, FeedbackIn, JobCreate, JobOut, ResultFull, TaskToggle
 from ..security import DB, CurrentUser
@@ -35,7 +35,7 @@ def _own_job(db, job_id: uuid.UUID, user) -> DesignJob:
 
 
 @router.post("/trees/{tree_id}/jobs", response_model=JobOut, status_code=status.HTTP_202_ACCEPTED,
-             dependencies=[Depends(per_ip("phase_a", 30, 86400, "Mạng của bạn đã phân tích quá nhiều lần hôm nay. Ngày mai thử tiếp nhé."))])
+             dependencies=[Depends(per_ip("phase_a", 30, 86400, "Mạng của bạn đã phân tích quá nhiều lần hôm nay. Ngày mai thử tiếp nhé.", staff_exempt=True))])
 def create_job(tree_id: uuid.UUID, body: JobCreate, user: CurrentUser, db: DB):
     tree = db.get(Tree, tree_id)
     if tree is None or tree.user_id != user.id:
@@ -43,7 +43,8 @@ def create_job(tree_id: uuid.UUID, body: JobCreate, user: CurrentUser, db: DB):
     ops = get_ops(db)
     if ops["pause_analysis"]:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, ops["pause_message"])
-    if jobs_today(db, user) >= int(ops["phase_a_daily_limit"]):
+    staff = user.role in (UserRole.admin, UserRole.artisan)  # chạy bộ đo / kiểm thử nội bộ
+    if not staff and jobs_today(db, user) >= int(ops["phase_a_daily_limit"]):
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS,
                             "Hôm nay bạn đã phân tích đủ số lần cho phép. Ngày mai bạn thử tiếp nhé.")
     front_id = None

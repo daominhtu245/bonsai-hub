@@ -37,8 +37,14 @@ BENCH = REPO / "data" / "benchmark"
 CASES = BENCH / "cases.yaml"
 PHOTOS = BENCH / "photos"
 RUNS = BENCH / "runs"
+FAIL_VI = {  # cùng mã với bảng chấm (rules/judging.yaml) và fidelity.py
+    "trunk_changed": "Thân bị đổi", "trunk_too_thick": "Thân to quá mức", "removed_branch_present": "Cành phải cắt vẫn còn",
+    "extra_trunk_or_major_branch": "Mọc thêm thân / cành lớn", "wrong_species_foliage": "Sai loại lá", "camera_or_background_changed": "Đổi góc chụp / nền",
+    "pot_style_wrong": "Chậu khác thiết kế", "pads_missing": "Thiếu tầng lá", "foliage_outside_design": "Lá ngoài thiết kế", "apex_off": "Ngọn lệch",
+    "text_artifact": "Có chữ / vết lạ", "pasted_look": "Trông như dán ghép",
+}
 COST_PER_CASE_USD = 0.45  # phân tích + 1 lần tạo ảnh chế độ Tiêu chuẩn (≈ $0,40) + chấm; xem Chi phí AI để chỉnh
-SPECIES_OK = {"si", "sanh", "mai_chieu_thuy", "tung_la_han", "linh_sam", "other"}
+SPECIES_OK = {"si", "sanh", "mai_chieu_thuy", "tung_la_han", "linh_sam", None}  # None = chưa rõ loài, để P1 tự nhận
 
 
 # ---------- danh sách phôi ----------
@@ -181,6 +187,8 @@ def run(base: str, label: str, yes: bool, only: list[str] | None, option: str) -
     user = Api(base, _token(base, "BENCH_TOKEN", "bench@bonsai.local"))
     admin = Api(base, _token(base, "ADMIN_TOKEN", os.environ.get("BENCH_ADMIN_EMAIL", "qt@test.vn")))
     me = user.call("GET", "/me")
+    if me["role"] not in ("admin", "artisan"):  # tài khoản đo = nghệ nhân → không vướng giới hạn phân tích / ngày
+        admin.call("PUT", f"/admin/users/{me['id']}/role", {"role": "artisan"})
     need = len(cases) * (3 if option == "all" else 1)
     if me["credits"] < need:
         admin.call("POST", "/admin/credits/gift", {"email": me["email"], "credits": min(100, need - me["credits"] + 2), "batch": f"bench-{label}"[:40]})
@@ -275,6 +283,11 @@ def summarize(rows: list[dict], reviews: list[dict]) -> dict:
     }
 
 
+def _vi(code: str) -> str:
+    pre, _, c = code.rpartition(": ")
+    return (pre + ": " if pre else "") + FAIL_VI.get(c, c)
+
+
 def _pct(a: int, b: int) -> str:
     return f"{a}/{b} ({100 * a / b:.0f}%)" if b else "—"
 
@@ -311,7 +324,7 @@ def report(run_dir: Path, compare: Path | None, admin: Api | None = None) -> Non
             f"<img src='{html.escape(r.get('photo_url') or '')}'><img src='{html.escape(r.get('s4_url') or '')}'></div>"
             f"<figcaption><b>{html.escape(r['case'])}</b> · {html.escape(str(r.get('chosen_style') or r.get('status')))} · {verdict}<br>"
             f"AI {r.get('ai_total') or '—'} · vẽ {r.get('attempts', 0)} lần · ${r.get('cost_usd', 0):.3f}"
-            f"{'<br>Lỗi: ' + html.escape(', '.join(r['hard_fails'])) if r.get('hard_fails') else ''}"
+            f"{'<br>Lỗi: ' + html.escape(', '.join(map(_vi, r['hard_fails']))) if r.get('hard_fails') else ''}"
             f"{'<br>' + html.escape(r.get('error') or '') if r.get('error') else ''}</figcaption></figure>")
     page = (
         "<!doctype html><meta charset=utf-8><title>Bộ đo chất lượng</title><style>body{font:14px system-ui;margin:20px;background:#f6f6f4}"
@@ -324,7 +337,7 @@ def report(run_dir: Path, compare: Path | None, admin: Api | None = None) -> Non
         f"<table><tr><th></th><th>Lần này</th><th>{'Lần trước' if prev else ''}</th></tr>"
         + line("Chạy xong", "done", "n") + line("Tự kiểm tra đạt", "auto_pass", "done") + line("Nghệ nhân đã chấm", "reviewed", "done")
         + line("Nghệ nhân chấm đạt (Cổng 2 ≥ 70%)", "artisan_pass", "reviewed") + "</table>"
-        "<h2>Lỗi hay gặp</h2><table>" + "".join(f"<tr><td>{html.escape(k)}</td><td>{v}</td></tr>" for k, v in s["top_fails"]) + "</table>"
+        "<h2>Lỗi hay gặp</h2><table>" + "".join(f"<tr><td>{html.escape(_vi(k))}</td><td>{v}</td></tr>" for k, v in s["top_fails"]) + "</table>"
         "<h2>Từng phôi (trái: ảnh gốc · phải: kết quả)</h2><div class=g>" + "".join(cards) + "</div>")
     (run_dir / "report.html").write_text(page)
     (run_dir / "summary.json").write_text(json.dumps(s, ensure_ascii=False, indent=1))

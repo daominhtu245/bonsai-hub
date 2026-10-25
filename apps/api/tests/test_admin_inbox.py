@@ -118,3 +118,20 @@ def test_reviews_for_jobs(db, client, login, bucket):  # noqa: F811
     rows = client.get(f"/api/v1/admin/reviews?job_id={job.id}&job_id={uuid.uuid4()}", headers=admin).json()
     assert len(rows) == 1 and rows[0]["passed"] is True and rows[0]["total"] == 70.0
     assert client.get(f"/api/v1/admin/reviews?job_id={job.id}", headers=headers).status_code == 403
+
+
+def test_staff_exempt_from_analysis_limits(db, client, login, monkeypatch):
+    """Bộ đo chất lượng chạy hàng chục phiên / ngày bằng tài khoản quản trị: không vướng giới hạn phân tích."""
+    monkeypatch.setattr("bonsai_api.queue.enqueue", lambda *a, **kw: True)
+    admin = _admin(db, login)
+    user, _ = login("u@example.com")
+
+    def run(h):
+        key = client.post("/api/v1/uploads/presign", headers=h, json={"content_type": "image/jpeg", "size_bytes": 10}).json()["key"]
+        tree = client.post("/api/v1/trees", headers=h, json={"photos": [{"key": key, "view_index": 0}]}).json()
+        return client.post(f"/api/v1/trees/{tree['id']}/jobs", headers=h, json={}).status_code
+
+    from bonsai_api.routers import jobs as jobs_router
+    monkeypatch.setattr(jobs_router, "get_ops", lambda db: {"pause_analysis": False, "phase_a_daily_limit": 1})
+    assert run(user) == 202 and run(user) == 429
+    assert run(admin) == 202 and run(admin) == 202

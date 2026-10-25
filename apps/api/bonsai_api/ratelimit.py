@@ -41,11 +41,25 @@ def hit(key: str, limit: int, window_s: int) -> bool:
         return True
 
 
-def per_ip(name: str, limit: int, window_s: int, message: str = "Bạn thao tác quá nhanh. Thử lại sau ít phút nhé."):
-    """Dependency FastAPI: giới hạn `limit` lần mỗi `window_s` giây cho mỗi IP."""
+def per_ip(name: str, limit: int, window_s: int, message: str = "Bạn thao tác quá nhanh. Thử lại sau ít phút nhé.", *, staff_exempt: bool = False):
+    """Dependency FastAPI: giới hạn `limit` lần mỗi `window_s` giây cho mỗi IP.
+    `staff_exempt`: quản trị / nghệ nhân không bị giới hạn (chạy bộ đo chất lượng, kiểm thử)."""
+    if not staff_exempt:
+        def dep(request: Request) -> None:
+            if not hit(f"{name}:{client_ip(request)}", limit, window_s):
+                raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, message)
 
-    def dep(request: Request) -> None:
+        return dep
+
+    from fastapi import Depends
+
+    from .db.models import UserRole
+    from .security import get_optional_user
+
+    def staff_dep(request: Request, user=Depends(get_optional_user)) -> None:  # noqa: B008
+        if user is not None and user.role in (UserRole.admin, UserRole.artisan):
+            return
         if not hit(f"{name}:{client_ip(request)}", limit, window_s):
             raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, message)
 
-    return dep
+    return staff_dep
